@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deep RL – Multi-Armed Bandits | Session 2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+
+      --bg:            #f0f2f7;
+      --surface:       #ffffff;
+      --card:          #ffffff;
+      --border:        #e2e8f0;
+      --border-sub:    #f1f5f9;
+
+      --tx-1:  #0f172a;
+      --tx-2:  #475569;
+      --tx-3:  #94a3b8;
+
+      --accent:        #6366f1;
+      --accent-bg:     #eef2ff;
+      --accent-bd:     #c7d2fe;
+
+      --ok:     #059669; --ok-bg:  #ecfdf5; --ok-bd:  #a7f3d0; --ok-tx:  #065f46;
+      --warn:   #d97706; --warn-bg:#fffbeb; --warn-bd:#fde68a; --warn-tx:#92400e;
+      --err:    #dc2626; --err-bg: #fef2f2; --err-bd: #fecaca; --err-tx: #991b1b;
+      --info:   #2563eb; --info-bg:#eff6ff; --info-bd:#bfdbfe; --info-tx:#1e40af;
+
+      --sh-sm: 0 1px 2px rgba(0,0,0,.05);
+      --sh:    0 1px 3px rgba(0,0,0,.1), 0 1px 2px rgba(0,0,0,.06);
+      --sh-md: 0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.05);
+
+      --r:  10px; --r-sm: 6px; --r-lg: 14px;
+
+      --tab-bg: #e4e7ef;
+      --tab-active: #ffffff;
+    }
+
+    [data-theme="dark"] {
+      --bg:         #0d0d14;
+      --surface:    #161622;
+      --card:       #1a1a2e;
+      --border:     #2a2a40;
+      --border-sub: #1e1e30;
+
+      --tx-1: #f1f5f9;
+      --tx-2: #94a3b8;
+      --tx-3: #64748b;
+
+      --accent:    #818cf8;
+      --accent-bg: #1e1b4b;
+      --accent-bd: #3730a3;
+
+      --ok:     #34d399; --ok-bg:  #022c22; --ok-bd:  #065f46; --ok-tx:  #6ee7b7;
+      --warn:   #fbbf24; --warn-bg:#1c1500; --warn-bd:#78350f; --warn-tx:#fde68a;
+      --err:    #f87171; --err-bg: #1c0a0a; --err-bd: #7f1d1d; --err-tx: #fca5a5;
+      --info:   #60a5fa; --info-bg:#0c1a3a; --info-bd:#1e3a8a; --info-tx:#93c5fd;
+
+      --sh-sm: 0 1px 2px rgba(0,0,0,.3);
+      --sh:    0 1px 3px rgba(0,0,0,.4), 0 1px 2px rgba(0,0,0,.3);
+      --sh-md: 0 4px 6px rgba(0,0,0,.4), 0 2px 4px rgba(0,0,0,.3);
+
+      --tab-bg:     #1e1e30;
+      --tab-active: #2a2a42;
+    }
+
+    html { font-size: 16px; scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--tx-1);
+      line-height: 1.6;
+      min-height: 100vh;
+      transition: background .2s, color .2s;
+    }
+
+    /* ── Progress bar ── */
+    #pbar {
+      position: fixed; top: 0; left: 0; height: 3px;
+      background: linear-gradient(90deg, var(--accent), #a78bfa);
+      z-index: 1000; transition: width .1s linear;
+      border-radius: 0 2px 2px 0; pointer-events: none;
+    }
+
+    /* ── Layout ── */
+    .wrap { max-width: 860px; margin: 0 auto; padding: 0 20px 80px; }
+
+    /* ── Header ── */
+    .hdr {
+      padding: 32px 0 22px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+      display: flex; justify-content: space-between;
+      align-items: flex-start; gap: 16px;
+    }
+    .hdr-meta { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 9px; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 100px;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: .05em; text-transform: uppercase;
+    }
+    .ba { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-bd); }
+    .bn { background: var(--border-sub); color: var(--tx-3); border: 1px solid var(--border); }
+    .h1 {
+      font-size: 23px; font-weight: 700;
+      color: var(--tx-1); letter-spacing: -.025em;
+      line-height: 1.2; margin-bottom: 5px;
+    }
+    .h1-sub { font-size: 13px; color: var(--tx-3); }
+
+    .hdr-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+    .ibtn {
+      width: 36px; height: 36px; border-radius: var(--r);
+      border: 1px solid var(--border); background: var(--surface);
+      color: var(--tx-2); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .15s; box-shadow: var(--sh-sm);
+    }
+    .ibtn:hover { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-bd); }
+    .ibtn svg { width: 16px; height: 16px; }
+
+    /* ── Search ── */
+    .search { position: relative; margin-bottom: 18px; }
+    .search input {
+      width: 100%; padding: 10px 40px;
+      border: 1px solid var(--border); border-radius: var(--r-lg);
+      background: var(--surface); color: var(--tx-1);
+      font-family: var(--font); font-size: 14px;
+      box-shadow: var(--sh-sm); transition: all .15s; outline: none;
+    }
+    .search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99,102,241,.15); }
+    .search input::placeholder { color: var(--tx-3); }
+    .si, .sc {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      color: var(--tx-3); display: flex; align-items: center;
+    }
+    .si { left: 13px; pointer-events: none; }
+    .sc { right: 11px; background: none; border: none; cursor: pointer; display: none; padding: 2px; border-radius: 4px; }
+    .sc.vis { display: flex; }
+    .si svg, .sc svg { width: 15px; height: 15px; }
+
+    /* ── Tab nav ── */
+    .tnav {
+      display: flex; gap: 3px;
+      background: var(--tab-bg);
+      padding: 4px; border-radius: var(--r-lg);
+      margin-bottom: 22px;
+      overflow-x: auto; scrollbar-width: none;
+      position: sticky; top: 8px; z-index: 100;
+      box-shadow: var(--sh-md);
+    }
+    .tnav::-webkit-scrollbar { display: none; }
+    .tb {
+      display: flex; align-items: center; gap: 5px;
+      padding: 7px 13px; border-radius: var(--r);
+      border: none; background: transparent;
+      color: var(--tx-3); font-family: var(--font);
+      font-size: 12.5px; font-weight: 500;
+      cursor: pointer; white-space: nowrap;
+      transition: all .15s; flex-shrink: 0;
+    }
+    .tb:hover { color: var(--tx-1); background: rgba(255,255,255,.45); }
+    [data-theme="dark"] .tb:hover { background: rgba(255,255,255,.06); }
+    .tb.on { background: var(--tab-active); color: var(--accent); box-shadow: var(--sh); }
+    .tb svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+    /* ── Sections ── */
+    .sec { display: none; animation: fi .18s ease; }
+    .sec.on { display: block; }
+    @keyframes fi {
+      from { opacity: 0; transform: translateY(5px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Cards ── */
+    .cc {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 20px 22px;
+      margin-bottom: 13px; box-shadow: var(--sh-sm);
+      transition: box-shadow .15s;
+    }
+    .cc:hover { box-shadow: var(--sh); }
+    .ct {
+      font-size: 15px; font-weight: 600;
+      color: var(--tx-1); margin: 0 0 11px;
+      letter-spacing: -.01em;
+    }
+    .cb { font-size: 14px; color: var(--tx-2); line-height: 1.65; margin: 0 0 10px; }
+    .cb:last-child { margin-bottom: 0; }
+
+    /* ── Grid ── */
+    .g2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 9px; margin: 11px 0; }
+    @media(max-width:580px) { .g2 { grid-template-columns: 1fr; } }
+    .gi {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 11px 13px;
+    }
+    .gi p { font-size: 13px; color: var(--tx-2); line-height: 1.55; margin: 4px 0 0; }
+
+    /* ── Labels ── */
+    .lbl {
+      display: block; font-size: 10.5px; font-weight: 600;
+      letter-spacing: .06em; text-transform: uppercase;
+      color: var(--tx-3); margin-bottom: 5px;
+    }
+
+    /* ── Semantic blocks ── */
+    .blk { border-radius: var(--r); padding: 12px 15px; margin: 10px 0; font-size: 13.5px; line-height: 1.65; }
+    .blk .lbl { margin-bottom: 6px; }
+
+    .eg  { background: var(--ok-bg);   border-left: 3px solid var(--ok);   color: var(--ok-tx); }
+    .eg  .lbl { color: var(--ok); }
+
+    .mt  { background: var(--warn-bg); border-left: 3px solid var(--warn); color: var(--warn-tx); }
+    .mt  .lbl { color: var(--warn); }
+
+    .en  { background: var(--err-bg);  border-left: 3px solid var(--err);  color: var(--err-tx); }
+    .en  .lbl { color: var(--err); }
+
+    .ql  { background: var(--info-bg); border-left: 3px solid var(--info); color: var(--info-tx); font-style: italic; }
+    .ql  .lbl { color: var(--info); font-style: normal; }
+
+    /* ── Formula ── */
+    .fml {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 14px 16px;
+      margin: 11px 0; font-family: var(--mono);
+      font-size: 12.5px; color: var(--tx-1); line-height: 1.95;
+      white-space: pre; overflow-x: auto;
+      position: relative;
+    }
+    .fml-copy {
+      position: absolute; top: 8px; right: 8px;
+      padding: 3px 8px; font-size: 10px; font-weight: 600;
+      font-family: var(--font); letter-spacing: .04em;
+      background: var(--surface); color: var(--tx-3);
+      border: 1px solid var(--border); border-radius: var(--r-sm);
+      cursor: pointer; opacity: 0; transition: opacity .15s, color .15s;
+    }
+    .fml:hover .fml-copy { opacity: 1; }
+    .fml-copy:hover { color: var(--accent); border-color: var(--accent-bd); }
+    .fml-copy.copied { color: var(--ok); border-color: var(--ok-bd); }
+
+    /* ── Section sub-header ── */
+    .sec-h {
+      font-size: 11px; font-weight: 700;
+      color: var(--tx-3); margin: 16px 0 10px;
+      padding-top: 14px; border-top: 1px solid var(--border-sub);
+      text-transform: uppercase; letter-spacing: .06em;
+    }
+
+    /* ── Tables ── */
+    .ctbl {
+      width: 100%; border-collapse: collapse; font-size: 13px;
+      margin: 11px 0; border-radius: var(--r);
+      overflow: hidden; border: 1px solid var(--border);
+    }
+    .ctbl th {
+      text-align: left; padding: 9px 14px;
+      background: var(--bg); color: var(--tx-1);
+      font-weight: 600; font-size: 11.5px;
+      text-transform: uppercase; letter-spacing: .04em;
+      border-bottom: 1px solid var(--border);
+    }
+    .ctbl td {
+      padding: 9px 14px; border-bottom: 1px solid var(--border-sub);
+      color: var(--tx-2); vertical-align: top;
+    }
+    .ctbl tr:last-child td { border-bottom: none; }
+    .ctbl tbody tr:hover td { background: var(--bg); }
+    .ctbl td:first-child { color: var(--tx-1); font-weight: 500; white-space: nowrap; }
+
+    /* ── Step rows ── */
+    .sr { display: flex; gap: 11px; align-items: flex-start; margin: 8px 0; font-size: 13.5px; }
+    .sn {
+      min-width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 2px;
+    }
+    .sndef { background: var(--err-bg); color: var(--err); border: 1.5px solid var(--err-bd); }
+    .snpos { background: var(--warn-bg); color: var(--warn); border: 1.5px solid var(--warn-bd); }
+    .sb { color: var(--tx-2); line-height: 1.6; flex: 1; }
+
+    /* ── Inline badges ── */
+    .bdg {
+      display: inline-flex; align-items: center;
+      font-size: 10.5px; font-weight: 600;
+      padding: 2px 8px; border-radius: 100px; margin: 0 2px;
+    }
+    .bdef { background: var(--err-bg);  color: var(--err);  border: 1px solid var(--err-bd); }
+    .bpos { background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn-bd); }
+
+    /* ── Bold ── */
+    b { color: var(--tx-1); font-weight: 600; }
+
+    /* ── No results ── */
+    .nores {
+      text-align: center; padding: 52px 24px;
+      color: var(--tx-3); font-size: 14px; display: none;
+    }
+    .nores svg { margin: 0 auto 12px; display: block; opacity: .35; width: 40px; height: 40px; }
+
+    /* ── Search highlight ── */
+    mark { background: #fef08a; color: #713f12; border-radius: 2px; padding: 0 1px; }
+    [data-theme="dark"] mark { background: #854d0e; color: #fef08a; }
+
+    /* ── Utility ── */
+    .sr-only {
+      position: absolute; width: 1px; height: 1px;
+      padding: 0; margin: -1px; overflow: hidden;
+      clip: rect(0,0,0,0); white-space: nowrap; border-width: 0;
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--tx-3); }
+
+    /* ── Print ── */
+    @media print {
+      #pbar, .hdr-actions, .search, .tnav { display: none !important; }
+      .sec { display: block !important; }
+      .wrap { max-width: 100%; }
+      .cc { break-inside: avoid; box-shadow: none; border: 1px solid #ddd; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="pbar"></div>
+
+<div class="wrap">
+  <h2 class="sr-only">Deep RL – Multi-Armed Bandits: Enhanced exam notes (v2) based on Prof. Sangeetha Viswanathan Session 2</h2>
+
+  <!-- Header -->
+  <header class="hdr">
+    <div>
+      <div class="hdr-meta">
+        <span class="badge ba">DRL · Session 2</span>
+        <span class="badge bn">7 sections · ~25 min read</span>
+      </div>
+      <h1 class="h1">Multi-Armed Bandits</h1>
+      <p class="h1-sub">Prof. Sangeetha Viswanathan &nbsp;·&nbsp; Sutton &amp; Barto Ch. 2</p>
+    </div>
+    <div class="hdr-actions">
+      <button class="ibtn" id="thm-btn" title="Toggle dark mode" aria-label="Toggle dark mode">
+        <svg id="ico-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg id="ico-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <button class="ibtn" onclick="window.print()" title="Print notes" aria-label="Print notes">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Search -->
+  <div class="search">
+    <span class="si"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+    <input type="text" id="srch" placeholder="Search across all sections… (Ctrl+K)" autocomplete="off" spellcheck="false">
+    <button class="sc" id="sc-clr" aria-label="Clear search"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  </div>
+
+  <!-- Tab navigation -->
+  <nav class="tnav" role="tablist" aria-label="Study sections">
+    <button class="tb on" onclick="sw('fnd',this)" role="tab" aria-selected="true" aria-controls="t-fnd">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      Foundations
+    </button>
+    <button class="tb" onclick="sw('est',this)" role="tab" aria-selected="false" aria-controls="t-est">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Estimation
+    </button>
+    <button class="tb" onclick="sw('sel',this)" role="tab" aria-selected="false" aria-controls="t-sel">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      Selection
+    </button>
+    <button class="tb" onclick="sw('adv',this)" role="tab" aria-selected="false" aria-controls="t-adv">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      Advanced
+    </button>
+    <button class="tb" onclick="sw('pol',this)" role="tab" aria-selected="false" aria-controls="t-pol">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      Policy
+    </button>
+    <button class="tb" onclick="sw('exa',this)" role="tab" aria-selected="false" aria-controls="t-exa">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      Exam Prep
+    </button>
+    <button class="tb" onclick="sw('rev',this)" role="tab" aria-selected="false" aria-controls="t-rev">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      Quick Rev
+    </button>
+  </nav>
+
+  <!-- ══════════════════ FOUNDATIONS ══════════════════ -->
+  <section id="t-fnd" class="sec on" role="tabpanel">
+
+    <div class="cc">
+      <p class="ct">Chapter one-liner</p>
+      <p class="cb">How do we find the best option while occasionally trying new ones? Every algorithm here is a different answer.</p>
+      <div class="blk eg"><span class="lbl">Food court analogy</span>Biryani, Momos, Pizza, Dosa. Goal = max happiness. Always eat Biryani? Safe but you might miss something better. Always try something new? You learn a lot but never earn. This tension is the chapter.</div>
+    </div>
+
+    <div class="cc">
+      <p class="ct">Reward vs Value function</p>
+      <div class="g2">
+        <div class="gi"><span class="lbl">Reward = Present</span><p>Immediate feedback. The slap/high-five right now. "What happened this step?"</p></div>
+        <div class="gi"><span class="lbl">Value = Future</span><p>Long-term goodness. "Where does this path lead?"</p></div>
+      </div>
+      <div class="blk eg">
+        <span class="lbl">Chess example — Prof.'s setup: win=+1, loss=−1, all other moves=0</span>
+        Both move A and move B give reward=0 right now. Reward says: tie, can't decide.<br><br>
+        V(S2)=7 → move A leads to checkmate in ~5 moves.<br>
+        V(S3)=3 → move B leads to losing the queen in 3 moves.<br><br>
+        Value picks move A. Reward was completely useless here.
+      </div>
+      <div class="blk ql">
+        <span class="lbl">Prof. Sangeetha (~23:41)</span>
+        "Value function is a long-term decision-making signal which will decide how good is it for you to be in a state and do a particular action."
+      </div>
+      <div class="blk mt">
+        <span class="lbl">Two flavours — both examinable</span>
+        <b>V(s)</b> — how good is it to be in state s.<br>
+        <b>Q(s,a)</b> — how good is it to take action a in state s.<br><br>
+        When you cannot model the environment (e.g. autonomous vehicle — can't write clean transition dynamics), use Q directly. Q "directly evaluates your policy." This is model-free RL's seed.
+      </div>
+      <div class="blk en">
+        <span class="lbl">Exam mistake</span>
+        Value ≠ sum of rewards already received. Value = expected <b>future</b> return. Also: "fewer moves to reward" ≠ "higher value."
+      </div>
+    </div>
+
+    <div class="cc">
+      <p class="ct">Exploration vs Exploitation</p>
+      <div class="g2">
+        <div class="gi"><span class="lbl">Exploitation — Earn</span><p>Cash in on what you know is good. Go to the best-known stall every day.</p></div>
+        <div class="gi"><span class="lbl">Exploration — Learn</span><p>Gamble on something unproven. Try the new stall even though it's risky.</p></div>
+      </div>
+      <div class="blk eg">
+        <span class="lbl">Noodle stall example (Prof.'s)</span>
+        Biryani scores best on day 1 → you go only to Biryani forever. But noodle stall's chef was on leave that day and gave you a bad experience. You'll never discover it's actually better. "Always sticking with a greedy choice will never give you the options to learn."
+      </div>
+      <div class="blk en">
+        <span class="lbl">The trap — both extremes fail</span>
+        Pure exploitation → locked in, misses the actual best.<br>
+        Pure exploration → never cashes in on what's good.
+      </div>
+      <div class="blk mt">
+        <span class="lbl">Memory trick</span>
+        Explore = Learn &nbsp;·&nbsp; Exploit = Earn
+      </div>
+    </div>
+
+    <div class="cc">
+      <p class="ct">K-Armed Bandit setup</p>
+      <p class="cb">Simplest RL. One state. K actions. Pick one lever, get reward, repeat. Find which lever pays best over T steps.</p>
+      <div class="blk en">
+        <span class="lbl">Stationary ≠ Constant (Prof. spent ~15 min on this)</span>
+        Stationary = reward distribution stays fixed (machine always pays 10–100 range).<br>
+        The actual reward varies each pull — that's noise, NOT non-stationarity.<br>
+        Non-stationary = distribution shifts (Week 1: 10–100 → Week 2: 200–300).
+      </div>
+      <div class="blk mt">
+        <span class="lbl">Memory trick</span>
+        One-Armed Bandit = one slot machine. K-Armed Bandit = K slot machines.
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ══════════════════ ESTIMATION ══════════════════ -->
+  <section id="t-est" class="sec" role="tabpanel">
+
+    <div class="cc">
+      <p class="ct">True value q*(a) vs estimated value Q(a)</p>
+      <div class="g2">
+        <div class="gi"><span class="lbl">q*(a) — True value (unknown)</span><p>Expected reward if action a is taken forever. Hidden. What we're trying to approximate.</p></div>
+        <div class="gi"><span class="lbl">Q(a) — Estimated value (computed)</span><p>Our best guess from experience. Acts as proxy. Improves over time.</p></div>
+      </div>
+      <div class="fml">Goal: Q(a) → q*(a) as samples grow  [Law of Large Numbers]<button class="fml-copy" onclick="copyFml(this)">COPY</button></div>
+    </div>
+
+    <div class="cc">
+      <p class="ct">Sample average estimate</p>
+      <div class="fml">Q(a) = Σ {rewards from a} / (times a was taken)<button class="fml-copy" onclick="copyFml(this)">COPY</button></div>
+      <div class="blk eg">
+        <span class="lbl">Prof.'s live 4-machine example</span>
+        A1: rewards=[2], N=1 → Q=2.0<br>
+        A2: rewards=[3,3], N=2 → Q=<b>3.0</b> ← greedy picks this on step 6<br>
+        A3: rewards=[1], N=1 → Q=1.0<br>
+        A4: rewards=[1], N=1 → Q=1.0<br><br>
+        Note: Prof. first said Q(A2)=2.5 assuming one reward, then corrected to 3.0 once both rewards were counted.
+      </div>
+      <div class="blk en">
+        <span class="lbl">Common exam mistake</span>
+        Divide by per-action count only — never by total time steps. If A2 was pulled 3 times out of 10 total pulls, divide by 3, not 10.
+      </div>
+    </div>
+
+    <div class="cc">
+      <p class="ct">Incremental update rule</p>
+      <p class="cb">Avoids storing all past rewards. Equivalent to sample average but O(1) memory.</p>
+      <div class="fml">Q_{n+1} = Q_n + (1/n)(R_n − Q_n)
+
+Derivation: Q_{n+1} = (1/n)(R_n + (n−1)Q_n) = Q_n + (1/n)(R_n − Q_n)<button class="fml-copy" onclick="copyFml(this)">COPY</button></div>
+      <div class="blk mt">
+        <span class="lbl">Universal RL one-liner — appears everywhere in RL!</span>
+        New estimate = Old estimate + Learning rate × Error<br>
+        Error = (R_n − Q_n) = "how wrong was my guess." Positive → increase. Negative → decrease.
+      </div>
+    </div>
+
+    <div class="cc">
+      <p class="ct">Non-stationary fix: constant step size α</p>
+      <p class="cb">For non-stationary problems, replace 1/n with a fixed α. Recent rewards matter more.</p>
+      <div class="fml">Q_{n+1} = Q_n + α(R_n − Q_n)   [constant α]
+
+Unrolled: Q_{n+1} = (1−α)^n · Q_1 + Σ α(1−α)^(n−i) · R_i
+
+Weight on R_i = α(1−α)^(n−i) → older rewards decay exponentially<button class="fml-copy" onclick="copyFml(this)">COPY</button></div>
+      <div class="blk eg">
+        <span class="lbl">Recency-weighted Q computation — exam type! (α=0.5, Q init=0)</span>
+        Step 1, A=S, R=7:  Q(S) = 0 + 0.5(7−0) = <b>3.5</b><br>
+        Step 2, A=T, R=5:  Q(T) = 0 + 0.5(5−0) = <b>2.5</b><br>
+        Step 5, A=S, R=8:  Q(S) = 3.5 + 0.5(8−3.5) = 3.5 + 2.25 = <b>5.75</b>
+      </div>
+      <div class="blk en">
+        <span class="lbl">Bias comparison — exam-critical</span>
+        α = 1/n (sample avg): satisfies Robbins-Monro Σα=∞ AND Σα²&lt;∞ → converges, initial bias fully removed.<br><br>
+        α = constant: satisfies Σα=∞ but NOT Σα²&lt;∞ → keeps adapting, initial bias persists (geometrically shrinking but never zero). This is intentional for non-stationary problems.
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ══════════════════ SELECTION ══════════════════ -->
+  <section id="t-sel" class="sec" role="tabpanel">
+
+    <div class="cc">
+      <p class="ct">Greedy action selection</p>
+      <p class="cb">Always pick the action with the highest current estimate. Pure exploitation.</p>
+      <div class="fml">A_t = argmax_a  Q_t(a)<button class="fml-copy" onclick="copyFml(this)">COPY</button></div>
+      <div class="blk eg">
+        <span class="lbl">Warm-up rule</span>
+        Try every action at least once before starting greedy (otherwise untried actions stay at Q=0 forever and are never chosen).
+      </div>
+      <div class="blk en">
+        <span class="lbl">The lock-in problem</span>
+        One unlucky sample permanently buries a good action. Noodle stall → chef on leave → low rating → greedy never returns → misses the actual best stall. "It's a never-ending loop." — Prof. Sangeetha
+      </div>
+    </div>
+
+    <div class="cc">
+      <p class="ct">ε-Greedy action selection</p>
+      <p class="cb">With probability (1−ε): pick argmax Q (exploit). With probability ε: pick uniformly at random (explore). ε is a tunable hyperparameter.</p>
+      <div class="blk en">
+        <span class="lbl">Crucial subtlety — students often miss this</span>
+        During the explore branch, you pick uniformly over ALL K actions — the greedy action is still in the pool. Exploration does NOT remove the greedy action. This is what makes the probability derivation come out to 0.75, not 0.5.
+      </div>
+      <p class="sec-h">P(greedy selected) — full derivation (K=2, ε=0.5)</p>
+      <div class="fml">P(greedy) = P(greedy|exploit)·P(exploit) + P(greedy|explore)·P(explore)
+        = (1)·(1−ε) + (1/K)·ε
+        = (1)(0.5) + (1/2)(0.5)
+        = 0.5  +  0.25  =  0.75<button class="fml-copy" onclick="copyFml(this)">COPY</button></div>
+      <div class="blk eg">
+        <span class="lbl">Interpretation</span>
+        Exploit branch (prob 0.5) → always picks greedy → contributes 0.5<br>
+        Explore branch (prob 0.5) → picks each of 2 actions at prob 1/2 → greedy gets an extra 0.25<br>
+        Total = 0.75
+      </div>
+      <div class="blk mt">
+        <span class="lbl">General formulas (K actions) — memorise both</span>
+        <b>P(greedy selected) = (1−ε) + ε/K</b><br>
+        P(a specific non-greedy action selected) = ε/K<br><br>
+        Quick check K=4, ε=0.2: P(greedy) = 0.8 + 0.05 = <b>0.85</b>
+      </div>
+      <div class="blk en">
+        <span class="lbl">Exam alert — almost-certain question</span>
+        Prof. promised to open the next class with this exact derivation. Classic wrong answer = 0.5 (forgetting greedy is still in the explore pool). Also know: ε=0 → pure greedy, ε=1 → pure random.
+      </div>
+    </div>
+
+    <div class="cc">
+      <p class="ct">Step size α — three cases (Prof. quizzed the class on α=0)</p>
+      <table class="ctbl">
+        <thead><tr><th>α value</th><th>Effect</th><th>Prof.'s framing</th></tr></thead>
+        <tbody>
+          <tr><td>α = 0</td><td>No update ever</td><td>"Will not converge, you will not learn anything at all"</td></tr>
+          <tr><td>α = constant</td><td>Fixed fraction each error</td><td>Standard hyperparameter, like in ML</td></tr>
+          <tr><td>α ↓ slowly</td><td>Adapts, never reaches 0</td><td>"Tuning adaptively based on performance"</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </section>
+
+  <!-- ══════════════════ ADVANCED ══════════════════ -->
+  <section id="t-adv" class="sec" role="tabpanel">
+
+    <div class="cc">
+      <p class="ct">UCB — Upper Confidence Bound</p>
+      <p class="cb">Smart exploration: prefer actions we're most uncertain about. Not random — uncertainty-directed.</p>
+      <div class="fml">A_t = argmax_a  [ Q_t(a) + c · √(ln t / N_t(a)) ]<button class="fml-copy" onclick="copyFml(this)">COPY</button></div>
+      <table class="ctbl" style="margin:12px 0">
+        <thead><tr><th>Term</th><th>Name</th><th>Role</th></tr></thead>
+        <tbody>
+          <tr><td>Q_t(a)</td><td>Action value estimate</td><td>Exploit — how good we think this action is</td></tr>
+          <tr><td>c</td><td>Confidence level</td><td>Tunable knob — larger c = more exploration</td></tr>
+          <tr><td>√(ln t / N_t(a))</td><td>Uncertainty bonus</td><td>Explore — big when rarely tried, shrinks as N grows</td></tr>
+        </tbody>
+      </table>
+      <div class="blk eg">
+        <span class="lbl">Counter dynamics</span>
+        a selected → N_t(a) ↑ → bonus shrinks → "I know this one well now."<br>
+        Other actions selected → t ↑ but N_t(a) fixed → a's bonus grows → "a is stale, revisit it."<br><br>
+        <b>N_t(a) = 0 → bonus = ∞ → UCB always tries every action at least once before comparing.</b>
+      </div>
+      <div class="blk eg">
+        <span class="lbl">Numerical example — N=4, t=50, c=2</span>
+        ln(50) ≈ 3.912 → 3.912/4 ≈ 0.978 → √0.978 ≈ 0.989 → bonus = 2 × 0.989 ≈ <b>1.98</b><br>
+        UCB score = Q(a) + 1.98. Even a mediocre estimate can win the argmax if uncertainty is high.
+      </div>
+      <div class="blk mt">
+        <span class="lbl">ε-Greedy vs UCB</span>
+        ε-Greedy: explores randomly (coin flip, any action equally)<br>
+        UCB: explores by uncertainty (targets least-understood actions)<br>
+        UCB beats ε-greedy on bandits. But: harder to scale to deep RL with large state spaces.
+      </div>
+      <div class="blk en">
+        <span class="lbl">Common exam mistake</span>
+        Getting the fraction inverted: ln t is in the NUMERATOR, N_t(a) is in the DENOMINATOR. Never swap.
+      </div>
+    </div>
+
+    <div class="cc">
+      <p class="ct">Optimistic Initial Values</p>
+      <p class="cb">Set Q₁(a) = very high (e.g. +5) for all actions when true values ≈ 0. Use ε=0 (pure greedy). Exploration happens automatically through disappointment.</p>
+      <div class="blk eg">
+        <span class="lbl">Disappointment mechanism — step by step</span>
+        1. All Q = 5. Every arm looks equally amazing.<br>
+        2. Greedy picks any arm (say A1). Expected +5, gets +1.<br>
+        3. Q(A1) = 5 + 0.5(1−5) = 5 − 2 = <b>3</b> (with α=0.5).<br>
+        4. A1 (Q=3) is now worth less than untried arms (still Q=5).<br>
+        5. Greedy switches to a fresh arm. Repeat → all arms get visited several times.
+      </div>
+      <div class="blk eg">
+        <span class="lbl">Worked calculation — exam-style (Q₁=5, α=0.5, R₁=1)</span>
+        Q₂ = Q₁ + α(R₁−Q₁) = 5 + 0.5(1−5) = 5 − 2 = <b>3</b><br>
+        Estimate dropped. Every untried arm still at Q=5. Greedy switches. That's forced exploration.
+      </div>
+      <div class="blk en">
+        <span class="lbl">Limitation — why it fails for non-stationary (likely exam follow-up)</span>
+        The inflation is a one-time burst. Once all estimates decay toward reality, no mechanism remains to keep exploring. If the environment shifts after the initial phase, the agent is stuck. Stationary only, early training only.
+      </div>
+      <div class="blk mt">
+        <span class="lbl">Bias comparison — exam-critical</span>
+        Sample average (α=1/n): initial bias fully removed once each arm is tried at least once.<br>
+        Constant α: initial bias persists (shrinks geometrically but never reaches 0).<br>
+        → This is why optimistic init + constant α doesn't cleanly reset.
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ══════════════════ POLICY ══════════════════ -->
+  <section id="t-pol" class="sec" role="tabpanel">
+
+    <div class="cc">
+      <p class="ct">From value-based to policy-based</p>
+      <p class="cb">All previous methods estimate Q(a) then derive a policy as argmax. Policy methods skip value estimation — directly learn which action to choose.</p>
+      <div class="blk eg">
+        <span class="lbl">Key conceptual shift</span>
+        Value-based: Q(a) → argmax → action (indirect)<br>
+        Policy-based: preference H(a) → softmax → probability → sample action (direct)
+      </div>
+      <div class="blk mt">
+        <span class="lbl">Why this matters long-term</span>
+        Softmax-over-preferences is a differentiable policy. Swap the K scalars for a neural net πθ(a|s) and the gradient-bandit update generalises into REINFORCE → A2C → PPO. The entire policy-gradient branch of deep RL starts here, in the bandit.
+      </div>
+    </div>
+
+    <div class="cc">
+      <p class="ct">Preferences H(a) and Softmax</p>
+      <p class="cb">H(a) = learnable preference score. Not a reward, not a value — just a relative "how much I lean toward this action" knob. Higher H → chosen more often.</p>
+      <p class="sec-h">Hardmax vs Softmax</p>
+      <div class="g2">
+        <div class="gi"><span class="lbl">Hardmax = argmax H(a)</span><p>Deterministic. Winner takes all. No exploration. Not differentiable — gradient is undefined at the boundary.</p></div>
+        <div class="gi"><span class="lbl">Softmax (Boltzmann)</span><p>Smooth, probabilistic. Every action gets nonzero probability. Differentiable. Both exploratory and gradient-friendly.</p></div>
+      </div>
+      <div class="fml">π(a) = e^H(a) / Σ_{a'} e^H(a')   [Softmax / Boltzmann distribution]<button class="fml-copy" onclick="copyFml(this)">COPY</button></div>
+      <div class="blk eg">
+        <span class="lbl">Worked example — H = (2, 0)</span>
+        e² ≈ 7.389, e⁰ = 1. Total = 8.389.<br>
+        π(a1) = 7.389/8.389 ≈ <b>0.881</b> &nbsp;·&nbsp; π(a2) = 1/8.389 ≈ <b>0.119</b><br><br>
+        a1 dominates (~88%) but a2 still gets ~12% — that residual IS the exploration.
+      </div>
+      <div class="blk eg">
+        <span class="lbl">Prof.'s example — H = (6, 9, 2)</span>
+        softmax → (0.047, 0.952, 0.00087)<br>
+        a2 dominates (~95%). a1 gets ~5%. a3 keeps tiny &lt;0.1% share. Not winner-take-all.
+      </div>
+      <div class="blk mt">
+        <span class="lbl">Key insight — softmax depends only on differences</span>
+        Adding a constant to every H leaves all probabilities unchanged. Only relative preferences matter.
+      </div>
+    </div>
+
+    <div class="cc">
+      <p class="ct">Gradient Bandit — update rule</p>
+      <p class="cb">Differentiable policy → do gradient ascent on expected reward. Compare reward to a running baseline R̄ (mean of all rewards so far).</p>
+      <div class="fml">Chosen action At:
+  H_{t+1}(At) = H_t(At) + α(Rt − R̄t)(1 − π_t(At))
+
+All other actions a ≠ At:
+  H_{t+1}(a)  = H_t(a)  − α(Rt − R̄t) π_t(a)<button class="fml-copy" onclick="copyFml(this)">COPY</button></div>
+      <div class="blk eg">
+        <span class="lbl">Tug-of-war logic</span>
+        Rt &gt; R̄t (beat the average): push chosen action's preference UP, all others DOWN. "Better than expected — do it more."<br>
+        Rt &lt; R̄t (below average): push chosen DOWN, all others UP. "Worse than expected — back off."
+      </div>
+      <div class="blk en">
+        <span class="lbl">Baseline R̄t — why it matters (testbed numbers)</span>
+        With baseline, α=0.1: ~85% optimal actions.<br>
+        Without baseline, α=0.1: ~48% optimal actions.<br><br>
+        Same algorithm, same step size. Adding the baseline roughly doubles performance by reducing gradient variance without introducing bias.
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ══════════════════ EXAM PREP ══════════════════ -->
+  <section id="t-exa" class="sec" role="tabpanel">
+
+    <div class="cc">
+      <p class="ct">"Definitely vs Possibly ε" analysis</p>
+      <p class="cb">This question type appears in <b>every single BITS DRL exam sitting</b>. Given (step, action, reward) sequences, identify which steps definitely used ε and which possibly did.</p>
+      <div class="blk mt">
+        <span class="lbl">The two rules</span>
+        <span class="bdg bdef">Definitely ε</span> Chosen action is NOT the current greedy action (argmax Q). It must have been a random pick — no other explanation.<br><br>
+        <span class="bdg bpos">Possibly ε</span> Chosen action IS the current greedy action. Could be greedy (no ε fired) or got lucky during random branch (ε fired but randomly landed on greedy).
+      </div>
+      <div class="blk eg">
+        <span class="lbl">Step-by-step algorithm</span>
+        1. Before each step: compute current Q(a) for all arms using the update rule.<br>
+        2. Find argmax Q = the greedy arm. If tie, all tied arms count as greedy.<br>
+        3. Compare chosen arm to greedy set:<br>
+        &nbsp;&nbsp;&nbsp;Chosen NOT in greedy set → <span class="bdg bdef">Definitely ε</span><br>
+        &nbsp;&nbsp;&nbsp;Chosen IS in greedy set &nbsp;→ <span class="bdg bpos">Possibly ε</span><br>
+        4. Update Q for chosen arm. Proceed to next step.
+      </div>
+    </div>
+
+    <div class="cc">
+      <p class="ct">Worked example — Dec 2025 paper style</p>
+      <p class="cb">4 arms: S, T, R, C. α=0.5 (constant step size). All Q init = 0. Sequence: (1,S,7) (2,T,5) (3,R,6) (4,C,4) (5,S,8) (6,T,6).</p>
+      <div class="sr"><div class="sn snpos">1</div><div class="sb">All Q=0 (all tied). A=S. S is in greedy set. <span class="bdg bpos">Possibly ε</span><br>Q(S) = 0 + 0.5(7−0) = <b>3.5</b></div></div>
+      <div class="sr"><div class="sn sndef">2</div><div class="sb">Q: S=3.5, others=0. Greedy = S. A=T ≠ S. <span class="bdg bdef">Definitely ε</span><br>Q(T) = 0 + 0.5(5−0) = <b>2.5</b></div></div>
+      <div class="sr"><div class="sn sndef">3</div><div class="sb">Q: S=3.5, T=2.5, R=0, C=0. Greedy = S. A=R ≠ S. <span class="bdg bdef">Definitely ε</span><br>Q(R) = 0 + 0.5(6−0) = <b>3.0</b></div></div>
+      <div class="sr"><div class="sn sndef">4</div><div class="sb">Q: S=3.5, T=2.5, R=3.0, C=0. Greedy = S. A=C ≠ S. <span class="bdg bdef">Definitely ε</span><br>Q(C) = 0 + 0.5(4−0) = <b>2.0</b></div></div>
+      <div class="sr"><div class="sn snpos">5</div><div class="sb">Q: S=3.5, T=2.5, R=3.0, C=2.0. Greedy = S. A=S = greedy. <span class="bdg bpos">Possibly ε</span><br>Q(S) = 3.5 + 0.5(8−3.5) = <b>5.75</b></div></div>
+      <div class="sr"><div class="sn sndef">6</div><div class="sb">Q: S=5.75, T=2.5, R=3.0, C=2.0. Greedy = S. A=T ≠ S. <span class="bdg bdef">Definitely ε</span><br>Q(T) = 2.5 + 0.5(6−2.5) = <b>4.25</b></div></div>
+      <div class="fml" style="margin-top:14px">Definitely ε: steps 2, 3, 4, 6
+Possibly ε:   steps 1, 5
+Best arm:     S  (final Q = 5.75, highest)<button class="fml-copy" onclick="copyFml(this)">COPY</button></div>
+    </div>
+
+    <div class="cc">
+      <p class="ct">Exam alerts — topic by topic</p>
+      <table class="ctbl">
+        <thead><tr><th>Topic</th><th>What to prepare</th></tr></thead>
+        <tbody>
+          <tr><td>Reward vs Value</td><td>Chess example verbatim: win=+1/loss=−1/else=0. V(S2)=7 checkmate, V(S3)=3 lost queen. V(s) vs Q(s,a) + model-free justification for Q.</td></tr>
+          <tr><td>Bandit Q calc</td><td>Sample average for stationary. Constant α for non-stationary. Divide by per-action count only.</td></tr>
+          <tr><td>ε-Greedy probability</td><td>K=2, ε=0.5 → 0.75 derivation. General: (1−ε)+ε/K. ε=0 → greedy, ε=1 → random.</td></tr>
+          <tr><td>Definitely / Possibly ε</td><td>Always do the Q update first, then compare chosen vs argmax at that step.</td></tr>
+          <tr><td>UCB formula</td><td>Label each term. Compute bonus score. N=0 → infinite bonus. ln t on top, N_t(a) on bottom.</td></tr>
+          <tr><td>Optimistic Init</td><td>Q₁=5, α=0.5, R=1 → Q₂=3. Why fails for non-stationary. Constant α bias persists.</td></tr>
+          <tr><td>Softmax / Gradient</td><td>Softmax for small H vector. Gradient update rule. Baseline importance: ~85% vs ~48%.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="cc">
+      <p class="ct">Three recurring question patterns (across all past papers)</p>
+      <div class="blk eg">
+        <span class="lbl">Pattern 1 — Q computation + best arm</span>
+        Given (step, arm, reward), compute Q using sample-average or constant-α. State the best arm. Seen in: Dec 2025 Q3, Jul 2023 Q2, Jul 2024 Q3.
+      </div>
+      <div class="blk eg">
+        <span class="lbl">Pattern 2 — Definitely/Possibly ε trajectory analysis</span>
+        Same sequence as Pattern 1. Which steps definitely used ε? Which possibly? Requires correct Q update as prerequisite. Seen in: Dec 2025 Q3, Jul 2024 Q3.
+      </div>
+      <div class="blk eg">
+        <span class="lbl">Pattern 3 — Conceptual contrasts</span>
+        Reward vs value. MAB vs MDP. Optimistic init vs UCB (when each works/fails). Greedy better than ε-greedy (when?). TD update. Seen as short-answer sections in every sitting.
+      </div>
+      <div class="blk mt">
+        <span class="lbl">When is greedy better than ε-greedy?</span>
+        After training converges (deployment time, set ε=0). When the environment is stationary and already well-explored. On problems where the cost of exploration is high.
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ══════════════════ QUICK REV ══════════════════ -->
+  <section id="t-rev" class="sec" role="tabpanel">
+
+    <div class="cc">
+      <p class="ct">All key formulas</p>
+      <div class="fml">Sample average:     Q(a) = ΣR / n
+
+Incremental update (stationary):
+  Q_{n+1} = Q_n + (1/n)(R_n − Q_n)
+
+Constant step size (non-stationary):
+  Q_{n+1} = Q_n + α(R_n − Q_n)
+
+ε-Greedy P(greedy):
+  P(greedy)     = (1 − ε) + ε/K
+  P(non-greedy) = ε/K
+
+UCB:
+  A_t = argmax[ Q_t(a) + c√(ln t / N_t(a)) ]
+
+Softmax policy:
+  π(a) = e^H(a) / Σ e^H(a')
+
+Gradient bandit (chosen action At):
+  H_{t+1}(At) = H_t(At) + α(Rt − R̄t)(1 − π_t(At))
+
+Gradient bandit (all other actions):
+  H_{t+1}(a)  = H_t(a)  − α(Rt − R̄t) π_t(a)
+
+TD update (value):
+  V(s) ← V(s) + α[R + γV(s') − V(s)]<button class="fml-copy" onclick="copyFml(this)">COPY</button></div>
+    </div>
+
+    <div class="cc">
+      <p class="ct">Method comparison</p>
+      <table class="ctbl">
+        <thead><tr><th>Method</th><th>Exploration</th><th>Non-stationary?</th><th>Key weakness</th></tr></thead>
+        <tbody>
+          <tr><td>Greedy</td><td>None</td><td>No</td><td>Lock-in from first bad sample</td></tr>
+          <tr><td>ε-Greedy</td><td>Random (prob ε)</td><td>Yes + constant α</td><td>Wastes budget on random pulls</td></tr>
+          <tr><td>Optimistic Init</td><td>Initial burst only</td><td>No</td><td>Exploration vanishes after decay</td></tr>
+          <tr><td>UCB</td><td>Uncertainty-directed</td><td>Harder</td><td>Awkward with large state spaces</td></tr>
+          <tr><td>Softmax/Gradient</td><td>Probability-based</td><td>Yes</td><td>Needs baseline for good performance</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="cc">
+      <p class="ct">One-line recall — all key terms</p>
+      <table class="ctbl">
+        <tbody>
+          <tr><td>Reward</td><td>Immediate feedback this step</td></tr>
+          <tr><td>Value V(s)</td><td>Expected cumulative future reward from state s</td></tr>
+          <tr><td>Q(s,a)</td><td>Expected return for taking action a in state s</td></tr>
+          <tr><td>q*(a)</td><td>True (unknown) expected reward of action a</td></tr>
+          <tr><td>Q(a)</td><td>Estimated action value from experience</td></tr>
+          <tr><td>Stationary</td><td>Distribution fixed → use α=1/n</td></tr>
+          <tr><td>Non-stationary</td><td>Distribution shifts → use constant α</td></tr>
+          <tr><td>N_t(a)</td><td>Times action a was taken up to step t</td></tr>
+          <tr><td>H(a)</td><td>Preference score for action a (policy methods)</td></tr>
+          <tr><td>π(a)</td><td>Probability of selecting action a</td></tr>
+          <tr><td>R̄_t</td><td>Running mean reward baseline (gradient bandit)</td></tr>
+          <tr><td>Definitely ε</td><td>Chosen arm ≠ argmax Q at that step</td></tr>
+          <tr><td>Possibly ε</td><td>Chosen arm = argmax Q (could be greedy or lucky random)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </section>
+
+  <!-- No results -->
+  <div class="nores" id="nores">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    No results found. Try a different search term.
+  </div>
+
+</div><!-- /wrap -->
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── Theme ── */
+  var html = document.documentElement;
+  var sun = document.getElementById('ico-sun');
+  var moon = document.getElementById('ico-moon');
+  var saved = localStorage.getItem('drl-theme') || 'light';
+  applyTheme(saved);
+
+  function applyTheme(t) {
+    html.setAttribute('data-theme', t);
+    sun.style.display  = t === 'dark' ? 'none' : 'block';
+    moon.style.display = t === 'dark' ? 'block' : 'none';
+  }
+
+  document.getElementById('thm-btn').addEventListener('click', function () {
+    var next = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    applyTheme(next);
+    localStorage.setItem('drl-theme', next);
+  });
+
+  /* ── Progress bar ── */
+  var pbar = document.getElementById('pbar');
+  window.addEventListener('scroll', function () {
+    var d = document.documentElement;
+    var pct = d.scrollTop / (d.scrollHeight - d.clientHeight) * 100;
+    pbar.style.width = Math.min(pct, 100) + '%';
+  }, { passive: true });
+
+  /* ── Tabs ── */
+  var tabs = ['fnd', 'est', 'sel', 'adv', 'pol', 'exa', 'rev'];
+
+  window.sw = function (id, btn) {
+    tabs.forEach(function (x) {
+      var s = document.getElementById('t-' + x);
+      if (s) s.classList.remove('on');
+    });
+    document.querySelectorAll('.tb').forEach(function (b) {
+      b.classList.remove('on');
+      b.setAttribute('aria-selected', 'false');
+    });
+    var target = document.getElementById('t-' + id);
+    if (target) target.classList.add('on');
+    if (btn) { btn.classList.add('on'); btn.setAttribute('aria-selected', 'true'); }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    clearSearch();
+  };
+
+  /* Arrow-key nav on tab bar */
+  document.querySelector('.tnav').addEventListener('keydown', function (e) {
+    var btns = Array.prototype.slice.call(document.querySelectorAll('.tb'));
+    var i = btns.indexOf(document.activeElement);
+    if (e.key === 'ArrowRight' && i < btns.length - 1) btns[i + 1].focus();
+    if (e.key === 'ArrowLeft'  && i > 0)               btns[i - 1].focus();
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); document.activeElement.click(); }
+  });
+
+  /* Number key shortcuts (1-7) + Ctrl/Cmd+K */
+  document.addEventListener('keydown', function (e) {
+    if (e.target.tagName === 'INPUT') return;
+    var n = parseInt(e.key, 10);
+    if (n >= 1 && n <= tabs.length) {
+      var btns = document.querySelectorAll('.tb');
+      sw(tabs[n - 1], btns[n - 1]);
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      document.getElementById('srch').focus();
+    }
+  });
+
+  /* ── Search ── */
+  var srch   = document.getElementById('srch');
+  var scClr  = document.getElementById('sc-clr');
+  var nores  = document.getElementById('nores');
+  var idx    = [];
+
+  function buildIdx() {
+    idx = [];
+    document.querySelectorAll('.sec').forEach(function (sec) {
+      sec.querySelectorAll('.cc').forEach(function (card) {
+        idx.push({ card: card, sec: sec, orig: card.innerHTML, txt: card.textContent.toLowerCase() });
+      });
+    });
+  }
+  buildIdx();
+
+  function clearSearch() {
+    srch.value = '';
+    scClr.classList.remove('vis');
+    nores.style.display = 'none';
+    idx.forEach(function (o) { o.card.innerHTML = o.orig; o.card.style.display = ''; });
+  }
+
+  function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+  srch.addEventListener('input', function () {
+    var q = srch.value.trim().toLowerCase();
+    scClr.classList.toggle('vis', q.length > 0);
+    if (!q) { clearSearch(); return; }
+
+    var found = 0;
+    var sectionsWithHits = {};
+
+    idx.forEach(function (o) {
+      if (o.txt.includes(q)) {
+        o.card.style.display = '';
+        o.card.innerHTML = o.orig.replace(new RegExp('(' + escRe(q) + ')', 'gi'), '<mark>$1</mark>');
+        sectionsWithHits[o.sec.id] = true;
+        found++;
+      } else {
+        o.card.style.display = 'none';
+      }
+    });
+
+    tabs.forEach(function (x) {
+      var s = document.getElementById('t-' + x);
+      s.classList.toggle('on', !!sectionsWithHits['t-' + x]);
+    });
+
+    nores.style.display = found === 0 ? 'block' : 'none';
+  });
+
+  scClr.addEventListener('click', function () {
+    clearSearch();
+    /* restore the active tab that was showing before search */
+    var activeBtn = document.querySelector('.tb.on');
+    if (!activeBtn) { document.querySelector('.tb').click(); }
+  });
+
+  /* ── Formula copy ── */
+  window.copyFml = function (btn) {
+    var fml = btn.closest('.fml');
+    /* get text without the button text */
+    var clone = fml.cloneNode(true);
+    var cloneBtn = clone.querySelector('.fml-copy');
+    if (cloneBtn) cloneBtn.remove();
+    var text = clone.textContent;
+    navigator.clipboard.writeText(text.trim()).then(function () {
+      btn.textContent = 'COPIED';
+      btn.classList.add('copied');
+      setTimeout(function () { btn.textContent = 'COPY'; btn.classList.remove('copied'); }, 1800);
+    });
+  };
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRL Session 1 — Course Introduction · Study Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0c0c0f; --panel:#141419; --panel2:#1b1b22; --line:#2a2a33;
+  --ink:#e8e6e0; --mut:#9b988f;
+  --gold:#d4a853; --teal:#4ec9b0; --sky:#7dd3fc; --rose:#f87171; --lime:#a3e635; --violet:#c084fc;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Newsreader",Georgia,serif; font-size:18px; line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+}
+/* grain */
+body::before{
+  content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.5;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+}
+h1,h2,h3,h4{font-family:"Syne",sans-serif; line-height:1.15; font-weight:700; letter-spacing:-.01em}
+code,pre,.mono,.f{font-family:"JetBrains Mono",monospace}
+a{color:var(--sky)}
+
+/* layout */
+.wrap{display:flex; position:relative; z-index:1}
+.side{
+  width:248px; flex:0 0 248px; position:sticky; top:0; height:100vh; overflow-y:auto;
+  border-right:1px solid var(--line); padding:22px 16px; background:rgba(16,16,20,.7);
+}
+.side h2{font-size:14px; color:var(--gold); text-transform:uppercase; letter-spacing:.12em; margin:0 0 4px}
+.side .sub{font-size:12px; color:var(--mut); margin:0 0 16px; font-family:"JetBrains Mono",monospace}
+.prog-wrap{height:5px; background:var(--panel2); border-radius:4px; overflow:hidden; margin-bottom:18px}
+#prog{height:100%; width:0; background:linear-gradient(90deg,var(--gold),var(--lime)); transition:width .15s}
+.nav a{display:block; color:var(--mut); text-decoration:none; font-family:"JetBrains Mono",monospace;
+  font-size:12.5px; padding:7px 10px; border-radius:7px; margin-bottom:2px; border-left:2px solid transparent}
+.nav a:hover{color:var(--ink); background:var(--panel)}
+.nav a.on{color:var(--gold); border-left-color:var(--gold); background:var(--panel)}
+.nav .grp{font-size:11px; color:#56544d; text-transform:uppercase; letter-spacing:.1em; margin:14px 0 4px 10px}
+
+.main{flex:1; min-width:0; padding:0 6vw 140px}
+section{padding:64px 0 12px; border-bottom:1px solid transparent; max-width:880px; margin:0 auto;
+  opacity:0; transform:translateY(26px); transition:opacity .6s ease, transform .6s ease}
+section.show{opacity:1; transform:none}
+
+/* hero */
+.hero{padding-top:78px}
+.badge{display:inline-block; font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--gold); border:1px solid var(--gold); border-radius:30px; padding:5px 13px}
+.hero h1{font-size:clamp(34px,6vw,62px); margin:18px 0 10px; font-weight:800}
+.hero h1 em{font-style:normal; color:var(--gold)}
+.hero .lede{font-size:21px; color:var(--mut); max-width:680px}
+.meta{display:flex; gap:10px; flex-wrap:wrap; margin-top:22px}
+.meta span{font-family:"JetBrains Mono",monospace; font-size:12px; color:var(--mut);
+  background:var(--panel); border:1px solid var(--line); padding:6px 11px; border-radius:8px}
+
+.kic{font-family:"JetBrains Mono",monospace; font-size:13px; color:var(--gold); letter-spacing:.08em}
+h2.sec{font-size:clamp(26px,4vw,40px); margin:6px 0 8px}
+h3{font-size:24px; margin:34px 0 10px; color:var(--ink)}
+h4{font-size:18px; margin:22px 0 8px; color:var(--teal); font-family:"Syne",sans-serif}
+p{margin:12px 0}
+.mut{color:var(--mut)}
+ul,ol{padding-left:22px} li{margin:7px 0}
+
+/* boxes */
+.box{border-radius:12px; padding:16px 18px; margin:18px 0; background:var(--panel)}
+.annot{border-left:4px solid var(--teal); background:linear-gradient(90deg,rgba(78,201,176,.08),transparent)}
+.quote{border-left:4px solid var(--sky); background:linear-gradient(90deg,rgba(125,211,252,.08),transparent); font-style:italic}
+.quote .who{display:block; font-style:normal; font-family:"JetBrains Mono",monospace; font-size:12px; color:var(--sky); margin-top:8px; letter-spacing:.04em}
+.why{position:relative; border:1px solid transparent; border-radius:12px;
+  background:linear-gradient(var(--panel),var(--panel)) padding-box,
+  linear-gradient(120deg,var(--gold),rgba(212,168,83,.15)) border-box}
+.why h4{color:var(--gold)}
+.research{border-left:4px solid var(--lime); background:linear-gradient(90deg,rgba(163,230,53,.07),transparent)}
+.research .tag{display:inline-block; font-family:"JetBrains Mono",monospace; font-size:10px; letter-spacing:.12em;
+  text-transform:uppercase; color:#0c0c0f; background:var(--lime); padding:3px 8px; border-radius:5px; margin-bottom:8px}
+.exam{border:1px solid var(--rose); border-radius:12px; background:rgba(248,113,113,.06)}
+.exam .tag{display:inline-block; font-family:"JetBrains Mono",monospace; font-size:10px; letter-spacing:.12em;
+  text-transform:uppercase; color:#0c0c0f; background:var(--rose); padding:3px 8px; border-radius:5px; margin-bottom:8px}
+.answer{border-left:4px solid var(--lime); background:rgba(163,230,53,.1); border-radius:8px; padding:12px 16px; margin:14px 0; font-family:"JetBrains Mono",monospace; font-size:14px; color:var(--lime)}
+.insight{border-left:3px solid var(--violet); padding:6px 14px; margin:12px 0; color:#d9c7f5; font-size:15px}
+.insight b{color:var(--violet)}
+.lab{display:inline-block; font-family:"JetBrains Mono",monospace; font-size:10px; color:var(--sky); border:1px solid var(--sky); border-radius:5px; padding:2px 7px; letter-spacing:.08em}
+
+/* formulas */
+.f-block{font-family:"JetBrains Mono",monospace; background:var(--panel2); border:1px solid var(--line);
+  border-radius:10px; padding:16px 18px; margin:16px 0; font-size:15px; overflow-x:auto; line-height:1.9}
+.f-block .lbl{display:block; color:var(--mut); font-size:11px; text-transform:uppercase; letter-spacing:.1em; margin-bottom:6px}
+.q{color:var(--gold)} .r{color:var(--rose)} .a{color:var(--teal)} .s{color:var(--sky)}
+.v{color:var(--violet)} .g{color:var(--lime)} .op{color:var(--mut)}
+
+/* pipeline */
+.pipe{counter-reset:p; margin:18px 0}
+.pipe .st{position:relative; padding:12px 14px 12px 52px; background:var(--panel); border:1px solid var(--line);
+  border-radius:10px; margin-bottom:10px}
+.pipe .st::before{counter-increment:p; content:counter(p); position:absolute; left:12px; top:12px;
+  width:28px; height:28px; border-radius:50%; background:var(--gold); color:#0c0c0f; font-family:"Syne";
+  font-weight:700; display:grid; place-items:center; font-size:14px}
+
+/* tabs */
+.tabs{display:flex; gap:8px; margin:20px 0 0; flex-wrap:wrap}
+.tabs button{font-family:"JetBrains Mono",monospace; font-size:12px; letter-spacing:.04em; cursor:pointer;
+  background:var(--panel); color:var(--mut); border:1px solid var(--line); border-radius:8px 8px 0 0; padding:9px 15px}
+.tabs button.on{color:var(--ink); border-bottom-color:transparent}
+.tabs button[data-d="e"].on{color:var(--lime); border-color:var(--lime)}
+.tabs button[data-d="m"].on{color:var(--gold); border-color:var(--gold)}
+.tabs button[data-d="c"].on{color:var(--rose); border-color:var(--rose)}
+.panel{display:none; border:1px solid var(--line); border-radius:0 10px 10px 10px; padding:18px; background:var(--panel)}
+.panel.on{display:block}
+.panel .qs{font-weight:500; color:var(--ink)}
+
+/* tables */
+table{border-collapse:collapse; width:100%; margin:16px 0; font-size:14px; font-family:"JetBrains Mono",monospace}
+th,td{border:1px solid var(--line); padding:8px 11px; text-align:left}
+th{background:var(--panel2); color:var(--gold); font-weight:500}
+tr:nth-child(even) td{background:rgba(255,255,255,.012)}
+
+/* code */
+pre{background:#0a0a0d; border:1px solid var(--line); border-radius:10px; padding:15px 16px; overflow-x:auto; font-size:13.5px; line-height:1.65}
+pre .c{color:#6a6a72} pre .k{color:var(--violet)} pre .fn{color:var(--sky)} pre .st{color:var(--lime)} pre .n{color:var(--gold)}
+
+/* interactive */
+.demo{border:1px solid var(--gold); border-radius:14px; padding:20px; margin:22px 0; background:linear-gradient(180deg,rgba(212,168,83,.05),transparent)}
+.demo h4{color:var(--gold); margin-top:0}
+.ctl{display:flex; align-items:center; gap:12px; margin:12px 0; flex-wrap:wrap}
+.ctl label{font-family:"JetBrains Mono",monospace; font-size:13px; color:var(--mut); min-width:120px}
+input[type=range]{accent-color:var(--gold); flex:1; min-width:140px}
+.val{font-family:"JetBrains Mono",monospace; color:var(--gold); min-width:54px; text-align:right}
+button.act{font-family:"JetBrains Mono",monospace; font-size:13px; cursor:pointer; background:var(--gold); color:#0c0c0f;
+  border:none; border-radius:8px; padding:8px 14px; font-weight:700}
+button.act:hover{filter:brightness(1.1)}
+button.gho{background:transparent; color:var(--ink); border:1px solid var(--line)}
+.donut{width:150px; height:150px; border-radius:50%; flex:0 0 150px}
+.dwrap{display:flex; gap:22px; align-items:center; flex-wrap:wrap}
+.leg{font-family:"JetBrains Mono",monospace; font-size:13px}
+.leg div{margin:5px 0} .sw{display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:7px; vertical-align:middle}
+.bar{height:14px; background:var(--panel2); border-radius:7px; overflow:hidden; margin-top:3px}
+.bar > i{display:block; height:100%; background:var(--teal); transition:width .25s}
+.grid2{display:grid; grid-template-columns:repeat(2,1fr); gap:8px; max-width:260px; margin:12px 0}
+.cell{border:1px solid var(--line); border-radius:8px; padding:14px; text-align:center; font-family:"JetBrains Mono",monospace; background:var(--panel2)}
+.cell.hot{border-color:var(--gold); color:var(--gold)}
+.cell.cur{box-shadow:0 0 0 2px var(--teal)}
+
+/* quiz */
+.qz{border:1px solid var(--line); border-radius:12px; padding:18px; margin:16px 0; background:var(--panel)}
+.qz .head{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:6px}
+.dif{font-family:"JetBrains Mono",monospace; font-size:10px; padding:3px 8px; border-radius:5px; letter-spacing:.08em; text-transform:uppercase}
+.dif.e{background:var(--lime); color:#0c0c0f} .dif.m{background:var(--gold); color:#0c0c0f} .dif.h{background:var(--rose); color:#0c0c0f}
+.tg{font-family:"JetBrains Mono",monospace; font-size:10px; color:var(--mut); border:1px solid var(--line); padding:3px 8px; border-radius:5px}
+.opt{display:block; width:100%; text-align:left; margin:6px 0; padding:10px 13px; border:1px solid var(--line);
+  background:var(--panel2); color:var(--ink); border-radius:8px; cursor:pointer; font-family:"Newsreader",serif; font-size:15px}
+.opt:hover{border-color:var(--mut)}
+.opt.right{border-color:var(--lime); background:rgba(163,230,53,.12)}
+.opt.wrong{border-color:var(--rose); background:rgba(248,113,113,.1)}
+.expl{display:none; margin-top:10px; padding:12px 14px; border-left:3px solid var(--violet); background:rgba(192,132,252,.07); border-radius:6px; font-size:15px}
+.expl.show{display:block}
+
+/* show/hide solution toggle */
+.solbtn{font-family:"JetBrains Mono",monospace; font-size:12px; letter-spacing:.04em; cursor:pointer;
+  background:transparent; color:var(--gold); border:1px solid var(--gold); border-radius:8px;
+  padding:7px 13px; margin:12px 0 2px; transition:background .15s}
+.solbtn:hover{background:rgba(212,168,83,.12)}
+.sol{display:none; margin-top:12px}
+.sol.show{display:block}
+
+/* scroll top */
+#top{position:fixed; right:26px; bottom:26px; width:46px; height:46px; border-radius:50%; background:var(--gold);
+  color:#0c0c0f; border:none; cursor:pointer; font-size:20px; display:none; z-index:30; box-shadow:0 6px 20px rgba(0,0,0,.4)}
+#top.show{display:block}
+
+@media(max-width:880px){
+  .side{display:none}
+  .main{padding:0 20px 120px}
+  .grid2{max-width:100%}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<!-- SIDEBAR -->
+<aside class="side">
+  <h2>DRL · Session 1</h2>
+  <p class="sub">Course Introduction</p>
+  <div class="prog-wrap"><div id="prog"></div></div>
+  <nav class="nav" id="nav">
+    <a href="#hero">Overview</a>
+    <div class="grp">Course Logistics</div>
+    <a href="#s1">01 · Objectives & Outcomes</a>
+    <a href="#s2">02 · Evaluation & Rules</a>
+    <div class="grp">Core Topics</div>
+    <a href="#s3">03 · What &amp; Why is RL?</a>
+    <a href="#s4">04 · RL vs Supervised/Unsupervised</a>
+    <a href="#s5">05 · Agent-Environment Loop</a>
+    <a href="#s6">06 · Policy, Value, Model</a>
+    <a href="#s7">07 · Algorithm Taxonomy</a>
+    <div class="grp">Worked Examples</div>
+    <a href="#s8">08 · Tic-Tac-Toe &amp; TD Learning</a>
+    <a href="#s9">09 · Autonomous Driving Reward</a>
+    <div class="grp">Interactive</div>
+    <a href="#lab">Live Demos</a>
+    <div class="grp">Exam Prep</div>
+    <a href="#quiz">Exam Quiz</a>
+  </nav>
+</aside>
+
+<main class="main">
+
+<!-- HERO -->
+<section id="hero" class="hero">
+  <span class="badge">BITS Pilani WILP · AIMLCZG512 · S2-25</span>
+  <h1>Welcome to Deep RL:<br><em>Why Reward Beats Rules</em></h1>
+  <p class="lede">A first-principles study guide built from Session 1 — course logistics, the formal definition of Reinforcement Learning, the agent-environment loop, and the very first worked example of learning from experience: Tic-Tac-Toe.</p>
+  <div class="meta">
+    <span>Session #1 · Course Introduction</span>
+    <span>Source: Lecture slide deck (36 slides)</span>
+    <span>Textbook: Sutton &amp; Barto, RL: An Introduction, 2nd Ed., Ch.1</span>
+  </div>
+  <div class="box annot" style="margin-top:26px">
+    <b>How this maps to your exam.</b> Session 1 sets the <b>vocabulary</b> every later session assumes: agent, environment, state, action, reward, policy, value function, model. The Tic-Tac-Toe example is the seed of <b>Temporal Difference (TD) learning</b> — the update rule <span class="f">V(S<sub>t</sub>) ← V(S<sub>t</sub>) + α[V(S<sub>t+1</sub>) − V(S<sub>t</sub>)]</span> reappears, generalized, for the rest of the course. Look for the rose <b>Exam Alert</b> boxes and the tabbed worked examples (Easy / Medium / Complex).
+  </div>
+</section>
+
+<!-- ============ 01 OBJECTIVES & OUTCOMES ============ -->
+<section id="s1">
+  <div class="kic">// 01</div>
+  <h2 class="sec">Course Objectives &amp; Learning Outcomes</h2>
+
+  <h3>Why this course exists</h3>
+  <p>The course objectives boil down to three things: <b>understand</b> the conceptual and mathematical foundations of Deep RL (and its classic-to-state-of-the-art algorithms), <b>implement and evaluate</b> DRL solutions for planning/control/decision-making problems, and <b>generalize</b> — be able to model a brand-new real-world problem as a DRL problem.</p>
+
+  <div class="pipe">
+    <div class="st"><b>Understand</b> — conceptual + mathematical foundations of DRL, plus the algorithm landscape (classic and SOTA).</div>
+    <div class="st"><b>Implement &amp; Evaluate</b> — apply DRL to planning, control, and decision-making problems across domains.</div>
+    <div class="st"><b>Generalize</b> — recognize new real-world problems and re-cast them as DRL problems (the "model real life problems" goal).</div>
+  </div>
+
+  <h3>Learning Outcomes (the four exam-mapped pillars)</h3>
+  <ul>
+    <li><b>LO1 — Fundamentals:</b> understand RL concepts/algorithms and apply them to control, decision-making, and planning.</li>
+    <li><b>LO2 — Implementation:</b> implement DRL algorithms and handle <b>training instability</b> and <b>convergence</b> issues.</li>
+    <li><b>LO3 — Evaluation:</b> judge DRL algorithms on <b>sample efficiency, robustness, generalization</b> — not just final reward.</li>
+    <li><b>LO4 — Real-world framing:</b> understand challenges/opportunities of applying DRL to real-world problems and modelling new ones.</li>
+  </ul>
+
+  <div class="box why">
+    <h4>Why this matters</h4>
+    <p>LO2 and LO3 are easy to skim past in lecture 1, but they describe the <i>actual pain points</i> of every later assignment: DRL training is famously unstable (LO2), and "did it learn?" is the wrong question — "how <i>efficiently</i> did it learn, and does it <i>generalize</i>?" (LO3) is the right one. Keep these four pillars as a checklist when you read any DRL paper or run any experiment this semester.</p>
+  </div>
+
+  <div class="box exam">
+    <span class="tag">Exam Alert</span>
+    <p><b>Likely question:</b> "List and briefly explain the learning outcomes of this course" or "What distinguishes evaluation of a DRL algorithm from evaluation of a supervised model?" — Answer using LO3: sample efficiency, robustness, and generalization, contrasted with simple accuracy/loss metrics in supervised learning.</p>
+  </div>
+</section>
+
+<!-- ============ 02 EVALUATION & RULES ============ -->
+<section id="s2">
+  <div class="kic">// 02</div>
+  <h2 class="sec">Course Operation: Evaluation &amp; Ground Rules</h2>
+
+  <h3>How your grade is built</h3>
+  <p>The split rewards <b>continuous engagement</b> (quizzes + assignments = 30%) as much as the two big written exams (30% + 40%). Note the tooling: <b>TensorFlow / PyTorch / OpenAI Gym</b> — these are the libraries you'll live in for both assignments.</p>
+
+  <table>
+    <tr><th>Component</th><th>Weight</th><th>Key detail</th></tr>
+    <tr><td>Two Quizzes</td><td>5% each (best of two → 5% total)</td><td>Scores scaled to 5%; <b>no makeup</b> — attend at least one</td></tr>
+    <tr><td>Assignment 1</td><td>10%</td><td>Partially numerical + implementation of <b>classic algorithms</b></td></tr>
+    <tr><td>Assignment 2</td><td>15%</td><td><b>Deep Learning–based RL</b> (TensorFlow/PyTorch/Gym)</td></tr>
+    <tr><td>Mid-Term Exam</td><td>30%</td><td>Written, A4 pages, scanned &amp; uploaded</td></tr>
+    <tr><td>Comprehensive Exam</td><td>40%</td><td>Written, A4 pages, scanned &amp; uploaded</td></tr>
+    <tr><td>Webinars/Tutorials</td><td>—</td><td>4 total: 2 before mid-sem, 2 after</td></tr>
+  </table>
+
+  <div class="f-block">
+    <span class="lbl">Quick sanity check — does it add to 100%?</span>
+    <span class="v">5</span> <span class="op">(quizzes)</span> <span class="op">+</span> <span class="v">10</span> <span class="op">+</span> <span class="v">15</span> <span class="op">(assignments)</span> <span class="op">+</span> <span class="v">30</span> <span class="op">(mid-sem)</span> <span class="op">+</span> <span class="v">40</span> <span class="op">(comprehensive)</span> <span class="op">=</span> <span class="g">100%</span>
+  </div>
+
+  <h3>Plagiarism — read this twice</h3>
+  <p>All graded submissions must reflect <b>your original effort</b>. Copy-pasting from any source (online, peers) is prohibited, as is unauthorized collaboration. Crucially: the policy does <b>not</b> distinguish between the person who <i>shares</i> their work and the person who <i>receives</i> it — both are equally liable. Identical verbatim answers or "unreasonable similarity" across a submission set triggers investigation and severe punishment.</p>
+
+  <div class="box exam">
+    <span class="tag">Exam Alert · operational, not technical</span>
+    <p>Not exam-testable in the technical sense, but <b>operationally critical</b>: a single shared assignment file between two students = both penalized, regardless of who "did the work". Treat every Assignment 1/2 submission as individually written from scratch.</p>
+  </div>
+</section>
+
+<!-- ============ 03 WHAT & WHY RL ============ -->
+<section id="s3">
+  <div class="kic">// 03</div>
+  <h2 class="sec">What &amp; Why is Reinforcement Learning?</h2>
+
+  <h3>Intuition first</h3>
+  <p>RL is <b>reward-based / feedback-based learning</b>. A common misconception to kill immediately: <b>RL is not a type of neural network, and it is not an alternative to neural networks.</b> It's an <i>approach to learning</i> — a problem framing — that happens to use neural networks (Deep RL) when the state/action spaces get large. Classic applications: autonomous driving, gaming.</p>
+
+  <div class="quote box">
+    "Reinforcement learning (RL) is based on rewarding desired behaviors or punishing undesired ones. Instead of one input producing one output, the algorithm produces a variety of outputs and is trained to select the right one based on certain variables."
+    <span class="who">— Gartner (as quoted in lecture)</span>
+  </div>
+
+  <h3>When should you reach for RL?</h3>
+  <p>RL is the right tool for <b>large environments</b> in (at least) these three situations:</p>
+  <ol>
+    <li>A <b>model of the environment is known</b>, but no analytic (closed-form) solution exists.</li>
+    <li>Only a <b>simulation model</b> of the environment is available (this is the home turf of simulation-based optimization).</li>
+    <li>The <b>only way to gather information</b> about the environment is to <b>interact with it</b> — there is no dataset to fall back on.</li>
+  </ol>
+
+  <div class="box why">
+    <h4>Why this matters</h4>
+    <p>This three-way split is a quick diagnostic: if you have labelled data and no sequential decisions → supervised learning. If you have a clean closed-form model → classical optimization/control. RL earns its place specifically when (a) the problem is sequential, (b) feedback is reward-shaped rather than labelled, and (c) either the model is too complex for analytic solutions or doesn't exist at all and must be learned through interaction.</p>
+  </div>
+
+  <h3>Formal definition</h3>
+  <div class="f-block">
+    <span class="lbl">Sutton &amp; Barto-style formal definition</span>
+    <span class="v">RL</span> <span class="op">is an area of machine learning concerned with how intelligent</span> <span class="a">agents</span> <span class="op">ought to take</span> <span class="q">actions</span> <span class="op">in an</span> <span class="s">environment</span> <span class="op">in order to maximize the notion of cumulative</span> <span class="r">reward</span>.
+  </div>
+
+  <div class="box exam">
+    <span class="tag">Exam Alert</span>
+    <p><b>Likely question:</b> "Is RL a type of neural network? Justify." — <b>No.</b> RL is a learning paradigm/approach defined by an agent maximizing cumulative reward through interaction; neural networks are merely one way to <i>implement</i> the function approximators (policy/value) inside an RL agent — hence "<b>Deep</b> RL".</p>
+  </div>
+</section>
+
+<!-- ============ 04 RL vs SUPERVISED/UNSUPERVISED ============ -->
+<section id="s4">
+  <div class="kic">// 04</div>
+  <h2 class="sec">RL vs. Supervised vs. Unsupervised Learning</h2>
+
+  <p>The three ML paradigms differ in <b>what signal they learn from</b> and <b>what question they answer</b>:</p>
+
+  <table>
+    <tr><th>Criteria</th><th>Supervised ML</th><th>Unsupervised ML</th><th>Reinforcement ML</th></tr>
+    <tr><td><i>Definition</i></td><td>Learns from labelled data</td><td>Trained on unlabelled data, no guidance</td><td>Works by interacting with the environment</td></tr>
+    <tr><td><i>Type of data</i></td><td>Labelled data</td><td>Unlabelled data</td><td>No predefined data</td></tr>
+    <tr><td><i>Type of problems</i></td><td>Regression &amp; classification</td><td>Association &amp; clustering</td><td>Exploitation or exploration</td></tr>
+    <tr><td><i>Supervision</i></td><td>Extra supervision</td><td>No supervision</td><td>No supervision</td></tr>
+    <tr><td><i>Algorithms</i></td><td>Linear/Logistic Regression, SVM, KNN…</td><td>K-Means, C-Means, Apriori</td><td>Q-Learning, SARSA</td></tr>
+    <tr><td><i>Aim</i></td><td>Calculate outcomes</td><td>Discover underlying patterns</td><td>Learn a series of actions</td></tr>
+    <tr><td><i>Application</i></td><td>Risk evaluation, sales forecast</td><td>Recommendation systems, anomaly detection</td><td>Self-driving cars, gaming, healthcare</td></tr>
+  </table>
+
+  <p>The paradigm view from the "(Deep) Reinforcement Learning" slide expresses each as a <b>distribution / function the model represents</b>:</p>
+  <div class="f-block">
+    <span class="lbl">Supervised</span> <span class="v">p<sub>θ</sub>(y|x)</span> <span class="op">→</span> classification, regression
+  </div>
+  <div class="f-block">
+    <span class="lbl">Unsupervised</span> <span class="v">p<sub>θ</sub>(x)</span> <span class="op">→</span> inference, generation
+  </div>
+  <div class="f-block">
+    <span class="lbl">Reinforcement</span> <span class="v">π<sub>θ</sub>(a|s)</span> <span class="op">→</span> prediction, control
+  </div>
+  <p class="mut" style="font-size:14px"><b>Read this as:</b> RL learns a <b>policy</b> — a distribution over actions <span class="f">a</span> conditioned on state <span class="f">s</span> — parameterized by <span class="f">θ</span> (e.g. neural network weights in Deep RL). Everything else in the course is about how to find good <span class="f">θ</span>.</p>
+
+  <h3>Characteristics of RL (the four things that make it hard)</h3>
+  <ul>
+    <li><b>No supervision</b> — only a scalar reward signal, no "correct answer" labels.</li>
+    <li><b>Sequential decision-making</b> — today's action shapes tomorrow's options.</li>
+    <li><b>Time matters</b> — order of actions/observations is central, unlike i.i.d. supervised samples.</li>
+    <li><b>Delayed feedback</b> — the consequence of an action may arrive many steps later (this is exactly the chess/value-function problem you'll meet in Session 2).</li>
+  </ul>
+
+  <div class="box research">
+    <span class="tag">Research Enhanced</span>
+    <p>These four characteristics are precisely why RL cannot simply "borrow" supervised-learning theory: <b>i.i.d. assumptions break</b> (the agent's own policy changes the data distribution it sees — a moving target), and <b>credit assignment</b> across delayed rewards is an open research problem tackled by eligibility traces, TD(λ), and — in deep RL — techniques like reward shaping and n-step returns. <span class="mut">— Sutton &amp; Barto, RL: An Introduction, 2nd ed., Ch.1.</span></p>
+  </div>
+
+  <!-- examples -->
+  <h3>Worked examples</h3>
+  <div class="tabs" data-ex="ex1">
+    <button data-d="e" class="on" onclick="tab('ex1',0,this)">Easy</button>
+    <button data-d="m" onclick="tab('ex1',1,this)">Medium</button>
+    <button data-d="c" onclick="tab('ex1',2,this)">Complex</button>
+  </div>
+  <div class="panel on" id="ex1-0">
+    <p class="qs">Q. A model predicts house prices from labelled (features → price) data. Which paradigm, and why?</p>
+    <div class="answer">Supervised learning — labelled data, the aim is to calculate an outcome (price), evaluated with regression metrics.</div>
+  </div>
+  <div class="panel" id="ex1-1">
+    <p class="qs">Q. A retailer groups customers by purchase patterns with no labels, to design promotions. Which paradigm — and how would the same retailer's "next best offer per customer, learned by trial and feedback over time" differ?</p>
+    <div class="answer">Grouping by patterns with no labels = <b>unsupervised</b> (clustering, e.g. K-Means) — aim is to discover structure. "Next best offer learned by trial/feedback over time" = <b>RL</b> — the system takes an action (an offer), observes a reward (purchase or not), and must balance trying new offers (exploration) vs. repeating known-good ones (exploitation).</div>
+  </div>
+  <div class="panel" id="ex1-2">
+    <p class="qs">Q. Why can't you simply treat an RL agent's experience stream as i.i.d. training data for a supervised model of "best action given state"?</p>
+    <ol><li>The data distribution depends on the <b>current policy</b> — change the policy, change the data.</li>
+    <li>Rewards are <b>delayed</b>, so a "label" (was this action good?) isn't available at the time of the action.</li>
+    <li>Samples are <b>temporally correlated</b> (consecutive states are similar), violating i.i.d.</li></ol>
+    <div class="answer">Because (1) the policy-induced distribution shifts as the agent learns (non-stationary target), (2) the true "label" for an action — its long-term value — isn't known until much later (delayed feedback), and (3) consecutive samples are correlated, not independent. This is exactly why RL needs its own machinery (value functions, TD learning, replay buffers) rather than reusing supervised learning directly.</div>
+  </div>
+</section>
+
+<!-- ============ 05 AGENT-ENVIRONMENT LOOP ============ -->
+<section id="s5">
+  <div class="kic">// 05</div>
+  <h2 class="sec">The Agent-Environment Loop</h2>
+
+  <h3>The picture you'll redraw all semester</h3>
+  <p>Every RL problem is the same loop: an <b>Agent</b> observes a <b>state</b>, takes an <b>action</b>, and the <b>Environment</b> responds with a new state and a <b>reward</b>.</p>
+
+  <div class="f-block">
+    <span class="lbl">The loop, step by step (t = 0, 1, 2, …)</span>
+    Agent observes <span class="s">S<sub>t</sub> ∈ S</span>
+    <br>Agent selects <span class="q">A<sub>t</sub> ∈ A</span> → forms pair <span class="op">(</span><span class="s">S<sub>t</sub></span><span class="op">,</span> <span class="q">A<sub>t</sub></span><span class="op">)</span>
+    <br>Environment transitions to <span class="s">S<sub>t+1</sub> ∈ S</span>
+    <br>Agent receives reward <span class="r">R<sub>t+1</sub> ∈ R</span> for taking <span class="q">A<sub>t</sub></span> in <span class="s">S<sub>t</sub></span>
+  </div>
+
+  <h3>The building-block walking example</h3>
+  <p>The slides build intuition with a child learning to walk/ride a bicycle, and with video games:</p>
+  <ul>
+    <li><b>Agent</b> — an <i>entity</i> trying to learn the best way to perform a task (the child).</li>
+    <li><b>Action (A)</b> — what the agent does at each time step ("walking"); <span class="f">A</span> is the <b>set of all possible moves</b> (in a video game: run left/right, jump high/low, crouch, stand).</li>
+    <li><b>State (S)</b> — the agent's <b>current situation</b>; after an action the agent moves to a different state (the child takes a step → new position).</li>
+    <li><b>Reward (R)</b> — feedback on the action: positive if it's good / leads toward winning, negative (and vice versa) if not.</li>
+    <li><b>Environment</b> — the outside/physical world the agent operates in.</li>
+  </ul>
+
+  <div class="box annot">
+    <b>Notation reminder.</b> Be precise about the timing convention: the action <span class="f">A<sub>t</sub></span> taken <i>from</i> state <span class="f">S<sub>t</sub></span> produces reward <span class="f">R<sub>t+1</sub></span> and next state <span class="f">S<sub>t+1</sub></span> — the reward/next-state indices are <b>t+1</b>, not <b>t</b>. This off-by-one trips people up in every later derivation.
+  </div>
+
+  <div class="box exam">
+    <span class="tag">Exam Alert</span>
+    <p><b>Likely question:</b> "Draw and label the agent-environment interaction diagram, defining S, A, R" — make sure your arrows show state/reward flowing <i>from</i> environment <i>to</i> agent, action flowing <i>from</i> agent <i>to</i> environment, and that <span class="f">R<sub>t+1</sub>, S<sub>t+1</sub></span> are the result of <span class="f">A<sub>t</sub></span> taken in <span class="f">S<sub>t</sub></span>.</p>
+  </div>
+</section>
+
+<!-- ============ 06 POLICY, VALUE, MODEL ============ -->
+<section id="s6">
+  <div class="kic">// 06</div>
+  <h2 class="sec">Policy, Value Functions &amp; Model</h2>
+
+  <p>Beyond agent and environment, an RL system has up to <b>four sub-elements</b>: a <b>policy</b>, a <b>reward</b> (already covered), a <b>value function</b>, and optionally a <b>model</b> of the environment.</p>
+
+  <h3>Policy π — "what do I do here?"</h3>
+  <p>The policy decides which action the agent takes in the current state. Formally, it's the <b>probability</b> that an agent will select a specific action from a specific state — a function mapping states to a probability distribution over actions.</p>
+  <div class="f-block">
+    <span class="lbl">Policy notation</span>
+    <span class="v">π(a|s)</span> <span class="op">=</span> probability that <span class="q">A<sub>t</sub>=a</span> given <span class="s">S<sub>t</sub>=s</span>, under policy <span class="v">π</span>
+  </div>
+
+  <h3>Value Functions — "how good is this, really?"</h3>
+  <p>A value function is a measure of <b>how good it is</b> for an agent to be in a given state, or to perform a given action in a given state. Two types are introduced (full math next session):</p>
+  <ul>
+    <li><b>State-value function</b> — goodness of being in state <i>s</i>.</li>
+    <li><b>Action-value function</b> — goodness of taking action <i>a</i> in state <i>s</i>.</li>
+  </ul>
+
+  <h3>Model of the Environment — "what happens if…?"</h3>
+  <p>A model <b>mimics environment behaviour</b>: given a state and action, it predicts the resultant next state and reward. Models are used for <b>planning</b> — deciding a course of action by reasoning ahead, before actually acting.</p>
+
+  <div class="box why">
+    <h4>Why this matters</h4>
+    <p>This four-way split — policy, reward, value, model — is exactly the axis along which the <b>algorithm taxonomy</b> (next section) is organized. "Model-free" methods skip the model entirely and learn policy/value directly from experience; "model-based" methods learn or are given a model and use it for planning. Every algorithm name you'll meet this semester (Q-learning, PPO, DDPG, AlphaZero…) is a specific recipe for combining these four pieces.</p>
+  </div>
+
+  <div class="box exam">
+    <span class="tag">Exam Alert</span>
+    <p><b>Likely question:</b> "Differentiate between a policy and a value function" — Policy = <i>what to do</i> (action selection rule, π(a|s)); Value function = <i>how good</i> a state/action is (used to <i>derive</i> a good policy, e.g. greedily). They're related but not the same object — a common mix-up is to call the value function "the policy".</p>
+  </div>
+</section>
+
+<!-- ============ 07 ALGORITHM TAXONOMY ============ -->
+<section id="s7">
+  <div class="kic">// 07</div>
+  <h2 class="sec">The (Deep) RL Algorithm Taxonomy</h2>
+
+  <p>The slide deck's algorithm tree (from OpenAI) is a map you'll keep returning to — every algorithm name in this course slots into one branch.</p>
+
+  <div class="f-block">
+    <span class="lbl">Top-level split</span>
+    <span class="v">RL Algorithms</span>
+    <br>├── <span class="a">Model-Free RL</span> — learn policy/value directly from experience, no environment model
+    <br>└── <span class="g">Model-Based RL</span> — learn or are given a model, used for planning
+  </div>
+
+  <table>
+    <tr><th>Branch</th><th>Sub-branch</th><th>Example algorithms</th></tr>
+    <tr><td rowspan="2"><b>Model-Free</b></td><td>Policy Optimization</td><td>Policy Gradient, A2C/A3C, PPO, TRPO</td></tr>
+    <tr><td>Q-Learning</td><td>DQN, C51, QR-DQN, HER (and DDPG/TD3/SAC bridge both branches)</td></tr>
+    <tr><td rowspan="2"><b>Model-Based</b></td><td>Learn the Model</td><td>World Models, I2A, MBMF, MBVE</td></tr>
+    <tr><td>Given the Model</td><td>AlphaZero</td></tr>
+  </table>
+
+  <div class="box annot">
+    <b>Note on DDPG / TD3 / SAC.</b> These sit at the intersection of Policy Optimization and Q-Learning — they learn <i>both</i> a policy (the "actor") and an action-value function (the "critic"). You don't need the details yet; just recognize the shape: <b>actor-critic methods bridge the two model-free branches.</b>
+  </div>
+
+  <div class="box exam">
+    <span class="tag">Exam Alert</span>
+    <p><b>Likely question:</b> "Classify DQN, PPO, and AlphaZero within the RL algorithm taxonomy." — <b>DQN</b>: Model-Free → Q-Learning. <b>PPO</b>: Model-Free → Policy Optimization. <b>AlphaZero</b>: Model-Based → Given the Model (it's given the rules/dynamics of the game and plans with them via search).</p>
+  </div>
+</section>
+
+<!-- ============ 08 TIC-TAC-TOE & TD LEARNING ============ -->
+<section id="s8">
+  <div class="kic">// 08</div>
+  <h2 class="sec">Worked Example: Tic-Tac-Toe &amp; Temporal Difference Learning</h2>
+
+  <h3>The setup</h3>
+  <p>Two players alternate X/O on a 3×3 board; three in a row (any direction) wins. Crucially, the slides frame this against an <b>imperfect opponent</b> — one whose play is sometimes incorrect and lets you win. The aim: <i>"How might we construct a player that will find the imperfections in its opponent's play and learn to maximize its chances of winning?"</i></p>
+
+  <h3>Step 1 — A table of state values</h3>
+  <p>Every possible board <b>state</b> gets an entry in a value table, initialized as follows (from <i>our</i> perspective):</p>
+  <table>
+    <tr><th>State</th><th>Initial Value</th><th>Meaning</th></tr>
+    <tr><td>Empty / balanced opening board</td><td>0.5</td><td>~50% chance we eventually win</td></tr>
+    <tr><td>Board where <b>we have won</b></td><td>1.0</td><td>Certain win → maximum value</td></tr>
+    <tr><td>Board where <b>opponent has won</b></td><td>0</td><td>Certain loss → minimum value</td></tr>
+    <tr><td>… (all other states)</td><td>… (typically 0.5 initially)</td><td>Unknown — to be learned</td></tr>
+  </table>
+  <p><b>Learning Task:</b> Play many games against the opponent and update these values from experience.</p>
+
+  <h3>Step 2 — Greedy moves through a game tree</h3>
+  <p>At each "our move" point, we look at the values of the states reachable from each candidate move and pick the one with the <b>highest value</b> — this is the <b>greedy move</b>, marked with a star (<span class="g">★</span>) in the game-tree diagram. The slides define:</p>
+  <ul>
+    <li><span class="f"><span class="s">S<sub>t</sub></span></span> — the state <i>before</i> the greedy move</li>
+    <li><span class="f"><span class="s">S<sub>t+1</sub></span></span> — the state <i>after</i> the greedy move</li>
+  </ul>
+
+  <h3>Step 3 — The Temporal Difference (TD) update</h3>
+  <p>After making the greedy move, we nudge the value of the <i>old</i> state toward the value of the <i>new</i> state:</p>
+  <div class="f-block">
+    <span class="lbl">Temporal Difference Learning Rule</span>
+    <span class="v">V(S<sub>t</sub>)</span> <span class="op">←</span> <span class="v">V(S<sub>t</sub>)</span> <span class="op">+</span> <span class="a">α</span> <span class="op">[</span> <span class="v">V(S<sub>t+1</sub>)</span> <span class="op">−</span> <span class="v">V(S<sub>t</sub>)</span> <span class="op">]</span>
+  </div>
+  <p class="mut" style="font-size:14px"><b>Read it as:</b> "new estimate = old estimate + step-size × error", where the <b>error</b> is the difference between two <i>successive</i> predictions <span class="f">V(S<sub>t+1</sub>) − V(S<sub>t</sub>)</span> — hence "<b>Temporal Difference</b>": you learn from the difference between values at successive time steps, not from a final outcome alone. <span class="f">α</span> is the <b>step-size parameter</b>, controlling how much each update shifts the estimate.</p>
+
+  <div class="box annot">
+    <b>Why this is the seed of everything.</b> Notice there's no "correct label" anywhere — <span class="f">V(S<sub>t+1</sub>)</span> is itself just <i>another estimate</i>, not ground truth. The agent is learning from its <b>own predictions, bootstrapped one step into the future</b>. This bootstrapping idea is the defining feature of TD methods (vs. Monte Carlo, which waits for the actual game outcome).
+  </div>
+
+  <h3>Discussion: the role of α</h3>
+  <p>The slides pose three open questions about the step-size parameter — work through each:</p>
+  <div class="pipe">
+    <div class="st"><b>If α → 0 gradually over many games:</b> updates shrink toward nothing — the value table <b>converges/stabilizes</b>, "freezing" what's been learned. Good once the opponent's pattern is well-estimated and stationary.</div>
+    <div class="st"><b>If α is reduced but never reaches 0:</b> learning continues indefinitely at a small rate — the agent keeps <b>slowly adapting</b> to any drift in the opponent's play, while being mostly stable.</div>
+    <div class="st"><b>If α is kept constant for life:</b> every new game has a <b>fixed-size influence</b> — the agent stays maximally responsive to a <b>non-stationary opponent</b> (one whose strategy changes over time), at the cost of never fully "settling".</div>
+  </div>
+
+  <h3>Key takeaways (as given in the slides)</h3>
+  <ol>
+    <li>Learning happens <b>while interacting</b> with the environment (the opponent) — not from a pre-collected dataset.</li>
+    <li>We have a <b>clear goal</b> (win the game / maximize V).</li>
+    <li>Our policy makes moves that <b>maximize the chance of reaching the goal</b> — using the values of states <b>most of the time (exploitation)</b>, and exploring the rest of the time.</li>
+  </ol>
+
+  <!-- examples -->
+  <h3>Worked examples</h3>
+  <div class="tabs" data-ex="ex2">
+    <button data-d="e" class="on" onclick="tab('ex2',0,this)">Easy</button>
+    <button data-d="m" onclick="tab('ex2',1,this)">Medium</button>
+    <button data-d="c" onclick="tab('ex2',2,this)">Complex</button>
+  </div>
+  <div class="panel on" id="ex2-0">
+    <p class="qs">Q. Apply the TD update: V(S<sub>t</sub>)=0.5, V(S<sub>t+1</sub>)=0.6, α=0.1. New V(S<sub>t</sub>)?</p>
+    <div class="f-block">V(S<sub>t</sub>) ← 0.5 + 0.1 × (0.6 − 0.5) = 0.5 + 0.01 = <span class="g">0.51</span></div>
+    <div class="answer">0.51 — the old estimate moved 10% of the way toward the new estimate.</div>
+  </div>
+  <div class="panel" id="ex2-1">
+    <p class="qs">Q. A board state leads, via the greedy move, to a state valued 1.0 (our win). If V(S<sub>t</sub>)=0.5 and α=0.5, what's the new value, and after another identical update from the new value?</p>
+    <div class="f-block">
+      Step 1: V(S<sub>t</sub>) ← 0.5 + 0.5×(1.0 − 0.5) = 0.5 + 0.25 = <span class="g">0.75</span>
+      <br>Step 2: V(S<sub>t</sub>) ← 0.75 + 0.5×(1.0 − 0.75) = 0.75 + 0.125 = <span class="g">0.875</span>
+    </div>
+    <div class="answer">0.75, then 0.875 — each update halves the remaining gap to 1.0. This geometric convergence is why TD learning approaches but never instantly jumps to the "true" value.</div>
+    <div class="insight"><b>Key insight:</b> a large α (0.5) converges fast but is sensitive to noise; a small α converges slowly but smooths over noisy/inconsistent opponent play.</div>
+  </div>
+  <div class="panel" id="ex2-2">
+    <p class="qs">Q. The reading assignment asks: how is this TD-based solution different from (a) minimax and (b) genetic algorithms? Sketch an answer.</p>
+    <ol>
+      <li><b>Minimax</b> assumes an <b>optimal, adversarial opponent</b> and searches the full game tree to guarantee a worst-case-optimal move — it needs a model of the game (rules/transitions) and typically full tree search at decision time.</li>
+      <li><b>Genetic algorithms</b> evolve a <b>population of policies</b> via selection/mutation/crossover across many "generations" (games), with no explicit value function per state — improvement is population-level and not driven by a per-step prediction error.</li>
+      <li><b>TD learning (this example)</b> learns <b>per-state value estimates online</b>, from a <i>single agent's</i> sequential experience, explicitly <b>exploits an imperfect opponent</b> (rather than assuming optimal play like minimax), and updates incrementally after every move via bootstrapped prediction error — no full tree search, no population.</li>
+    </ol>
+    <div class="answer">Core distinction: minimax = worst-case game-tree search assuming a perfect opponent; genetic algorithms = population-level evolutionary search with no per-state value signal; TD = online, incremental, bootstrapped value learning from one agent's experience against a (possibly imperfect) opponent — explicitly designed to exploit weaknesses rather than assume none exist.</div>
+  </div>
+
+  <div class="box exam">
+    <span class="tag">Exam Alert · likely numerical</span>
+    <p><b>Likely question:</b> A numerical TD-update computation (given V(S<sub>t</sub>), V(S<sub>t+1</sub>), α — compute new V(S<sub>t</sub>)), <i>plus</i> a conceptual question on the effect of α (constant / decaying / →0) — answer using the three-point discussion above. Also expect the minimax/GA comparison from the reading assignment to resurface.</p>
+  </div>
+</section>
+
+<!-- ============ 09 AUTONOMOUS DRIVING REWARD ============ -->
+<section id="s9">
+  <div class="kic">// 09</div>
+  <h2 class="sec">Worked Example: Reward Design for Autonomous Driving</h2>
+
+  <p>The slides give a complete (S, A, R, Objective) sketch for a self-driving car — your first taste of <b>reward shaping</b>.</p>
+
+  <table>
+    <tr><th>Element</th><th>Definition in this example</th></tr>
+    <tr><td><b>Objective</b></td><td>Reach destination safely</td></tr>
+    <tr><td><b>State</b></td><td>Image from the front camera</td></tr>
+    <tr><td><b>Action</b></td><td>Steering, acceleration, brake</td></tr>
+    <tr><td><b>Reward</b></td><td>Forward speed (base signal), shaped by the events below</td></tr>
+  </table>
+
+  <div class="f-block">
+    <span class="lbl">Reward shaping table</span>
+    Drive off road <span class="op">=</span> <span class="r">−10</span>
+    <br>Hit a person <span class="op">=</span> <span class="r">−1000</span>
+    <br>Drive at speed limit <span class="op">=</span> <span class="g">+2</span>
+    <br>Align with lane <span class="op">=</span> <span class="g">+4</span>
+    <br>Run a stop sign <span class="op">=</span> <span class="r">−5</span>
+    <br>Erratic driving <span class="op">=</span> <span class="r">−3</span>
+    <br>…
+  </div>
+
+  <div class="box why">
+    <h4>Why this matters</h4>
+    <p>This table is a masterclass in reward design <b>by relative magnitude</b>. "Hit a person" at −1000 isn't just "bad" — it's <b>orders of magnitude worse</b> than every other penalty combined, so the agent can never learn to trade off small gains (e.g. +2 for speed) against that catastrophic outcome. Meanwhile +2 (speed limit) vs +4 (lane alignment) tells the agent that <b>staying in lane matters more than going fast</b>. Badly scaled rewards are one of the most common real-world DRL failure modes — an agent will ruthlessly optimize <i>exactly</i> the number you give it, including loopholes you didn't intend ("reward hacking").</p>
+  </div>
+
+  <!-- examples -->
+  <h3>Worked examples</h3>
+  <div class="tabs" data-ex="ex3">
+    <button data-d="e" class="on" onclick="tab('ex3',0,this)">Easy</button>
+    <button data-d="m" onclick="tab('ex3',1,this)">Medium</button>
+    <button data-d="c" onclick="tab('ex3',2,this)">Complex</button>
+  </div>
+  <div class="panel on" id="ex3-0">
+    <p class="qs">Q. In one episode, the car drives at the speed limit for 3 steps (+2 each), aligns with lane for 2 steps (+4 each), and runs one stop sign (−5). What's the total reward?</p>
+    <div class="f-block">3×(+2) + 2×(+4) + 1×(−5) = 6 + 8 − 5 = <span class="g">+9</span></div>
+    <div class="answer">+9 — sum the per-step rewards across the episode (this is the "cumulative reward" from the formal RL definition).</div>
+  </div>
+  <div class="panel" id="ex3-1">
+    <p class="qs">Q. Suppose "drive off road" were changed from −10 to −1 (smaller magnitude). What unintended behaviour might emerge, given +2/+4 are still on offer for speed/lane?</p>
+    <div class="answer">If the road-departure penalty (−1) is smaller than achievable positive rewards (+2 speed, +4 lane), the agent could learn to <b>cut corners off-road</b> to gain a better lane-alignment/speed combination on the far side, since the small −1 penalty is outweighed by +2/+4 gains. This is "reward hacking": the agent optimizes the literal reward sum, not the intended objective ("reach destination <i>safely</i>").</div>
+    <div class="insight"><b>Key insight:</b> penalty magnitudes must dominate any combination of rewards that could be earned by the unsafe shortcut — relative scale, not just sign, encodes intent.</div>
+  </div>
+  <div class="panel" id="ex3-2">
+    <p class="qs">Q. Map this example onto the formal RL definition (S, A, R, Environment, cumulative reward) and onto the Objective vs. Reward distinction — why might "forward speed" alone (the base reward) be a poor proxy for the stated Objective ("reach destination safely")?</p>
+    <ol>
+      <li><b>S</b> = front-camera image, <b>A</b> = {steer, accelerate, brake}, <b>Environment</b> = road/traffic/physics, <b>R</b> = shaped scalar combining speed + event bonuses/penalties.</li>
+      <li><b>Cumulative reward</b> = sum of R over the whole drive (the quantity the agent is trained to maximize).</li>
+      <li>"Forward speed" alone rewards <i>going fast</i>, which is correlated with but <b>not equivalent to</b> "reaching the destination safely" — a purely speed-maximizing agent would have no signal telling it to stay on the road, avoid pedestrians, or stop at signs.</li>
+    </ol>
+    <div class="answer">The Objective ("reach destination safely") is the <i>true</i> goal, but it's not directly differentiable/observable per step. The reward function is an <b>engineered proxy</b> for that objective — "forward speed" alone under-specifies safety, so the table adds explicit penalty/bonus terms (off-road, hit person, stop sign, lane alignment, erratic driving) to pull the proxy back toward the true objective. This Objective-vs-Reward gap is exactly the reward-design problem you'll revisit throughout the course.</div>
+  </div>
+
+  <div class="box exam">
+    <span class="tag">Exam Alert</span>
+    <p><b>Likely question:</b> "For [some new domain — e.g. a delivery drone / warehouse robot], specify the state, action, reward, and objective, and design a reward table with appropriate relative magnitudes." — Practice this pattern: 1 sentence Objective, concrete State/Action definitions, then a reward table where <b>catastrophic outcomes dominate by orders of magnitude</b> and desirable behaviours are positively but moderately weighted relative to each other.</p>
+  </div>
+</section>
+
+<!-- ============ LAB ============ -->
+<section id="lab">
+  <div class="kic">// LAB</div>
+  <h2 class="sec">Live Demos</h2>
+
+  <div class="demo">
+    <h4>1. TD Update Stepper</h4>
+    <p class="mut">Click "Step" repeatedly to watch V(S<sub>t</sub>) chase V(S<sub>t+1</sub>) under <span class="f">V(S<sub>t</sub>) ← V(S<sub>t</sub>) + α[V(S<sub>t+1</sub>) − V(S<sub>t</sub>)]</span>. V(S<sub>t+1</sub>) is fixed at 1.0 (a winning state).</p>
+    <div class="ctl">
+      <label>α (step size)</label>
+      <input type="range" id="tdA" min="0.05" max="0.9" step="0.05" value="0.3" oninput="document.getElementById('tdAv').textContent=this.value">
+      <span class="val" id="tdAv">0.30</span>
+    </div>
+    <div class="ctl">
+      <button class="act" onclick="tdStep()">Step</button>
+      <button class="act gho" onclick="tdReset()">Reset</button>
+    </div>
+    <p>V(S<sub>t</sub>) = <b id="tdV">0.50</b> &nbsp;|&nbsp; V(S<sub>t+1</sub>) = <b>1.00</b> &nbsp;|&nbsp; Step <span id="tdN">0</span></p>
+    <p class="mut" id="tdmsg" style="font-size:14px">Press "Step" to apply one TD update.</p>
+  </div>
+
+  <div class="demo">
+    <h4>2. Autonomous Driving Reward Calculator</h4>
+    <p class="mut">Tally an episode's cumulative reward using the reward-shaping table from Section 09.</p>
+    <div class="ctl"><label>Speed-limit steps (+2)</label><input type="range" id="rSpeed" min="0" max="20" value="3" oninput="rCalc()"><span class="val" id="rSpeedV">3</span></div>
+    <div class="ctl"><label>Lane-aligned steps (+4)</label><input type="range" id="rLane" min="0" max="20" value="2" oninput="rCalc()"><span class="val" id="rLaneV">2</span></div>
+    <div class="ctl"><label>Erratic-driving events (−3)</label><input type="range" id="rErr" min="0" max="10" value="0" oninput="rCalc()"><span class="val" id="rErrV">0</span></div>
+    <div class="ctl"><label>Stop-signs run (−5)</label><input type="range" id="rStop" min="0" max="5" value="0" oninput="rCalc()"><span class="val" id="rStopV">0</span></div>
+    <div class="ctl"><label>Off-road events (−10)</label><input type="range" id="rRoad" min="0" max="5" value="0" oninput="rCalc()"><span class="val" id="rRoadV">0</span></div>
+    <div class="ctl"><label>Hit person? </label><input type="checkbox" id="rHit" onchange="rCalc()"></div>
+    <p style="font-size:18px">Cumulative reward = <b id="rTotal" style="color:var(--gold)">10</b></p>
+    <p class="mut" id="rmsg" style="font-size:14px"></p>
+  </div>
+
+  <div class="demo">
+    <h4>3. Effect of α Schedule on Convergence</h4>
+    <p class="mut">Compare how V(S<sub>t</sub>) approaches a true value of 1.0 over 15 games under three α schedules from the "discussion" slide.</p>
+    <div class="ctl">
+      <button class="act" onclick="alphaRun()">Run 15 steps</button>
+      <button class="act gho" onclick="alphaReset()">Reset</button>
+    </div>
+    <table id="alphaTable">
+      <tr><th>Step</th><th>α→0 (decaying to 0)</th><th>α small, never 0</th><th>α constant (0.5)</th></tr>
+    </table>
+    <p class="mut" style="font-size:14px">Notice: the decaying-α curve <b>freezes</b> once α≈0; the constant-α curve keeps moving (responsive but never settles) — exactly the trade-off discussed in Section 08.</p>
+  </div>
+</section>
+
+<!-- ============ QUIZ ============ -->
+<section id="quiz">
+  <div class="kic">// EXAM PREP</div>
+  <h2 class="sec">Exam Quiz</h2>
+  <p class="mut">10 questions spanning course logistics, RL definitions, the agent-environment loop, TD learning, and reward design. Click an option to check your answer.</p>
+  <div id="quizbox"></div>
+</section>
+
+</main>
+</div>
+<button id="top" onclick="scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+/* ---------- fade-up + nav highlight + progress ---------- */
+const secs=[...document.querySelectorAll('section')];
+const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('show')})},{threshold:.08});
+secs.forEach(s=>io.observe(s));
+const navlinks=[...document.querySelectorAll('#nav a')];
+function onScroll(){
+  const sc=scrollY, h=document.body.scrollHeight-innerHeight;
+  document.getElementById('prog').style.width=(100*sc/h)+'%';
+  document.getElementById('top').classList.toggle('show',sc>500);
+  let cur=secs[0].id;
+  for(const s of secs){ if(s.getBoundingClientRect().top<=140) cur=s.id; }
+  navlinks.forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+cur));
+}
+addEventListener('scroll',onScroll,{passive:true}); onScroll();
+
+/* ---------- tabs ---------- */
+function tab(ex,i,btn){
+  for(let j=0;j<3;j++){const p=document.getElementById(ex+'-'+j); if(p)p.classList.toggle('on',j===i);}
+  btn.parentElement.querySelectorAll('button').forEach((b,j)=>b.classList.toggle('on',j===i));
+}
+
+/* ---------- 1: TD stepper ---------- */
+let tdV=0.5, tdN=0;
+function tdStep(){
+  const al=+document.getElementById('tdA').value;
+  const err=1.0-tdV;
+  tdV += al*err;
+  tdN++;
+  document.getElementById('tdV').textContent=tdV.toFixed(3);
+  document.getElementById('tdN').textContent=tdN;
+  document.getElementById('tdmsg').textContent=`TD error = 1.00 − ${ (tdV-al*err).toFixed(3) } = ${err.toFixed(3)} → V(St) moved by α×error = ${(al*err).toFixed(3)}`;
+}
+function tdReset(){tdV=0.5; tdN=0;
+  document.getElementById('tdV').textContent='0.500';
+  document.getElementById('tdN').textContent='0';
+  document.getElementById('tdmsg').textContent='Press "Step" to apply one TD update.';}
+
+/* ---------- 2: reward calculator ---------- */
+function rCalc(){
+  const speed=+document.getElementById('rSpeed').value;
+  const lane=+document.getElementById('rLane').value;
+  const err=+document.getElementById('rErr').value;
+  const stop=+document.getElementById('rStop').value;
+  const road=+document.getElementById('rRoad').value;
+  const hit=document.getElementById('rHit').checked;
+  document.getElementById('rSpeedV').textContent=speed;
+  document.getElementById('rLaneV').textContent=lane;
+  document.getElementById('rErrV').textContent=err;
+  document.getElementById('rStopV').textContent=stop;
+  document.getElementById('rRoadV').textContent=road;
+  let total = speed*2 + lane*4 - err*3 - stop*5 - road*10 - (hit?1000:0);
+  document.getElementById('rTotal').textContent=total;
+  document.getElementById('rmsg').textContent = hit
+    ? 'Hitting a person (−1000) dwarfs every other term — exactly the "dominant penalty" design intent.'
+    : (total>0 ? 'Net positive episode — safe driving outweighing minor penalties.' : 'Net negative — penalties dominate this episode.');
+}
+rCalc();
+
+/* ---------- 3: alpha schedule comparison ---------- */
+function alphaRun(){
+  let vDecay=0.5, vSmall=0.5, vConst=0.5, alphaDecay=0.5;
+  const tbl=document.getElementById('alphaTable');
+  tbl.innerHTML='<tr><th>Step</th><th>α→0 (decaying to 0)</th><th>α small, never 0 (0.05)</th><th>α constant (0.5)</th></tr>';
+  for(let i=1;i<=15;i++){
+    alphaDecay = 0.5/i; // decays toward 0
+    vDecay += alphaDecay*(1-vDecay);
+    vSmall += 0.05*(1-vSmall);
+    vConst += 0.5*(1-vConst);
+    tbl.innerHTML += `<tr><td>${i}</td><td>${vDecay.toFixed(3)} (α=${alphaDecay.toFixed(3)})</td><td>${vSmall.toFixed(3)}</td><td>${vConst.toFixed(3)}</td></tr>`;
+  }
+}
+function alphaReset(){
+  document.getElementById('alphaTable').innerHTML='<tr><th>Step</th><th>α→0 (decaying to 0)</th><th>α small, never 0</th><th>α constant (0.5)</th></tr>';
+}
+
+/* ---------- quiz ---------- */
+const QUIZ=[
+ {d:'e',t:'Logistics',q:'What happens if a student misses both quizzes?',
+  o:['They score 0 on the 5% quiz component — no makeup is allowed','They get an automatic makeup quiz','Quiz weight shifts to assignments','They are exempted from quizzes'],c:0,
+  e:'The slides explicitly say "NO MAKEUP, for whatever the reason" and to attend at least one quiz. Missing both → 0 on that 5%.'},
+ {d:'e',t:'Definitions',q:'Which statement about RL is correct?',
+  o:['RL is a learning approach based on rewarding/punishing behaviors; it is not a type of neural network',
+     'RL is a specific type of neural network architecture',
+     'RL is an alternative to neural networks, never used together',
+     'RL only works with labelled datasets'],c:0,
+  e:'The slide explicitly states RL is "not a type of NN nor is it an alternative to NN. Rather it is an approach for learning." Deep RL combines RL with NNs as function approximators.'},
+ {d:'e',t:'Elements',q:'In the agent-environment loop, what does the agent receive from the environment?',
+  o:['State and reward','Only actions','Only a policy','Only a value function'],c:0,
+  e:'The environment returns the new state S_{t+1} and reward R_{t+1} in response to the agent\'s action A_t. Policy and value function are internal to the agent.'},
+ {d:'e',t:'TD rule',q:'In V(S_t) ← V(S_t) + α[V(S_{t+1}) − V(S_t)], what does α represent?',
+  o:['The step-size parameter controlling update magnitude','The discount factor for future rewards','The reward received','The number of states'],c:0,
+  e:'α is explicitly labelled "Step Size Parameter" in the slides — it scales how much the TD error shifts the value estimate.'},
+ {d:'m',t:'Evaluation',q:'Assignment 1 (10%) + Assignment 2 (15%) use which toolkits, per the slides?',
+  o:['Tensorflow / PyTorch / OpenAI Gym Toolkit','Only scikit-learn','MATLAB only','Excel-based simulation'],c:0,
+  e:'The Course Operation slide specifies "Tensorflow / Pytorch / OpenAI Gym Toolkit → 25%" covering both assignments.'},
+ {d:'m',t:'TD computation',q:'Given V(S_t)=0.5, V(S_{t+1})=1.0, α=0.5 — what is the new V(S_t)?',
+  o:['0.75','0.50','1.00','0.25'],c:0,
+  e:'V(S_t) ← 0.5 + 0.5×(1.0−0.5) = 0.5 + 0.25 = 0.75. (1.00 forgets the α scaling; 0.25 reports only the increment; 0.50 forgets to update.)'},
+ {d:'m',t:'Comparison',q:'Which pairing correctly matches an ML paradigm to its "Aim" per the comparison table?',
+  o:['Unsupervised → discover underlying patterns; RL → learn a series of actions',
+     'Supervised → learn a series of actions; RL → calculate outcomes',
+     'RL → discover underlying patterns; Unsupervised → learn a series of actions',
+     'Supervised → discover underlying patterns; RL → calculate outcomes'],c:0,
+  e:'Per the table: Supervised aim = "calculate outcomes"; Unsupervised aim = "discover underlying patterns"; RL aim = "learn a series of action(s)".'},
+ {d:'m',t:'Algorithm taxonomy',q:'Where does AlphaZero sit in the RL algorithm taxonomy shown in the slides?',
+  o:['Model-Based RL → Given the Model','Model-Free RL → Q-Learning','Model-Free RL → Policy Optimization','Model-Based RL → Learn the Model'],c:0,
+  e:'AlphaZero is shown under Model-Based RL → "Given the Model" (it is given the game\'s rules/dynamics and plans using them).'},
+ {d:'h',t:'Reward design',q:'In the autonomous-driving reward table, why is "hit a person = −1000" set so much larger in magnitude than other terms (e.g. +2 for speed, +4 for lane alignment)?',
+  o:['To ensure no combination of smaller positive rewards can make the catastrophic action worth taking',
+     'Because −1000 is just a placeholder with no design significance',
+     'To make the reward function easier to normalize',
+     'Because pedestrians are rare so the value barely matters'],c:0,
+  e:'Reward magnitudes encode relative priority. −1000 dominates any achievable sum of +2/+4-style rewards, ensuring the agent never finds it "worthwhile" to risk hitting a person to gain speed/lane bonuses — this is deliberate reward shaping to avoid reward hacking.'},
+ {d:'h',t:'TD vs alternatives',q:'How does the TD-based Tic-Tac-Toe learner fundamentally differ from a minimax player, per the reading assignment framing?',
+  o:['TD learns per-state value estimates online from experience against a possibly-imperfect opponent, without full game-tree search; minimax assumes an optimal adversary and searches the tree',
+     'TD and minimax are mathematically identical approaches',
+     'Minimax learns from rewards while TD requires labelled game outcomes',
+     'TD requires a full model of the opponent while minimax does not'],c:0,
+  e:'TD learning incrementally updates a value table from sequential play against an opponent that may make mistakes (exploitable), using bootstrapped one-step predictions — no exhaustive tree search or optimal-opponent assumption, unlike minimax.'},
+];
+const qb=document.getElementById('quizbox');
+QUIZ.forEach((Qz,i)=>{
+  const dmap={e:['e','Easy'],m:['m','Medium'],h:['h','Hard']};
+  const div=document.createElement('div'); div.className='qz';
+  div.innerHTML=`<div class="head"><span class="dif ${dmap[Qz.d][0]}">${dmap[Qz.d][1]}</span>`+
+    `<span class="tg">${Qz.t}</span></div>`+
+    `<p class="qs"><b>Q${i+1}.</b> ${Qz.q}</p><div class="opts"></div>`+
+    `<div class="expl" id="ex-${i}"><b>Explanation.</b> ${Qz.e}</div>`;
+  const opts=div.querySelector('.opts');
+  Qz.o.forEach((txt,j)=>{
+    const b=document.createElement('button'); b.className='opt'; b.textContent=String.fromCharCode(65+j)+'. '+txt;
+    b.onclick=()=>{
+      opts.querySelectorAll('.opt').forEach(x=>{x.disabled=true;});
+      b.classList.add(j===Qz.c?'right':'wrong');
+      if(j!==Qz.c) opts.children[Qz.c].classList.add('right');
+      document.getElementById('ex-'+i).classList.add('show');
+    };
+    opts.appendChild(b);
+  });
+  qb.appendChild(div);
+});
+</script>
+</body>
+</html>

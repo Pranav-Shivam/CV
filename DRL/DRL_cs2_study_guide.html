@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRL Session 2 — Multi-Armed Bandits · Study Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0c0c0f; --panel:#141419; --panel2:#1b1b22; --line:#2a2a33;
+  --ink:#e8e6e0; --mut:#9b988f;
+  --gold:#d4a853; --teal:#4ec9b0; --sky:#7dd3fc; --rose:#f87171; --lime:#a3e635; --violet:#c084fc;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Newsreader",Georgia,serif; font-size:18px; line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+}
+/* grain */
+body::before{
+  content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.5;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+}
+h1,h2,h3,h4{font-family:"Syne",sans-serif; line-height:1.15; font-weight:700; letter-spacing:-.01em}
+code,pre,.mono,.f{font-family:"JetBrains Mono",monospace}
+a{color:var(--sky)}
+
+/* layout */
+.wrap{display:flex; position:relative; z-index:1}
+.side{
+  width:248px; flex:0 0 248px; position:sticky; top:0; height:100vh; overflow-y:auto;
+  border-right:1px solid var(--line); padding:22px 16px; background:rgba(16,16,20,.7);
+}
+.side h2{font-size:14px; color:var(--gold); text-transform:uppercase; letter-spacing:.12em; margin:0 0 4px}
+.side .sub{font-size:12px; color:var(--mut); margin:0 0 16px; font-family:"JetBrains Mono",monospace}
+.prog-wrap{height:5px; background:var(--panel2); border-radius:4px; overflow:hidden; margin-bottom:18px}
+#prog{height:100%; width:0; background:linear-gradient(90deg,var(--gold),var(--lime)); transition:width .15s}
+.nav a{display:block; color:var(--mut); text-decoration:none; font-family:"JetBrains Mono",monospace;
+  font-size:12.5px; padding:7px 10px; border-radius:7px; margin-bottom:2px; border-left:2px solid transparent}
+.nav a:hover{color:var(--ink); background:var(--panel)}
+.nav a.on{color:var(--gold); border-left-color:var(--gold); background:var(--panel)}
+.nav .grp{font-size:11px; color:#56544d; text-transform:uppercase; letter-spacing:.1em; margin:14px 0 4px 10px}
+
+.main{flex:1; min-width:0; padding:0 6vw 140px}
+section{padding:64px 0 12px; border-bottom:1px solid transparent; max-width:880px; margin:0 auto;
+  opacity:0; transform:translateY(26px); transition:opacity .6s ease, transform .6s ease}
+section.show{opacity:1; transform:none}
+
+/* hero */
+.hero{padding-top:78px}
+.badge{display:inline-block; font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--gold); border:1px solid var(--gold); border-radius:30px; padding:5px 13px}
+.hero h1{font-size:clamp(34px,6vw,62px); margin:18px 0 10px; font-weight:800}
+.hero h1 em{font-style:normal; color:var(--gold)}
+.hero .lede{font-size:21px; color:var(--mut); max-width:680px}
+.meta{display:flex; gap:10px; flex-wrap:wrap; margin-top:22px}
+.meta span{font-family:"JetBrains Mono",monospace; font-size:12px; color:var(--mut);
+  background:var(--panel); border:1px solid var(--line); padding:6px 11px; border-radius:8px}
+
+.kic{font-family:"JetBrains Mono",monospace; font-size:13px; color:var(--gold); letter-spacing:.08em}
+h2.sec{font-size:clamp(26px,4vw,40px); margin:6px 0 8px}
+h3{font-size:24px; margin:34px 0 10px; color:var(--ink)}
+h4{font-size:18px; margin:22px 0 8px; color:var(--teal); font-family:"Syne",sans-serif}
+p{margin:12px 0}
+.mut{color:var(--mut)}
+ul,ol{padding-left:22px} li{margin:7px 0}
+
+/* boxes */
+.box{border-radius:12px; padding:16px 18px; margin:18px 0; background:var(--panel)}
+.annot{border-left:4px solid var(--teal); background:linear-gradient(90deg,rgba(78,201,176,.08),transparent)}
+.quote{border-left:4px solid var(--sky); background:linear-gradient(90deg,rgba(125,211,252,.08),transparent); font-style:italic}
+.quote .who{display:block; font-style:normal; font-family:"JetBrains Mono",monospace; font-size:12px; color:var(--sky); margin-top:8px; letter-spacing:.04em}
+.why{position:relative; border:1px solid transparent; border-radius:12px;
+  background:linear-gradient(var(--panel),var(--panel)) padding-box,
+  linear-gradient(120deg,var(--gold),rgba(212,168,83,.15)) border-box}
+.why h4{color:var(--gold)}
+.research{border-left:4px solid var(--lime); background:linear-gradient(90deg,rgba(163,230,53,.07),transparent)}
+.research .tag{display:inline-block; font-family:"JetBrains Mono",monospace; font-size:10px; letter-spacing:.12em;
+  text-transform:uppercase; color:#0c0c0f; background:var(--lime); padding:3px 8px; border-radius:5px; margin-bottom:8px}
+.exam{border:1px solid var(--rose); border-radius:12px; background:rgba(248,113,113,.06)}
+.exam .tag{display:inline-block; font-family:"JetBrains Mono",monospace; font-size:10px; letter-spacing:.12em;
+  text-transform:uppercase; color:#0c0c0f; background:var(--rose); padding:3px 8px; border-radius:5px; margin-bottom:8px}
+.answer{border-left:4px solid var(--lime); background:rgba(163,230,53,.1); border-radius:8px; padding:12px 16px; margin:14px 0; font-family:"JetBrains Mono",monospace; font-size:14px; color:var(--lime)}
+.insight{border-left:3px solid var(--violet); padding:6px 14px; margin:12px 0; color:#d9c7f5; font-size:15px}
+.insight b{color:var(--violet)}
+.lab{display:inline-block; font-family:"JetBrains Mono",monospace; font-size:10px; color:var(--sky); border:1px solid var(--sky); border-radius:5px; padding:2px 7px; letter-spacing:.08em}
+
+/* formulas */
+.f-block{font-family:"JetBrains Mono",monospace; background:var(--panel2); border:1px solid var(--line);
+  border-radius:10px; padding:16px 18px; margin:16px 0; font-size:15px; overflow-x:auto; line-height:1.9}
+.f-block .lbl{display:block; color:var(--mut); font-size:11px; text-transform:uppercase; letter-spacing:.1em; margin-bottom:6px}
+.q{color:var(--gold)} .r{color:var(--rose)} .a{color:var(--teal)} .s{color:var(--sky)}
+.v{color:var(--violet)} .g{color:var(--lime)} .op{color:var(--mut)}
+
+/* pipeline */
+.pipe{counter-reset:p; margin:18px 0}
+.pipe .st{position:relative; padding:12px 14px 12px 52px; background:var(--panel); border:1px solid var(--line);
+  border-radius:10px; margin-bottom:10px}
+.pipe .st::before{counter-increment:p; content:counter(p); position:absolute; left:12px; top:12px;
+  width:28px; height:28px; border-radius:50%; background:var(--gold); color:#0c0c0f; font-family:"Syne";
+  font-weight:700; display:grid; place-items:center; font-size:14px}
+
+/* tabs */
+.tabs{display:flex; gap:8px; margin:20px 0 0; flex-wrap:wrap}
+.tabs button{font-family:"JetBrains Mono",monospace; font-size:12px; letter-spacing:.04em; cursor:pointer;
+  background:var(--panel); color:var(--mut); border:1px solid var(--line); border-radius:8px 8px 0 0; padding:9px 15px}
+.tabs button.on{color:var(--ink); border-bottom-color:transparent}
+.tabs button[data-d="e"].on{color:var(--lime); border-color:var(--lime)}
+.tabs button[data-d="m"].on{color:var(--gold); border-color:var(--gold)}
+.tabs button[data-d="c"].on{color:var(--rose); border-color:var(--rose)}
+.panel{display:none; border:1px solid var(--line); border-radius:0 10px 10px 10px; padding:18px; background:var(--panel)}
+.panel.on{display:block}
+.panel .qs{font-weight:500; color:var(--ink)}
+
+/* tables */
+table{border-collapse:collapse; width:100%; margin:16px 0; font-size:14px; font-family:"JetBrains Mono",monospace}
+th,td{border:1px solid var(--line); padding:8px 11px; text-align:left}
+th{background:var(--panel2); color:var(--gold); font-weight:500}
+tr:nth-child(even) td{background:rgba(255,255,255,.012)}
+
+/* code */
+pre{background:#0a0a0d; border:1px solid var(--line); border-radius:10px; padding:15px 16px; overflow-x:auto; font-size:13.5px; line-height:1.65}
+pre .c{color:#6a6a72} pre .k{color:var(--violet)} pre .fn{color:var(--sky)} pre .st{color:var(--lime)} pre .n{color:var(--gold)}
+
+/* interactive */
+.demo{border:1px solid var(--gold); border-radius:14px; padding:20px; margin:22px 0; background:linear-gradient(180deg,rgba(212,168,83,.05),transparent)}
+.demo h4{color:var(--gold); margin-top:0}
+.ctl{display:flex; align-items:center; gap:12px; margin:12px 0; flex-wrap:wrap}
+.ctl label{font-family:"JetBrains Mono",monospace; font-size:13px; color:var(--mut); min-width:120px}
+input[type=range]{accent-color:var(--gold); flex:1; min-width:140px}
+.val{font-family:"JetBrains Mono",monospace; color:var(--gold); min-width:54px; text-align:right}
+button.act{font-family:"JetBrains Mono",monospace; font-size:13px; cursor:pointer; background:var(--gold); color:#0c0c0f;
+  border:none; border-radius:8px; padding:8px 14px; font-weight:700}
+button.act:hover{filter:brightness(1.1)}
+button.gho{background:transparent; color:var(--ink); border:1px solid var(--line)}
+.donut{width:150px; height:150px; border-radius:50%; flex:0 0 150px}
+.dwrap{display:flex; gap:22px; align-items:center; flex-wrap:wrap}
+.leg{font-family:"JetBrains Mono",monospace; font-size:13px}
+.leg div{margin:5px 0} .sw{display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:7px; vertical-align:middle}
+.bar{height:14px; background:var(--panel2); border-radius:7px; overflow:hidden; margin-top:3px}
+.bar > i{display:block; height:100%; background:var(--teal); transition:width .25s}
+.grid2{display:grid; grid-template-columns:repeat(2,1fr); gap:8px; max-width:260px; margin:12px 0}
+.cell{border:1px solid var(--line); border-radius:8px; padding:14px; text-align:center; font-family:"JetBrains Mono",monospace; background:var(--panel2)}
+.cell.hot{border-color:var(--gold); color:var(--gold)}
+.cell.cur{box-shadow:0 0 0 2px var(--teal)}
+
+/* quiz */
+.qz{border:1px solid var(--line); border-radius:12px; padding:18px; margin:16px 0; background:var(--panel)}
+.qz .head{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:6px}
+.dif{font-family:"JetBrains Mono",monospace; font-size:10px; padding:3px 8px; border-radius:5px; letter-spacing:.08em; text-transform:uppercase}
+.dif.e{background:var(--lime); color:#0c0c0f} .dif.m{background:var(--gold); color:#0c0c0f} .dif.h{background:var(--rose); color:#0c0c0f}
+.tg{font-family:"JetBrains Mono",monospace; font-size:10px; color:var(--mut); border:1px solid var(--line); padding:3px 8px; border-radius:5px}
+.opt{display:block; width:100%; text-align:left; margin:6px 0; padding:10px 13px; border:1px solid var(--line);
+  background:var(--panel2); color:var(--ink); border-radius:8px; cursor:pointer; font-family:"Newsreader",serif; font-size:15px}
+.opt:hover{border-color:var(--mut)}
+.opt.right{border-color:var(--lime); background:rgba(163,230,53,.12)}
+.opt.wrong{border-color:var(--rose); background:rgba(248,113,113,.1)}
+.expl{display:none; margin-top:10px; padding:12px 14px; border-left:3px solid var(--violet); background:rgba(192,132,252,.07); border-radius:6px; font-size:15px}
+.expl.show{display:block}
+
+/* show/hide solution toggle */
+.solbtn{font-family:"JetBrains Mono",monospace; font-size:12px; letter-spacing:.04em; cursor:pointer;
+  background:transparent; color:var(--gold); border:1px solid var(--gold); border-radius:8px;
+  padding:7px 13px; margin:12px 0 2px; transition:background .15s}
+.solbtn:hover{background:rgba(212,168,83,.12)}
+.sol{display:none; margin-top:12px}
+.sol.show{display:block}
+
+/* scroll top */
+#top{position:fixed; right:26px; bottom:26px; width:46px; height:46px; border-radius:50%; background:var(--gold);
+  color:#0c0c0f; border:none; cursor:pointer; font-size:20px; display:none; z-index:30; box-shadow:0 6px 20px rgba(0,0,0,.4)}
+#top.show{display:block}
+
+@media(max-width:880px){
+  .side{display:none}
+  .main{padding:0 20px 120px}
+  .grid2{max-width:100%}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<!-- SIDEBAR -->
+<aside class="side">
+  <h2>DRL · Session 2</h2>
+  <p class="sub">Multi-Armed Bandits</p>
+  <div class="prog-wrap"><div id="prog"></div></div>
+  <nav class="nav" id="nav">
+    <a href="#hero">Overview</a>
+    <div class="grp">Core Topics</div>
+    <a href="#s1">01 · Reward vs Value</a>
+    <a href="#s2">02 · Explore vs Exploit</a>
+    <a href="#s3">03 · K-Armed Bandit</a>
+    <a href="#s4">04 · Greedy Selection</a>
+    <a href="#s5">05 · ε-Greedy Selection</a>
+    <a href="#s6">06 · UCB Selection</a>
+    <a href="#s7">07 · Optimistic Init Values</a>
+    <a href="#s8">08 · Policy / Softmax / Gradient</a>
+    <div class="grp">Interactive</div>
+    <a href="#lab">Live Demos</a>
+    <div class="grp">Deep Dives</div>
+    <a href="#deep">Conceptual Deep Dives</a>
+    <a href="#quiz">Exam Quiz</a>
+    <div class="grp">Exam Prep</div>
+    <a href="#exam-past">Past Exam Qs (Bandit)</a>
+    <a href="#exam-sample">Sample Practice Qs</a>
+  </nav>
+</aside>
+
+<main class="main">
+
+<!-- HERO -->
+<section id="hero" class="hero">
+  <span class="badge">BITS Pilani WILP · AIMLCZG512 · S2-25</span>
+  <h1>The Core Dilemma of RL:<br><em>Explore</em> or <em>Exploit?</em></h1>
+  <p class="lede">A first-principles study guide built from Prof. Sangeetha Viswanathan's Session 2 lecture — reward vs value, the k-armed bandit, and the action-selection strategies every RL algorithm inherits.</p>
+  <div class="meta">
+    <span>Prof. Sangeetha Viswanathan</span>
+    <span>Recording · 2h 07m · May 2 2026</span>
+    <span>Slides: Multi-armed Bandits deck (45 pp.)</span>
+    <span>Source: full transcript + slide deck</span>
+  </div>
+  <div class="box annot" style="margin-top:26px">
+    <b>How this maps to your exam.</b> Mid-semester test is <b>closed book</b>; Prof. flagged that this session is <b>foundational</b> and that the ε-greedy probability derivation, the greedy-vs-explore tradeoff, and the action-value estimate are exactly the kind of thing she returns to. Each section ends with a rose <b>Exam Alert</b> box and a tabbed worked-example set (Easy / Medium / Complex). Look for the <span class="lab">LAB</span> badge — those topics appear in your Python ε-greedy bandit webinar notebook.
+  </div>
+</section>
+
+<!-- ============ 01 REWARD vs VALUE ============ -->
+<section id="s1">
+  <div class="kic">// 01</div>
+  <h2 class="sec">Reward vs Value Function</h2>
+
+  <h3>Intuition first</h3>
+  <p>A <b>reward</b> is the slap or the high-five you get <i>right now</i>, the instant you act. A <b>value function</b> is the wise friend whispering "yeah that felt good, but where does it <i>lead</i>?" Reward is immediate and local; value is long-term and forward-looking. The whole reason value exists is that immediate reward is often <b>useless for deciding</b>.</p>
+
+  <p>Prof.'s chess example makes this unforgettable. In her reward design, <b>win = +1, loss = −1, every other move = 0</b>. So mid-game you are in state S1 and can play move A (→ S2) or move B (→ S3). Both give reward <b>0</b>. The reward signal is flat — it cannot tell the two moves apart. You are blind.</p>
+
+  <p>Value functions break the tie by encoding the <i>future</i>. The value of S2 is <b>7</b>; the value of S3 is <b>3</b>. Why? Following A leads, after ~5 moves, to a <b>checkmate on your opponent</b>. Following B loses your <b>queen after 3 moves</b>. Fewer moves to a payoff (B) looks tempting, but value sees past that: losing the queen wrecks the game. So even though both immediate rewards are 0, value says <b>play A</b>.</p>
+
+  <div class="quote box">
+    "Reward is an immediate signal that you get. Value function is a long-term decision-making signal which will decide how good is it for you to be in a state and do a particular action… Value functions will capture future reward directions also."
+    <span class="who">— Prof. Sangeetha — Transcript (≈ 23:41 – 24:00)</span>
+  </div>
+
+  <h3>The two value functions</h3>
+  <p>Prof. introduced both flavours (full math deferred to Session 3):</p>
+  <ul>
+    <li><b>State value</b> <span class="f"><span class="v">V(s)</span></span> — how good is it to <i>be</i> in state s.</li>
+    <li><b>Action value</b> <span class="f"><span class="q">Q(s,a)</span></span> — how good is it to <i>take action a</i> while in state s.</li>
+  </ul>
+  <p>Her key practical note: when you <b>cannot model the environment</b> (e.g. an autonomous vehicle — you can't write down clean transition dynamics), you skip trying to value states and <b>work directly with Q(s,a)</b>, because Q is "directly evaluating your policy." This is the seed of <b>model-free RL</b>.</p>
+
+  <h4>Formal definitions (research-enriched)</h4>
+  <div class="f-block">
+    <span class="lbl">State value — expected discounted return</span>
+    <span class="v">V<sub>π</sub>(s)</span> <span class="op">=</span> <span class="a">𝔼<sub>π</sub></span><span class="op">[</span> <span class="r">Σ<sub>t</sub> γ<sup>t</sup> R<sub>t</sub></span> <span class="op">|</span> S<sub>0</sub><span class="op">=</span>s <span class="op">]</span>
+  </div>
+  <div class="f-block">
+    <span class="lbl">Action value — expected return after taking a</span>
+    <span class="q">Q<sub>π</sub>(s,a)</span> <span class="op">=</span> <span class="a">𝔼<sub>π</sub></span><span class="op">[</span> <span class="r">Σ<sub>t</sub> γ<sup>t</sup> R<sub>t</sub></span> <span class="op">|</span> S<sub>0</sub><span class="op">=</span>s, A<sub>0</sub><span class="op">=</span>a <span class="op">]</span>
+  </div>
+  <div class="f-block">
+    <span class="lbl">Link under the optimal policy</span>
+    <span class="v">V<sub>*</sub>(s)</span> <span class="op">=</span> <span class="g">max<sub>a</sub></span> <span class="q">Q<sub>*</sub>(s,a)</span>
+  </div>
+  <p class="mut" style="font-size:14px"><b>Symbols:</b> <span class="f">γ</span> = discount factor (0–1, how much future matters) · <span class="f">R<sub>t</sub></span> = reward at step t · <span class="f">𝔼<sub>π</sub></span> = expectation under policy π. In Session 2 we set γ aside; the bandit is the special case with one state and no future.</p>
+
+  <div class="box why">
+    <h4>Why this matters</h4>
+    <p>Every modern value-based algorithm — <b>Q-learning, SARSA, DQN</b> — is built on Q(s,a). A Deep Q-Network is literally a neural net that approximates this same Q. When AlphaGo evaluated board positions, it was estimating a value function exactly like the chess "7 vs 3". Reward-only agents (no value) are short-sighted and fail at any task with delayed payoff: chess, trading, robotics, dialogue.</p>
+  </div>
+
+  <div class="box research">
+    <span class="tag">Research Enhanced</span>
+    <p><b>Bellman's insight (1957), still the backbone in 2024–26 deep RL.</b> Value functions are useful precisely because they obey a recursive consistency: <span class="f">V(s) = 𝔼[R + γV(s′)]</span> (the Bellman equation, full treatment next session). This recursion is what lets DQN, and its modern descendants (e.g. distributional and double-Q variants used in current Atari/robotics benchmarks), bootstrap a long-horizon value from one-step samples. The chess "7" is a stand-in for this recursive lookahead. <span class="mut">— Sutton &amp; Barto, <i>RL: An Introduction</i> 2nd ed., Ch.3; Bellman 1957.</span></p>
+  </div>
+
+  <!-- examples -->
+  <h3>Worked examples</h3>
+  <div class="tabs" data-ex="ex1">
+    <button data-d="e" class="on" onclick="tab('ex1',0,this)">Easy</button>
+    <button data-d="m" onclick="tab('ex1',1,this)">Medium</button>
+    <button data-d="c" onclick="tab('ex1',2,this)">Complex</button>
+  </div>
+  <div class="panel on" id="ex1-0">
+    <p class="qs">Q. In the chess example, why does the <b>immediate reward</b> fail to choose between move A and move B?</p>
+    <ol><li>Both A and B are interior moves → reward = 0 for each.</li>
+    <li>Comparing 0 vs 0 gives no information.</li></ol>
+    <div class="answer">The immediate rewards are identical (0 = 0), so reward alone cannot rank the moves. Only the value function — which encodes the future checkmate (A) vs lost queen (B) — separates them.</div>
+    <div class="insight"><b>Key insight:</b> reward discriminates only when outcomes differ <i>now</i>. Value is mandatory whenever payoffs are delayed.</div>
+  </div>
+  <div class="panel" id="ex1-1">
+    <p class="qs">Q. Given V(S2)=7 and V(S3)=3 in state S1, which move does a value-greedy agent take, and what is the danger of using only "moves-to-payoff"?</p>
+    <ol><li>Value-greedy picks the higher value → V(S2)=7 → <b>move A</b>.</li>
+    <li>"Moves-to-payoff" would prefer B (3 moves &lt; 5 moves) — but that metric ignores <i>what</i> happens (losing the queen).</li></ol>
+    <div class="answer">Choose move A (value 7). Counting moves is a misleading shortcut; value already folds in the cost of losing the queen, so 3 &gt; 7 is wrong as a decision rule — use the value, not the move count.</div>
+    <div class="insight"><b>Key insight:</b> a student in the lecture made exactly this "fewer moves is better" mistake — value already accounts for consequences, so trust the value number.</div>
+  </div>
+  <div class="panel" id="ex1-2">
+    <p class="qs">Q. The environment is unmodellable (autonomous driving). Explain why we prefer Q(s,a) over V(s), and what "model-free" buys us.</p>
+    <ol><li>To act from V(s) you must know transitions P(s′|s,a) to look one step ahead — that <b>is</b> a model.</li>
+    <li>Q(s,a) bakes the action directly into the value, so the greedy policy is just <span class="f">argmax<sub>a</sub> Q(s,a)</span> — no model needed.</li>
+    <li>For driving, dynamics (other cars, friction, sensor noise) can't be cleanly modelled, so Q learned from experience is the only practical route.</li></ol>
+    <div class="answer">Q(s,a) lets you choose actions without environment dynamics → "model-free" RL. This is exactly why DQN (which outputs Q for each action) dominates settings where a model is unavailable.</div>
+    <div class="insight"><b>Key insight:</b> "model-free" = learn values/policy from raw interaction, never needing P(s′|s,a). Prof. tied this directly to the autonomous-vehicle case.</div>
+  </div>
+
+  <div class="box exam">
+    <span class="tag">Exam Alert · closed book</span>
+    <p><b>Likely question:</b> "Differentiate reward and value function with an example" — reproduce the chess case (win+1/loss−1/else 0; V(S2)=7 via future checkmate vs V(S3)=3 via lost queen).</p>
+    <p><b>Most common mistake:</b> saying value = sum of rewards already received. Value = <i>expected future</i> return. Also: confusing "fewer moves to reward" with "higher value".</p>
+    <p><b>Exam-critical:</b> the V(s) vs Q(s,a) distinction and the model-free justification for Q. Prof. explicitly deferred the formula to Session 3 but expects the <i>intuition</i> now.</p>
+  </div>
+</section>
+
+<!-- ============ 02 EXPLORE vs EXPLOIT ============ -->
+<section id="s2">
+  <div class="kic">// 02</div>
+  <h2 class="sec">Exploration vs Exploitation</h2>
+
+  <h3>Intuition first</h3>
+  <p>This is <b>the</b> dilemma of RL. <b>Exploitation</b> = cash in on what you already know is good. <b>Exploration</b> = gamble on something unproven to <i>learn more</i>. Pure exploitation is a trap: you lock onto the first thing that looked good and never discover anything better. Pure exploration never settles and never collects the reward. Good agents do <b>both</b>, in balance.</p>
+
+  <p>Prof.'s restaurant story nails it: three new hotels open near you. You try all three; hotel 1 had great food day one. After that you go <b>only</b> to hotel 1 forever — that's pure greedy. But maybe hotels 2 and 3 were just having an off day (the regular chef was absent), or hotel 1's quality later drops. Because you never go back, <b>you never find out</b>. "Always sticking with a greedy choice will never give you the options to learn."</p>
+
+  <div class="quote box">
+    "How do we generally learn? In your Google Map, don't you look for other possible options, or you always go for only the route that Google Map tells? … You learn by mistakes. That leaving room for mistakes is your exploration."
+    <span class="who">— Prof. Sangeetha — Transcript (≈ 1:58:40 – 1:59:00)</span>
+  </div>
+
+  <h3>The tic-tac-toe value-table walkthrough</h3>
+  <p>Prof. used tic-tac-toe (a <b>zero-sum</b> game: one wins +1, other −1, sum 0) to show how an agent acts on a value table.</p>
+  <div class="pipe">
+    <div class="st"><b>Set up initial state values.</b> A balanced opening position gets value <b>0.5</b> (both players ~50% to win). A position where player A has already won = <b>1</b>; where B won = <b>0</b> (values are from A's perspective).</div>
+    <div class="st"><b>Each player keeps their own table.</b> Value depends on whose turn and whose strategy, so in game-playing RL every player maintains a separate "record book" of state values.</div>
+    <div class="st"><b>Make moves to learn.</b> From a given state B you have, say, 4 actions leading to states valued <b>0.3, 0.2, 0.7, 0.6</b>.</div>
+    <div class="st"><b>Greedy move (exploit).</b> Pick the action landing on the highest value → <b>0.7</b>. "Greedy is nothing but, given the situation, I am choosing the most valued thing."</div>
+    <div class="st"><b>Explore.</b> Later from state D (actions valued 0.2, 0.4, 0.6, <b>0.7</b>), deliberately pick a <i>non-greedy</i> action (anything other than 0.7) to gather information. That is exploration.</div>
+  </div>
+
+  <div class="box annot">
+    <b>Slide / transcript note — "each player maintains their own value table."</b> Prof. stressed this is specific to multi-agent / game settings (covered later in the course): "every player will have their own record book." For a single-agent grid world, the one learning agent keeps one table.
+  </div>
+
+  <h3>How the learning update works — Temporal Difference (intuition)</h3>
+  <p>Prof. drew a direct parallel to supervised learning. In ML you compute an error (target − prediction), scale it by a learning rate, and add it to the current weight. RL does the <b>same thing across time steps</b> — hence <b>Temporal Difference (TD)</b>: you learn from the difference between successive time steps S1 → S2.</p>
+
+  <div class="f-block">
+    <span class="lbl">The universal learning one-liner (Prof.'s words)</span>
+    <span class="v">New estimate</span> <span class="op">=</span> <span class="v">Old estimate</span> <span class="op">+</span> <span class="a">α</span> <span class="op">×</span> <span class="r">error</span>
+  </div>
+  <div class="f-block">
+    <span class="lbl">TD update for a state value (research-enriched, full form in Session 3)</span>
+    <span class="v">V(s)</span> <span class="op">←</span> <span class="v">V(s)</span> <span class="op">+</span> <span class="a">α</span> <span class="op">[</span> <span class="r">R + γV(s′) − V(s)</span> <span class="op">]</span>
+    <br><span class="op">       ↑ the bracket is the </span><span class="r">TD error</span><span class="op"> (a prediction error)</span>
+  </div>
+
+  <h4>The learning rate α — three cases (from the lecture)</h4>
+  <table>
+    <tr><th>α value</th><th>Effect</th><th>Prof.'s framing</th></tr>
+    <tr><td class="a">α = 0</td><td>No update ever; weights frozen.</td><td>"Will not converge, you will not learn anything at all."</td></tr>
+    <tr><td class="a">α = const</td><td>Learn a fixed fraction of each error.</td><td>Standard hyperparameter (e.g. tuned, like in ML).</td></tr>
+    <tr><td class="a">α ↓ slowly</td><td>Adaptively reduced, never 0.</td><td>"Tuning adaptively based on the performance" — adaptive learning.</td></tr>
+  </table>
+
+  <div class="box why">
+    <h4>Why this matters <span class="lab">LAB</span></h4>
+    <p>The same explore/exploit knob runs through all of RL: <b>ε-greedy is still the default exploration in DQN</b> (2015) and remains in production systems today. The TD update you just saw is the literal core of the DQN loss (the network is trained to minimise the squared TD error). The learning rate α becomes the optimiser learning rate (Adam / RMSprop) in deep RL. Recommenders (YouTube, Netflix), ad auctions (Google), and A/B testing platforms all explicitly tune an explore/exploit balance.</p>
+  </div>
+
+  <div class="box research">
+    <span class="tag">Research Enhanced</span>
+    <p><b>Why blind greedy fails — regret.</b> Formally, cumulative <b>regret</b> <span class="f">R<sub>T</sub> = T·μ* − Σ<sub>t</sub> μ<sub>A<sub>t</sub></sub></span> measures total reward lost vs always playing the best arm. A purely greedy agent can suffer <b>linear regret</b> (Θ(T)) — if its first pull of the truly-best arm is unlucky, it abandons it forever and bleeds reward every step. Well-designed explorers (ε-greedy with decay, UCB) achieve <b>sublinear, O(log T)</b> regret. <span class="mut">— Auer, Cesa-Bianchi &amp; Fischer, "Finite-time Analysis of the Multiarmed Bandit," <i>Machine Learning</i> 2002; Lattimore &amp; Szepesvári, <i>Bandit Algorithms</i> 2020.</span></p>
+  </div>
+
+  <h3>Worked examples</h3>
+  <div class="tabs" data-ex="ex2">
+    <button data-d="e" class="on" onclick="tab('ex2',0,this)">Easy</button>
+    <button data-d="m" onclick="tab('ex2',1,this)">Medium</button>
+    <button data-d="c" onclick="tab('ex2',2,this)">Complex</button>
+  </div>
+  <div class="panel on" id="ex2-0">
+    <p class="qs">Q. From state D the action values are 0.2, 0.4, 0.6, 0.7. Which action is greedy, and which would count as exploration?</p>
+    <div class="answer">Greedy = the action leading to <b>0.7</b> (the max). Exploration = picking <b>any other</b> action (0.2, 0.4, or 0.6).</div>
+    <div class="insight"><b>Key insight:</b> "greedy" always means argmax of current estimates; "explore" = anything that is not that argmax.</div>
+  </div>
+  <div class="panel" id="ex2-1">
+    <p class="qs">Q. Apply one TD update. V(s)=0.5, V(s′)=0.8, R=0.2, α=0.1, γ=1. Find the new V(s).</p>
+    <ol>
+      <li>TD error = R + γV(s′) − V(s) = 0.2 + 1·0.8 − 0.5 = <b>0.5</b>.</li>
+      <li>V(s) ← 0.5 + 0.1 × 0.5 = 0.5 + 0.05.</li>
+    </ol>
+    <div class="answer">New V(s) = <b>0.55</b>. (TD error 0.5, scaled by α=0.1.)</div>
+    <div class="insight"><b>Key insight:</b> the bracket is exactly an ML prediction error; α controls how much of it you absorb this step.</div>
+  </div>
+  <div class="panel" id="ex2-2">
+    <p class="qs">Q. Explain, using the hotel story, why a purely greedy agent can incur <b>linear</b> regret, and how exploration fixes it.</p>
+    <ol>
+      <li>Suppose hotel 2 is truly best but had an off-day on your single visit → its estimate is unfairly low.</li>
+      <li>Greedy locks onto hotel 1 and <b>never re-samples</b> hotel 2, so every future day loses (μ* − μ₁) reward.</li>
+      <li>Over T days that lost gap accumulates as Θ(T) → linear regret.</li>
+      <li>Exploration re-samples hotel 2 occasionally; its estimate corrects, the agent switches, and per-step loss → 0, giving sublinear regret.</li>
+    </ol>
+    <div class="answer">Greedy's refusal to re-sample turns one unlucky observation into permanent loss (linear regret). Exploration guarantees every action is tried infinitely often, so estimates converge to truth and the agent eventually plays optimally.</div>
+    <div class="insight"><b>Key insight:</b> exploration is insurance against early bad luck — its small short-term cost prevents catastrophic long-term lock-in.</div>
+  </div>
+
+  <div class="box exam">
+    <span class="tag">Exam Alert · closed book</span>
+    <p><b>Likely question:</b> define exploration vs exploitation; identify greedy vs non-greedy from a value table; one-step TD update calculation.</p>
+    <p><b>Common mistakes:</b> (1) thinking exploration <i>excludes</i> the greedy action — it doesn't (next section). (2) Forgetting that α=0 means no learning. (3) Saying TD needs a full episode — TD updates every step (that's the point).</p>
+    <p><b>Exam-critical:</b> the "New = Old + α·error" one-liner and the three α cases. Prof. literally quizzed the class on α=0.</p>
+  </div>
+</section>
+
+<!-- ============ 03 K-ARMED BANDIT ============ -->
+<section id="s3">
+  <div class="kic">// 03</div>
+  <h2 class="sec">K-Armed Bandit &amp; Action-Value Estimates</h2>
+
+  <h3>Intuition first</h3>
+  <p>Now Prof. <b>strips RL down to one state</b>. "Let's just assume the environment is a single-state environment — there is no state change happening." You sit in front of <b>K levers</b> (a casino row of slot machines). Pull one → get a reward → you're in the same situation again. No future to plan, no sequence. The <i>only</i> question: <b>which of the K actions has the highest payoff, and how do I find it?</b></p>
+
+  <p>The name: a slot machine is a "one-armed bandit" (one lever, it robs you). Put K of them together → <b>k-armed bandit</b>. A casino with 15 machines = a 15-armed bandit; with 9 machines = 9-armed. Sutton &amp; Barto use this image for the abstract problem "pick the best of K actions."</p>
+
+  <div class="quote box">
+    "I'm narrowing down the problem… there's no state at all because it's only one state. All the problem I have is N actions, and from those N actions I have to choose one which will give me maximum reward."
+    <span class="who">— Prof. Sangeetha — Transcript (≈ 57:30 – 58:30)</span>
+  </div>
+
+  <h3>The problem, precisely</h3>
+  <ul>
+    <li>Repeatedly choose one of <b>K</b> actions.</li>
+    <li>Each choice returns a numeric reward from a <b>stationary probability distribution</b> that depends on the action.</li>
+    <li><b>Objective:</b> maximise <b>expected total reward</b> over some time period (e.g. "you get 10 pulls — take home the most money").</li>
+    <li><b>One lever at a time</b> (T1 pull lever 1, T2 lever 2, …), not simultaneously.</li>
+  </ul>
+
+  <div class="box annot">
+    <b>Stationary ≠ constant (Prof. drilled this).</b> Stationary means the reward <i>distribution</i> stays fixed — e.g. a machine always pays somewhere in the range 10–100. The actual number each pull still varies. If the casino owner changed the range weekly (10–100, then 200–300, then 300–500) it would be <b>non-stationary</b> — and you could never pin down an arm's true value. "My reward is not constant. I'm telling the reward distribution is stationary. There's a difference."
+  </div>
+
+  <h3>Action-value estimate Q(a) = the sample average</h3>
+  <p>The true value of an action, <span class="f"><span class="q">q*(a)</span></span>, is the expected reward for pulling it — but it's <b>hidden</b>. We estimate it by averaging the rewards we've actually seen from that action:</p>
+
+  <div class="f-block">
+    <span class="lbl">Sample-average action-value estimate</span>
+    <span class="q">Q<sub>t</sub>(a)</span> <span class="op">=</span> <span class="op">(</span><span class="r">sum of rewards received when a was taken</span><span class="op">)</span> <span class="op">/</span> <span class="s">(number of times a was taken)</span>
+    <br><span class="q">Q<sub>t</sub>(a)</span> <span class="op">=</span> <span class="op">[</span> <span class="r">Σ<sub>i</sub> R<sub>i</sub> · 𝟙(A<sub>i</sub>=a)</span> <span class="op">]</span> <span class="op">/</span> <span class="op">[</span> <span class="s">Σ<sub>i</sub> 𝟙(A<sub>i</sub>=a)</span> <span class="op">]</span>
+  </div>
+  <div class="f-block">
+    <span class="lbl">True (unknown) value we hope to converge to</span>
+    <span class="g">q*(a)</span> <span class="op">=</span> <span class="a">𝔼</span><span class="op">[</span> R<sub>t</sub> <span class="op">|</span> A<sub>t</sub><span class="op">=</span>a <span class="op">]</span>
+  </div>
+
+  <p><b>Prof.'s live numerical example</b> (4 slot machines, the reward each time step):</p>
+  <table>
+    <tr><th>Action</th><th>Rewards observed</th><th>Times taken</th><th>Q(a) = mean</th></tr>
+    <tr><td>A1</td><td>2</td><td>1</td><td>2 / 1 = <b>2</b></td></tr>
+    <tr><td>A2</td><td>3, 3</td><td>2</td><td>6 / 2 = <b>3</b></td></tr>
+    <tr><td>A3</td><td>1</td><td>1</td><td>1 / 1 = <b>1</b></td></tr>
+    <tr><td>A4</td><td>1</td><td>1</td><td>1 / 1 = <b>1</b></td></tr>
+  </table>
+  <p class="mut" style="font-size:14px">For the 6th play, A2 has the highest estimate (3) → a greedy agent pulls A2. <i>(In the lecture Prof. first mis-stated A2 as 2.5 assuming a single 3, then corrected it to 3 once both rewards of 3 were counted — divide only by the times <b>that</b> action was taken.)</i></p>
+
+  <div class="quote box">
+    "We are doing this averaging process in the hope that at some time we might land on the true value of the action… we have certain laws in mathematics which tell you keep on doing a particular action and at one point you might land on the actual value."
+    <span class="who">— Prof. Sangeetha — Transcript (≈ 1:23:00) [the Law of Large Numbers]</span>
+  </div>
+
+  <h4>Why average a noisy signal? (a student's challenge)</h4>
+  <p>A student objected: averaging makes A2 look like 2.5/3 instead of its peak 3 — isn't the average a <b>noisy</b> estimate that could mislead you? Prof.'s answer: in the real world reward is noisy, the future is unknown, and you don't know how much past to trust — and under all that uncertainty, <b>the mean is the proven best estimate</b>. You must also try each action <b>at least once</b>, or its Q stays 0 forever and you'll never know it.</p>
+
+  <div class="box why">
+    <h4>Why this matters <span class="lab">LAB</span></h4>
+    <p>The bandit is the <b>hydrogen atom of RL</b>: simplest setting that still contains the explore/exploit tension. It's not a toy — it's deployed daily: <b>online ad selection</b> (each ad = an arm, click = reward), <b>news/article recommendation</b> (contextual bandits power many feeds), <b>clinical trial</b> arm allocation, and <b>A/B testing</b> (a bandit reallocates traffic to winners mid-test instead of splitting evenly to the end). Your webinar implements exactly this in Python.</p>
+  </div>
+
+  <div class="box research">
+    <span class="tag">Research Enhanced</span>
+    <p><b>Sublinear regret is achievable, and bandits power real systems.</b> The required reading — Bouneffouf &amp; Rish, <i>"A Survey on Practical Applications of Multi-Armed and Contextual Bandits"</i> (arXiv:1904.10040, 2019) — documents deployments across recommendation, healthcare, finance, and dialogue. Theoretically, the best arm can be identified with regret growing only as <b>O(log T)</b>, far better than the linear regret of naive greedy. <span class="mut">— Bouneffouf &amp; Rish 2019; Lai &amp; Robbins 1985 (the log-T lower bound).</span></p>
+  </div>
+
+  <h3>Worked examples</h3>
+  <div class="tabs" data-ex="ex3">
+    <button data-d="e" class="on" onclick="tab('ex3',0,this)">Easy</button>
+    <button data-d="m" onclick="tab('ex3',1,this)">Medium</button>
+    <button data-d="c" onclick="tab('ex3',2,this)">Complex</button>
+  </div>
+  <div class="panel on" id="ex3-0">
+    <p class="qs">Q. Action A2 was pulled twice, both times giving reward 3. What is Q(A2)?</p>
+    <div class="answer">Q(A2) = (3 + 3) / 2 = <b>3</b>. (Sum of A2's rewards ÷ number of times A2 was taken — only A2's data.)</div>
+    <div class="insight"><b>Key insight:</b> never divide by total plays — divide by the count for <i>that specific action</i>.</div>
+  </div>
+  <div class="panel" id="ex3-1">
+    <p class="qs">Q. Reward history — A1: [2]; A2: [3,3]; A3: [1]; A4: [1]. Compute all Q estimates and state the greedy action for step 6.</p>
+    <ol>
+      <li>Q(A1)=2/1=2; Q(A2)=6/2=3; Q(A3)=1/1=1; Q(A4)=1/1=1.</li>
+      <li>argmax = A2 (estimate 3).</li>
+    </ol>
+    <div class="answer">Q = {A1:2, A2:3, A3:1, A4:1}; greedy action = <b>A2</b>.</div>
+    <div class="insight"><b>Key insight:</b> greedy reads straight off the estimate table — no recomputation of distributions needed.</div>
+  </div>
+  <div class="panel" id="ex3-2">
+    <p class="qs">Q. A casino owner resets each machine's reward range every week (10–100, then 200–300…). Explain why plain sample-averaging breaks, and what property is being violated.</p>
+    <ol>
+      <li>Sample-average weights <b>all</b> past rewards equally, including stale ones from old ranges.</li>
+      <li>The estimate is dragged toward an outdated mean and lags reality.</li>
+      <li>The violated assumption is <b>stationarity</b>: q*(a) is no longer fixed, so "converge to the true value" is meaningless — there's a moving target.</li>
+      <li>Fix (Section 5 deep-dive): use a <b>constant step-size α</b> so recent rewards dominate.</li>
+    </ol>
+    <div class="answer">Equal-weight averaging assumes a fixed distribution; under non-stationarity it converges to nothing useful. You must down-weight old data (constant-α / recency weighting).</div>
+    <div class="insight"><b>Key insight:</b> "stationary ≠ constant" is the exact hinge here — the range moving is what kills the average.</div>
+  </div>
+
+  <div class="box exam">
+    <span class="tag">Exam Alert · closed book</span>
+    <p><b>Likely question:</b> compute Q(a) from a reward history (e.g. A:[1,2,3,4] → Q=2.5); state why each action must be tried ≥ once; define stationary vs non-stationary.</p>
+    <p><b>Common mistakes:</b> dividing by total time steps instead of per-action count; saying stationary means constant reward; forgetting an untried action stays at Q=0.</p>
+    <p><b>Exam-critical:</b> the Q(a) formula, the "single state" framing, and the stationary-distribution caveat (Prof. spent ~15 minutes on it).</p>
+  </div>
+</section>
+
+<!-- ============ 04 GREEDY ============ -->
+<section id="s4">
+  <div class="kic">// 04</div>
+  <h2 class="sec">Greedy Action Selection</h2>
+
+  <h3>Intuition first</h3>
+  <p>Greedy is the simplest possible policy: <b>always pull the lever with the highest current estimate.</b> No second-guessing. It's Arjun the new employee who, after trying all 10 office food stalls once, eats biryani every single day because biryani scored best on day one.</p>
+
+  <div class="f-block">
+    <span class="lbl">Greedy action selection</span>
+    <span class="s">A<sub>t</sub></span> <span class="op">=</span> <span class="g">argmax<sub>a</sub></span> <span class="q">Q<sub>t</sub>(a)</span>
+  </div>
+
+  <div class="pipe">
+    <div class="st"><b>Warm-up:</b> try every action at least once (e.g. 4 actions → first 4 steps pull each once) so no estimate is stuck at 0.</div>
+    <div class="st"><b>From then on:</b> compute Q(a) for all actions, pick the argmax, pull it. Repeat.</div>
+    <div class="st"><b>The flaw:</b> one unlucky early sample of a good action permanently buries it. Arjun's noodles scored low only because the regular chef was on leave that day — greedy will never give noodles another chance.</div>
+  </div>
+
+  <div class="quote box">
+    "On day two the chef in the noodle stall was on leave… so you gave a low rating for noodles. But that doesn't mean the noodle stall is not as good as biryani. If you go with a greedy action choice, you might give away certain good actions because of always going behind the greedy."
+    <span class="who">— Prof. Sangeetha — Transcript (≈ 1:30:45 – 1:31:20)</span>
+  </div>
+
+  <div class="box annot">
+    <b>"It's a never-ending loop."</b> A student noted greedy can loop forever on a sub-optimal arm. Prof. agreed — and that's the cue for ε-greedy (next) and UCB (next session): "How to come out of this loop is by going for ε-greedy action selection, or… UCB."
+  </div>
+
+  <div class="box why">
+    <h4>Why this matters</h4>
+    <p>Greedy isn't useless — it's what you do at <b>deployment</b>, once learning is finished (set ε=0 to "exploit only"). The danger is being greedy <i>while still learning</i>. In the famous 10-armed testbed, pure-greedy plateaus well below ε-greedy because it commits too early. Greedy + one trick — <b>optimistic initial values</b> (start every Q high so reality "disappoints" the agent into trying everything) — recovers some exploration for free on stationary problems.</p>
+  </div>
+
+  <div class="box research">
+    <span class="tag">Research Enhanced</span>
+    <p><b>Greedy's failure is provable.</b> On Sutton &amp; Barto's 10-armed testbed (2000 random 10-arm problems, rewards ~ N(q*(a),1)), pure greedy (ε=0) gets stuck around <b>~1.0 average reward / ~35% optimal-action rate</b>, while ε=0.1 climbs past it — empirical proof that <i>some</i> exploration beats none. The reason is the linear-regret lock-in from Section 2. <span class="mut">— Sutton &amp; Barto Ch.2, Fig 2.2.</span></p>
+  </div>
+
+  <h3>Worked examples</h3>
+  <div class="tabs" data-ex="ex4">
+    <button data-d="e" class="on" onclick="tab('ex4',0,this)">Easy</button>
+    <button data-d="m" onclick="tab('ex4',1,this)">Medium</button>
+    <button data-d="c" onclick="tab('ex4',2,this)">Complex</button>
+  </div>
+  <div class="panel on" id="ex4-0">
+    <p class="qs">Q. Estimates are Q = {A:1, B:−0.2, C:−0.5, D:−2}. Which action does pure greedy select?</p>
+    <div class="answer">Greedy selects <b>A</b> (the argmax, estimate 1). The negatives are ignored.</div>
+    <div class="insight"><b>Key insight:</b> greedy only ever looks at the single largest estimate.</div>
+  </div>
+  <div class="panel" id="ex4-1">
+    <p class="qs">Q. Arjun's averages after a month: biryani 4.4, dosa 4.1, noodles 3.0 (dragged down by one off-day). On day 31 he picks biryani. Is that greedy? What good option might he be missing, and why?</p>
+    <ol>
+      <li>Picking the max-average stall = <b>greedy / exploitation</b>. Yes.</li>
+      <li>Noodles' true quality may be high; its low average came from a one-off bad sample (sous-chef day).</li>
+      <li>Greedy never re-samples noodles, so the bad estimate is never corrected.</li>
+    </ol>
+    <div class="answer">Yes, day-31 biryani is a greedy choice. He may be permanently missing a genuinely good noodle stall whose average was unfairly depressed by a single unlucky visit.</div>
+    <div class="insight"><b>Key insight:</b> greedy trusts the estimate completely — it has no mechanism to suspect an estimate is unreliable (UCB later fixes this by tracking uncertainty).</div>
+  </div>
+  <div class="panel" id="ex4-2">
+    <p class="qs">Q. Argue why pure greedy can incur linear regret even when its initial estimates are unbiased, and name two fixes from the course.</p>
+    <ol>
+      <li>Estimates are unbiased <i>in expectation</i>, but any single run sees finite-sample noise.</li>
+      <li>If noise ranks a sub-optimal arm first early on, greedy commits to it and stops sampling the true best.</li>
+      <li>Without re-sampling, the per-step gap (μ* − μ_chosen) never closes → Σ over T steps = Θ(T) = linear regret.</li>
+      <li>Fixes: (a) <b>ε-greedy</b> — forces occasional random re-sampling; (b) <b>optimistic initial values</b> — inflate Q₁ so every arm gets pulled early; (also UCB, next session).</li>
+    </ol>
+    <div class="answer">Unbiasedness doesn't protect a single trajectory: one bad early draw + no re-sampling = permanent loss = linear regret. ε-greedy and optimistic initialisation both restore the re-sampling greedy lacks.</div>
+    <div class="insight"><b>Key insight:</b> the problem isn't bias, it's <i>commitment without re-checking</i>. Exploration = mandated re-checking.</div>
+  </div>
+
+  <div class="box exam">
+    <span class="tag">Exam Alert · closed book</span>
+    <p><b>Likely question:</b> write the greedy rule (argmax Q); identify the greedy action from a table; explain greedy's weakness with the noodle/biryani story.</p>
+    <p><b>Common mistakes:</b> forgetting the mandatory "try each once" warm-up; thinking greedy is always bad (it's correct <i>after</i> convergence / at deployment).</p>
+    <p><b>Exam-critical:</b> A<sub>t</sub> = argmax<sub>a</sub> Q<sub>t</sub>(a) and the lock-in failure mode.</p>
+  </div>
+</section>
+
+<!-- ============ 05 EPSILON-GREEDY ============ -->
+<section id="s5">
+  <div class="kic">// 05</div>
+  <h2 class="sec">ε-Greedy Action Selection</h2>
+
+  <h3>Intuition first</h3>
+  <p>ε-greedy is the simplest cure for greedy's lock-in: <b>behave greedily most of the time, but with a small probability ε, throw the rulebook away and pick a random action.</b> ε is a dial you set — ε = 0.2 means "explore 20% of the time, exploit 80%." It's Arjun thinking "biryani is my favourite, but let me give noodles another shot today, just in case that bad day was a fluke."</p>
+
+  <div class="f-block">
+    <span class="lbl">ε-greedy rule</span>
+    <span class="s">A<sub>t</sub></span> <span class="op">=</span> <span class="g">argmax<sub>a</sub> Q<sub>t</sub>(a)</span> <span class="op">with prob.</span> <span class="a">(1 − ε)</span> <span class="op">&nbsp;&nbsp;[exploit]</span>
+    <br><span class="s">A<sub>t</sub></span> <span class="op">=</span> <span class="r">random action (uniform over all K)</span> <span class="op">with prob.</span> <span class="a">ε</span> <span class="op">&nbsp;[explore]</span>
+  </div>
+
+  <pre><span class="c"># Prof.'s pseudocode (Slide 17)</span>
+<span class="n">epsilon</span> = 0.05   <span class="c"># small value to control exploration</span>
+<span class="k">def</span> <span class="fn">get_action</span>():
+    <span class="k">if</span> random.random() &gt; epsilon:
+        <span class="k">return</span> argmax_a(Q)        <span class="c"># exploit (greedy)</span>
+    <span class="k">else</span>:
+        <span class="k">return</span> random.choice(A)    <span class="c"># explore (ANY action, incl. greedy)</span></pre>
+
+  <div class="box annot">
+    <b>The crucial subtlety (a student caught it).</b> During the explore branch you choose <b>uniformly among all K actions — the greedy one is still in the pool.</b> So the greedy action is NOT removed during exploration. This is exactly what makes the Ex-1 probability come out to 0.75, not 0.5.
+  </div>
+
+  <h3>The headline derivation — Ex-1 (P that greedy is selected)</h3>
+  <p><b>Two actions, ε = 0.5. What is P(greedy action selected)?</b> Prof. solved this with the law of total probability:</p>
+
+  <div class="f-block">
+    <span class="lbl">P(greedy) via total probability</span>
+    P(greedy) <span class="op">=</span> P(greedy | <span class="a">exploit</span>)·P(<span class="a">exploit</span>) <span class="op">+</span> P(greedy | <span class="r">explore</span>)·P(<span class="r">explore</span>)
+    <br>           <span class="op">=</span> (<span class="g">1</span>)·(<span class="a">1−ε</span>) <span class="op">+</span> (<span class="g">1/K</span>)·(<span class="r">ε</span>)
+    <br>           <span class="op">=</span> (1)(<span class="a">0.5</span>) <span class="op">+</span> (<span class="g">0.5</span>)(<span class="r">0.5</span>)  <span class="op">=</span>  0.5 <span class="op">+</span> 0.25  <span class="op">=</span>  <span style="color:var(--lime)">0.75</span>
+  </div>
+  <p class="mut" style="font-size:14px">Exploit (prob 0.5) always picks greedy → contributes 0.5. Explore (prob 0.5) picks each of the 2 actions with prob ½, so it lands on greedy an extra 0.5×0.5 = 0.25. Total = <b>0.75</b>.</p>
+
+  <div class="f-block">
+    <span class="lbl">General formulas (K actions)</span>
+    P(greedy) <span class="op">=</span> <span class="a">(1 − ε)</span> <span class="op">+</span> <span class="g">ε/K</span>
+    <br>P(a specific non-greedy action) <span class="op">=</span> <span class="g">ε/K</span>
+  </div>
+
+  <div class="quote box">
+    "When I tell exploration, there is still my greedy action in the lot. You are giving the same chance to the greedy action that you give to a non-greedy action. So it is 0.25, which makes it 0.75 — the probability of choosing the greedy action."
+    <span class="who">— Prof. Sangeetha — Transcript (≈ 1:57:00 – 1:57:30)</span>
+  </div>
+
+  <div class="box why">
+    <h4>Why this matters <span class="lab">LAB</span></h4>
+    <p>ε-greedy is <b>still the workhorse explorer in deep RL</b> — the original DQN (Mnih et al., 2015) used ε-greedy with ε <b>annealed</b> from 1.0 → 0.1 over training. The pattern "explore lots early, exploit more later" is the decaying-ε schedule. Your webinar's Python bandit notebook implements exactly this loop: warm-up over all arms, then ε-greedy selection with incremental Q updates. Prof.: "clearly your epsilon is a hyperparameter, like your learning rate."</p>
+  </div>
+
+  <div class="box research">
+    <span class="tag">Research Enhanced</span>
+    <p><b>Fixed ε is rarely optimal — decay it.</b> A constant ε keeps wasting ε-fraction of pulls on random actions <i>forever</i>, capping performance. Schedules like <b>ε<sub>t</sub> = min(1, c·K/(d²t))</b> (Auer et al. 2002) or simple ε<sub>t</sub>=1/t achieve <b>logarithmic regret</b>, whereas fixed ε gives linear regret in the exploration term. Modern alternatives that explore <i>smartly</i> (by uncertainty, not coin-flip) — <b>UCB</b> and <b>Thompson sampling</b> — often dominate ε-greedy; both are on the course roadmap. <span class="mut">— Auer, Cesa-Bianchi &amp; Fischer 2002; Chapelle &amp; Li, "An Empirical Evaluation of Thompson Sampling," NeurIPS 2011.</span></p>
+  </div>
+
+  <h3>Worked examples</h3>
+  <div class="tabs" data-ex="ex5">
+    <button data-d="e" class="on" onclick="tab('ex5',0,this)">Easy</button>
+    <button data-d="m" onclick="tab('ex5',1,this)">Medium</button>
+    <button data-d="c" onclick="tab('ex5',2,this)">Complex</button>
+  </div>
+  <div class="panel on" id="ex5-0">
+    <p class="qs">Q. ε = 0.2, K = 4 actions. What is the probability the greedy action is selected?</p>
+    <ol><li>P(greedy) = (1−ε) + ε/K = 0.8 + 0.2/4 = 0.8 + 0.05.</li></ol>
+    <div class="answer">P(greedy) = <b>0.85</b>. (And each specific non-greedy action: ε/K = 0.05.)</div>
+    <div class="insight"><b>Key insight:</b> always add the ε/K "bonus" — exploration can re-pick greedy.</div>
+  </div>
+  <div class="panel" id="ex5-1">
+    <p class="qs">Q. ε = 0.1, K = 3. Find P(greedy) and P(each non-greedy). Verify they sum to 1.</p>
+    <ol>
+      <li>P(greedy) = (1−0.1) + 0.1/3 = 0.9 + 0.0333 = 0.9333.</li>
+      <li>P(each non-greedy) = 0.1/3 = 0.0333, and there are 2 of them.</li>
+      <li>Check: 0.9333 + 2(0.0333) = 0.9333 + 0.0667 = 1.000 ✓</li>
+    </ol>
+    <div class="answer">P(greedy) ≈ <b>0.933</b>; each non-greedy ≈ <b>0.033</b>; total = 1. ✓</div>
+    <div class="insight"><b>Key insight:</b> probabilities must sum to 1 — a fast way to catch arithmetic slips in the exam.</div>
+  </div>
+  <div class="panel" id="ex5-2">
+    <p class="qs">Q. Prove P(greedy) = (1−ε) + ε/K for K actions, then evaluate at K=2, ε=0.5. Also: what does ε=0 and ε=1 reduce the algorithm to?</p>
+    <ol>
+      <li>By total probability over the two branches: P(greedy)=P(greedy|exploit)P(exploit)+P(greedy|explore)P(explore).</li>
+      <li>P(greedy|exploit)=1 (exploit always picks greedy); P(exploit)=1−ε.</li>
+      <li>P(greedy|explore)=1/K (uniform over K, greedy is one of them); P(explore)=ε.</li>
+      <li>⇒ P(greedy) = 1·(1−ε) + (1/K)·ε = <b>(1−ε)+ε/K</b>.</li>
+      <li>K=2, ε=0.5: (0.5) + (0.5)(0.5) = <b>0.75</b>. ✓</li>
+      <li>ε=0 ⇒ pure <b>greedy</b> (never explores). ε=1 ⇒ pure <b>random</b> (uniform, never exploits).</li>
+    </ol>
+    <div class="answer">P(greedy) = (1−ε) + ε/K; at K=2, ε=0.5 → 0.75. ε=0 → fully greedy; ε=1 → fully random uniform selection.</div>
+    <div class="insight"><b>Key insight:</b> ε interpolates between two extremes — greedy (ε=0) and random (ε=1). The art is choosing/decaying ε between them.</div>
+  </div>
+
+  <div class="box exam">
+    <span class="tag">Exam Alert · closed book</span>
+    <p><b>Almost-certain question:</b> the ε-greedy probability calc — reproduce the K=2, ε=0.5 → 0.75 derivation, or a variant (K=4/5, different ε). Prof. promised to <b>repeat this exact problem at the start of next class</b> — that's a giant hint it's exam-bound.</p>
+    <p><b>Common mistakes:</b> answering 0.5 by forgetting the greedy action is still inside the explore pool; mixing up P(greedy) with P(a non-greedy); not knowing ε=0 / ε=1 limits.</p>
+    <p><b>Exam-critical:</b> the pseudocode, P(greedy)=(1−ε)+ε/K, and that ε is a tunable hyperparameter. <span class="lab">LAB</span> coded directly in the webinar.</p>
+  </div>
+</section>
+
+<!-- ============ 06 UCB ============ -->
+<section id="s6">
+  <div class="kic">// 06</div>
+  <h2 class="sec">Upper-Confidence-Bound (UCB) Action Selection</h2>
+
+  <h3>Intuition first</h3>
+  <p>ε-greedy has a blind spot: when it decides to explore, it explores <b>indiscriminately</b> — it flips a coin and picks <i>any</i> non-greedy action with equal probability, with no preference for the ones that are nearly-best or the ones it's genuinely unsure about. That's wasteful. <b>UCB</b> fixes this by exploring with <i>judgement</i>: it favours actions according to their <b>potential to actually be optimal</b>, weighing two things at once — how close the action's estimate is to the maximum, <b>and</b> how uncertain that estimate still is.</p>
+
+  <p>Think of it as <b>optimism in the face of uncertainty</b>. Arjun doesn't just re-roll a random stall; he reasons "I've only tried the noodle place once — my opinion of it is shaky, so it might secretly be great." UCB gives every action an <b>optimistic bonus</b> proportional to how little it's been sampled. An action you've barely touched looks tempting <i>because</i> you're uncertain; an action you've pulled a hundred times has a tiny bonus, because you already know it well.</p>
+
+  <div class="f-block">
+    <span class="lbl">UCB action selection</span>
+    <span class="s">A<sub>t</sub></span> <span class="op">=</span> <span class="g">argmax<sub>a</sub></span> <span class="op">[</span> <span class="q">Q<sub>t</sub>(a)</span> <span class="op">+</span> <span class="v">c</span> <span class="op">·</span> <span class="r">√( ln t / N<sub>t</sub>(a) )</span> <span class="op">]</span>
+  </div>
+
+  <h3>Term-by-term breakdown</h3>
+  <table>
+    <tr><th>Term</th><th>Name</th><th>Role</th></tr>
+    <tr><td class="q">Q<sub>t</sub>(a)</td><td>Action value at t</td><td>The current sample-average estimate — the "exploit" part (closeness to the max estimate).</td></tr>
+    <tr><td class="v">c</td><td>Confidence level</td><td>A tunable knob ( c &gt; 0 ) controlling how much exploration the bonus drives. Larger c → more exploration.</td></tr>
+    <tr><td class="r">√(ln t / N<sub>t</sub>(a))</td><td>Measure of uncertainty</td><td>The "explore" bonus. Grows when an action is rarely picked; shrinks the more it is sampled.</td></tr>
+  </table>
+
+  <p>The magic is in how the two counters <span class="f"><span class="r">t</span></span> (total steps so far) and <span class="f"><span class="r">N<sub>t</sub>(a)</span></span> (times <i>this</i> action was chosen) move:</p>
+  <ul>
+    <li><b>Each time action a is selected</b> → <span class="f">N<sub>t</sub>(a)</span> goes up → it sits in the <i>denominator</i>, so the uncertainty term <b>shrinks</b>. You become more confident about a, so its optimistic bonus fades.</li>
+    <li><b>Each time some other action is selected</b> → <span class="f">t</span> goes up but <span class="f">N<sub>t</sub>(a)</span> stays the same. Since <span class="f">t</span> sits in the <i>numerator</i> (inside ln), a's uncertainty term slowly <b>grows</b> — the world has moved on and a is now "stale," so it deserves another look.</li>
+    <li><b>Net effect:</b> lower-value or already-frequently-picked actions get chosen with <b>decreasing frequency over time</b>, but no action is ever permanently abandoned — the <span class="f">ln t</span> creep eventually revives any neglected arm.</li>
+  </ul>
+  <p class="mut" style="font-size:14px">Note the asymmetry: <span class="f">N<sub>t</sub>(a)</span> pulls the bonus <i>down</i> fast (linear in the denominator), while <span class="f">ln t</span> pushes it <i>up</i> slowly (logarithmic). Exploration therefore tapers off — but never quite to zero.</p>
+
+  <div class="box why">
+    <h4>Why this matters</h4>
+    <p>UCB is the canonical formalisation of <b>"optimism in the face of uncertainty,"</b> one of the most reusable ideas in all of RL and bandits. It is the natural successor to <b>ε-greedy from §05</b>: same explore/exploit goal, but smart-exploration (steered by uncertainty) instead of a blind coin-flip. That single upgrade is why UCB powers real systems — <b>online ad and content selection, A/B-test traffic allocation, Monte-Carlo Tree Search</b> (the UCT rule in AlphaGo's tree is UCB applied to game-tree nodes). Where ε-greedy wastes its exploration budget uniformly, UCB spends it exactly where the agent's knowledge is thinnest.</p>
+  </div>
+
+  <div class="box research">
+    <span class="tag">Research Enhanced</span>
+    <p><b>UCB has provable, near-optimal regret.</b> Auer, Cesa-Bianchi &amp; Fischer's <i>"Finite-time Analysis of the Multiarmed Bandit Problem"</i> (UCB1, <i>Machine Learning</i> 2002) proved that this exact bonus formula achieves <b>O(log T)</b> cumulative regret — uniformly over time, not just asymptotically. That matches the famous <b>Lai &amp; Robbins (1985)</b> lower bound, which showed <b>log-T regret is the best any algorithm can do</b> on the stochastic bandit. So UCB is not a heuristic — it is essentially optimal for this problem class. The trade-off (per Sutton &amp; Barto): UCB is harder than ε-greedy to extend beyond bandits to general RL with large state spaces and function approximation. <span class="mut">— Auer, Cesa-Bianchi &amp; Fischer 2002; Lai &amp; Robbins 1985; Sutton &amp; Barto Ch.2.6.</span></p>
+  </div>
+
+  <div class="box annot">
+    <b>Slide-35 result.</b> On Sutton &amp; Barto's 10-armed testbed, <b>UCB with c = 2</b> performs <b>slightly better and faster</b> than <b>ε-greedy with ε = 0.1</b> — a higher average-reward curve, especially after the early steps. The caveat from the same slide: UCB's reliance on per-action counts <span class="f">N<sub>t</sub>(a)</span> makes it awkward to scale to full RL, where you rarely revisit the exact same state.
+  </div>
+
+  <h3>Worked examples</h3>
+  <div class="tabs" data-ex="ex6">
+    <button data-d="e" class="on" onclick="tab('ex6',0,this)">Easy</button>
+    <button data-d="m" onclick="tab('ex6',1,this)">Medium</button>
+    <button data-d="c" onclick="tab('ex6',2,this)">Complex</button>
+  </div>
+  <div class="panel on" id="ex6-0">
+    <p class="qs">Q. An action has been tried N<sub>t</sub>(a) = 4 times, the current step is t = 50, and c = 2. Compute its UCB exploration bonus c·√(ln t / N<sub>t</sub>(a)).</p>
+    <ol>
+      <li>ln t = ln 50 ≈ 3.912.</li>
+      <li>ln t / N = 3.912 / 4 ≈ 0.978 → √0.978 ≈ 0.989.</li>
+      <li>Bonus = c · 0.989 = 2 × 0.989 ≈ 1.978.</li>
+    </ol>
+    <div class="answer">Exploration bonus ≈ <b>1.98</b>. (The action's UCB score is its Q<sub>t</sub>(a) plus this ≈1.98.)</div>
+    <div class="insight"><b>Key insight:</b> the bonus is added <i>on top of</i> Q — even a mediocre estimate can win the argmax if its uncertainty bonus is large enough.</div>
+  </div>
+  <div class="panel" id="ex6-1">
+    <p class="qs">Q. At t = 100, c = 2. Arm X: Q = 1.0, N = 10. Arm Y: Q = 0.8, N = 1. Which arm does UCB select? (ln 100 ≈ 4.605.)</p>
+    <ol>
+      <li>Arm X bonus = 2·√(4.605/10) = 2·√0.4605 = 2·0.679 = 1.357 → UCB(X) = 1.0 + 1.357 = <b>2.357</b>.</li>
+      <li>Arm Y bonus = 2·√(4.605/1) = 2·√4.605 = 2·2.146 = 4.292 → UCB(Y) = 0.8 + 4.292 = <b>5.092</b>.</li>
+      <li>argmax → Arm Y (5.092 &gt; 2.357).</li>
+    </ol>
+    <div class="answer">UCB selects <b>Arm Y</b>, even though its estimate (0.8) is <i>lower</i> than X's (1.0). Y has been tried only once, so its huge uncertainty bonus dominates.</div>
+    <div class="insight"><b>Key insight:</b> UCB will repeatedly favour rarely-tried arms until their N grows enough to shrink the bonus — that's how it guarantees every arm gets sampled.</div>
+  </div>
+  <div class="panel" id="ex6-2">
+    <p class="qs">Q. (a) Why does a never-tried action ( N<sub>t</sub>(a) = 0 ) get effectively infinite priority? (b) Why does the t in the numerator eventually "revive" a stale, long-ignored arm?</p>
+    <ol>
+      <li><b>(a)</b> With N<sub>t</sub>(a) = 0 the term ln t / N<sub>t</sub>(a) divides by zero → the bonus → <b>+∞</b>. By convention UCB treats an unsampled action as having maximal value, so it is selected <b>first</b>. This forces the mandatory "try every arm at least once" warm-up automatically — no special-case code needed.</li>
+      <li><b>(b)</b> Suppose arm a is ignored for a long stretch. Its N<sub>t</sub>(a) is frozen, but every step elsewhere increments t. Inside the bonus, ln t keeps creeping up while the denominator is fixed, so √(ln t / N<sub>t</sub>(a)) <b>slowly grows</b>. Eventually the bonus is large enough that a wins the argmax and gets re-sampled.</li>
+      <li>Together: (a) guarantees full initial coverage; (b) guarantees no arm is ever permanently abandoned — both are why UCB explores every action infinitely often and its estimates converge to q*(a).</li>
+    </ol>
+    <div class="answer">(a) N = 0 ⇒ division by zero ⇒ infinite bonus ⇒ untried arms are picked first (automatic warm-up). (b) ln t in the numerator grows while N stays fixed, so a neglected arm's bonus inflates over time until it is re-tried — preventing permanent lock-out and ensuring convergence.</div>
+    <div class="insight"><b>Key insight:</b> the two counters encode opposite pressures — N<sub>t</sub>(a) builds confidence (shrinks the bonus), t restores doubt (grows it). Their balance is exactly "optimism in the face of uncertainty."</div>
+  </div>
+
+  <div class="box exam">
+    <span class="tag">Exam Alert · closed book</span>
+    <p><b>Likely question:</b> write the UCB rule A<sub>t</sub> = argmax<sub>a</sub>[ Q<sub>t</sub>(a) + c·√(ln t / N<sub>t</sub>(a)) ] and label each term (action value, confidence level c, uncertainty measure); or compute/rank UCB scores for given Q, N, t, c (as in the Easy/Medium examples).</p>
+    <p><b>Common mistakes:</b> putting N<sub>t</sub>(a) in the numerator or t in the denominator (it's ln t on top, N<sub>t</sub>(a) on the bottom); forgetting the N = 0 ⇒ infinite-bonus convention; claiming UCB explores randomly (it explores by uncertainty, <i>not</i> a coin-flip like ε-greedy).</p>
+    <p><b>Exam-critical:</b> the contrast "ε-greedy explores indiscriminately vs UCB explores by potential-to-be-optimal," the role of c, and the t↑ / N<sub>t</sub>(a)↑ dynamics. Remember the slide-35 result: UCB c=2 slightly beats ε-greedy ε=0.1, but is harder to extend to general RL.</p>
+  </div>
+</section>
+
+<!-- ============ 07 OPTIMISTIC INITIAL VALUES ============ -->
+<section id="s7">
+  <div class="kic">// 07</div>
+  <h2 class="sec">Optimistic Initial Values</h2>
+
+  <h3>Intuition first</h3>
+  <p>Every method so far is <b>biased by where you start it</b> — the number you wrote in <span class="f"><span class="q">Q<sub>1</sub>(a)</span></span> before pulling anything leaks into your estimates. Optimistic initial values turn this "bug" into a <b>free exploration trick</b>: instead of starting every action at a neutral 0, start them all <b>wildly high</b> (in the 10-armed testbed, <b>Q<sub>1</sub>=+5</b> when true values hover near 0).</p>
+
+  <p>Picture a greedy agent given a head-start rumour that <i>every</i> stall in the food court is a 5-star Michelin kitchen. It is pure greedy — no ε, no coin flips — yet it still ends up tasting everything. Why? Reality can only <b>disappoint</b> it. Whatever it tries first pays less than the inflated 5 it expected, so that action's estimate drops <i>below</i> the untried ones, and greedy is yanked toward the next shiny untouched lever. The optimism itself <b>manufactures exploration</b> with zero extra parameters.</p>
+
+  <div class="f-block">
+    <span class="lbl">Constant-α update with an optimistic start</span>
+    <span class="q">Q<sub>n+1</sub></span> <span class="op">=</span> <span class="q">Q<sub>n</sub></span> <span class="op">+</span> <span class="a">α</span> <span class="op">[</span> <span class="r">R<sub>n</sub> − Q<sub>n</sub></span> <span class="op">]</span>   <span class="op">,&nbsp;&nbsp;set</span> <span class="q">Q<sub>1</sub></span> <span class="op">=</span> <span class="g">+5</span> <span class="op">(≫ q*(a) ≈ 0)</span>
+    <br><span class="op">unrolled:</span> <span class="q">Q<sub>n+1</sub></span> <span class="op">=</span> <span class="g">(1−α)<sup>n</sup> Q<sub>1</sub></span> <span class="op">+</span> <span class="op">Σ<sub>i</sub></span> <span class="a">α(1−α)<sup>n−i</sup></span> <span class="r">R<sub>i</sub></span>
+  </div>
+  <p class="mut" style="font-size:14px">The very first term <span class="f"><span class="g">(1−α)<sup>n</sup> Q<sub>1</sub></span></span> is the <b>optimism carried forward</b> — it is the bias. With constant α it never fully reaches 0 (it only shrinks geometrically), so under constant-α the initial-value bias is <b>permanent but decreasing</b>. Under a sample-average (1/n) step the same term vanishes the moment every action has been pulled at least once.</p>
+
+  <h4>The "disappointment" mechanism, step by step</h4>
+  <div class="pipe">
+    <div class="st"><b>Inflate every estimate.</b> Q<sub>1</sub>(a)=+5 for all K arms — all equally, absurdly attractive.</div>
+    <div class="st"><b>Greedy pulls arm a.</b> Tie-broken arbitrarily; it expected +5.</div>
+    <div class="st"><b>Reality underdelivers.</b> Real reward (≈0) &lt; the inflated 5, so the update pushes Q(a) <i>down</i> toward reality — arm a is now worth <i>less</i> than the still-untouched 5s.</div>
+    <div class="st"><b>Greedy switches.</b> argmax now points at a fresh untried arm. Repeat → <b>all actions get tried several times</b> before any estimate settles.</div>
+  </div>
+
+  <div class="box why">
+    <h4>Why this matters</h4>
+    <p>This buys you <b>systematic early exploration for free</b> — no ε, no random coin, <b>zero extra hyperparameters</b> — on <b>stationary</b> tasks. It is the cheapest possible nudge that breaks greedy's lock-in (§s4). Contrast it with <b>UCB (§s6)</b>, which also explores <i>without</i> random flips but does so by tracking each arm's <b>uncertainty</b> on every step: UCB keeps re-checking under-sampled arms <i>forever</i>, whereas optimism is a <b>one-time</b> opening push that is spent once the inflated estimates have decayed. That single difference is exactly why UCB survives in non-stationary settings and optimism does not.</p>
+  </div>
+
+  <div class="box research">
+    <span class="tag">Research Enhanced</span>
+    <p><b>Sutton &amp; Barto Ch.2, Fig 2.3.</b> Optimistic-greedy (Q<sub>1</sub>=5, ε=0) is plotted against realistic ε-greedy (Q<sub>1</sub>=0, ε=0.1) on the 10-armed testbed. The deeper reason the two biases behave differently is the <b>Robbins–Monro</b> conditions for stochastic approximation: a step-size sequence converges iff <span class="f">Σ<sub>n</sub> α<sub>n</sub> = ∞</span> and <span class="f">Σ<sub>n</sub> α<sub>n</sub><sup>2</sup> &lt; ∞</span>. The sample-average step <span class="f">α<sub>n</sub>=1/n</span> satisfies <i>both</i> (Σ1/n diverges, Σ1/n² converges) → estimates converge and the initial bias is wiped out. A <b>constant α</b> satisfies the first but <b>violates the second</b> (Σα² = ∞) → it never fully forgets, so the optimism bias persists (while shrinking). <span class="mut">— Sutton &amp; Barto, <i>RL: An Introduction</i> 2nd ed., Ch.2; Robbins &amp; Monro 1951.</span></p>
+  </div>
+
+  <div class="box annot">
+    <b>Caution — it is only a trick.</b> Prof.'s slide is blunt: optimistic initial values are a <b>simple trick, effective on stationary problems, but far from a generally useful exploration method.</b> All the exploration happens in a burst at the very beginning; once the inflated estimates have decayed to reality there is no built-in mechanism left to keep exploring. Don't reach for it as your default explorer — reach for it only when the problem is stationary and you want a one-line, parameter-free head start.
+  </div>
+
+  <h3>Worked examples</h3>
+  <div class="tabs" data-ex="ex7">
+    <button data-d="e" class="on" onclick="tab('ex7',0,this)">Easy</button>
+    <button data-d="m" onclick="tab('ex7',1,this)">Medium</button>
+    <button data-d="c" onclick="tab('ex7',2,this)">Complex</button>
+  </div>
+  <div class="panel on" id="ex7-0">
+    <p class="qs">Q. Optimistic start Q<sub>1</sub>=5, constant α=0.5. The first pull of this arm returns reward R<sub>1</sub>=1. Compute Q<sub>2</sub>, and explain what it triggers.</p>
+    <ol>
+      <li>Q<sub>2</sub> = Q<sub>1</sub> + α[R<sub>1</sub> − Q<sub>1</sub>] = 5 + 0.5·(1 − 5).</li>
+      <li>= 5 + 0.5·(−4) = 5 − 2 = <b>3</b>.</li>
+    </ol>
+    <div class="answer">Q<sub>2</sub> = <b>3</b>. The estimate <i>dropped</i> from 5 toward the real reward — this arm (now 3) is worth less than every untried arm still sitting at 5, so the greedy argmax abandons it and pulls a fresh arm. That is the disappointment-driven switch.</div>
+    <div class="insight"><b>Key insight:</b> because reality is below the inflated start, the update is <i>negative</i> — optimism guarantees the first-pulled arm loses its lead, forcing a sweep through all arms.</div>
+  </div>
+  <div class="panel" id="ex7-1">
+    <p class="qs">Q. Why does a <b>sample-average</b> estimate make the initial-value bias vanish, while a <b>constant-α</b> estimate keeps it forever (only fading)?</p>
+    <ol>
+      <li>In both, the leftover initial term is the weight on Q<sub>1</sub>. Unroll the update: sample-average weights Q<sub>1</sub> by <span class="f">∏(1−1/k)</span>, constant-α weights it by <span class="f">(1−α)<sup>n</sup></span>.</li>
+      <li><b>Sample-average:</b> on the very first pull of an action the step is α<sub>1</sub>=1/1=1, so (1−α<sub>1</sub>)=0 — the Q<sub>1</sub> term is multiplied by 0 and <b>annihilated</b> the instant the action is selected once.</li>
+      <li><b>Constant-α:</b> (1−α)<sup>n</sup> with fixed α∈(0,1) is never exactly 0 for any finite n — it shrinks geometrically but a sliver of the optimism always remains.</li>
+    </ol>
+    <div class="answer">Sample-average's first step has α=1, which zeroes out Q<sub>1</sub> as soon as the action is tried once → bias gone. Constant-α multiplies Q<sub>1</sub> by (1−α)<sup>n</sup>, which decays toward but never reaches 0 → bias is permanent yet ever-decreasing.</div>
+    <div class="insight"><b>Key insight:</b> this is the Robbins–Monro story in miniature — 1/n shrinks the step (Σα²&lt;∞) so memory of the start dies; constant α refuses to shrink, so it never fully forgets.</div>
+  </div>
+  <div class="panel" id="ex7-2">
+    <p class="qs">Q. (Slide's open question.) Explain rigorously why optimistic initial values <b>fail to explore adequately in a non-stationary problem</b>.</p>
+    <ol>
+      <li><b>Optimism is a one-shot impulse.</b> The exploration comes entirely from the gap between Q<sub>1</sub>=+5 and reality. That gap is consumed during the opening phase, after which the inflated term <span class="f">(1−α)<sup>n</sup>Q<sub>1</sub></span> has decayed away and every estimate sits near its true value.</li>
+      <li><b>Non-stationarity means q*(a) drifts later.</b> Suppose at step 5000 a previously-mediocre arm's true value rises above the current best. There is no fresh optimism left to flag it — the estimates have long since settled.</li>
+      <li><b>Pure greedy provides no recovery.</b> With ε=0 the agent only ever pulls its current argmax, so the newly-improved arm is never re-sampled, its stale low estimate is never corrected, and the drift goes undetected — the agent locks onto a now-suboptimal arm (linear-regret lock-in returns).</li>
+      <li><b>Contrast:</b> mechanisms that explore <i>continuously</i> — decaying-but-nonzero ε, or UCB's ever-growing <span class="f">√(ln t / N<sub>t</sub>(a))</span> uncertainty bonus for un-pulled arms — keep probing forever and so catch the drift. Optimism cannot, because its push is spent at t≈0.</li>
+    </ol>
+    <div class="answer">Optimistic init front-loads <i>all</i> its exploration into the start. Once the inflated estimates decay to reality, a greedy agent has no remaining drive to explore; when q*(a) later changes (non-stationary), nothing triggers re-sampling, the change is missed, and the agent stays stuck on a no-longer-optimal action. Adequate exploration in non-stationary settings needs an <i>ongoing</i> source (constant-α recency weighting plus continual exploration via ε or UCB), not a one-time optimistic kick.</div>
+    <div class="insight"><b>Key insight:</b> the failure is temporal — exploration that is <b>concentrated at the start</b> cannot react to information that <b>arrives later</b>. Non-stationarity demands perpetual, not opening, exploration.</div>
+  </div>
+
+  <div class="box exam">
+    <span class="tag">Exam Alert · closed book</span>
+    <p><b>Likely question:</b> "All action-value methods are biased by their initial estimates — explain, and show how optimistic initial values exploit this for exploration." Reproduce the disappointment mechanism and the Q<sub>1</sub>=+5 testbed setup; be ready to compute one update (e.g. Q<sub>1</sub>=5, α=0.5, R=1 → Q<sub>2</sub>=3).</p>
+    <p><b>Almost-certain follow-up:</b> the slide's open question — <i>why optimism fails in non-stationary problems</i> (one-time push; no re-sampling after estimates settle; drift goes undetected). Prof. left this explicitly as a thinking question.</p>
+    <p><b>Common mistakes:</b> claiming constant-α removes the bias (it only decays it — sample-average removes it); calling optimism a general-purpose explorer (it is a stationary-only trick); forgetting ε=0 here, so the <i>only</i> exploration source is the inflated start.</p>
+    <p><b>Exam-critical:</b> sample-average bias vanishes vs constant-α bias persists (Robbins–Monro Σα=∞, Σα²&lt;∞); Q<sub>1</sub>=+5; disappointment→switch; and the non-stationary failure argument.</p>
+  </div>
+</section>
+
+<!-- ============ 08 POLICY-BASED METHODS ============ -->
+<section id="s8">
+  <div class="kic">// 08</div>
+  <h2 class="sec">Policy-Based Methods: Softmax &amp; Gradient Bandit</h2>
+
+  <h3>Intuition first — preferences, not values</h3>
+  <p>Every method so far (greedy, ε-greedy, UCB) shares one habit: <b>estimate Q(a), then act on it</b>. Policy-based methods make a clean break — <b>forget the value estimates entirely</b>. We stop asking "how much is each action worth?" and ask only the question we actually care about: <b>which action should I choose?</b></p>
+
+  <p>The trick is to attach a <b>numerical preference</b> <span class="f"><span class="v">H<sub>t</sub>(a)</span></span> to each action. A preference is <i>not</i> a reward or a value — it has no units, it isn't an estimate of anything. It is just a learnable "how much do I lean toward this action" knob. Higher H ⇒ pick it more often. Learning = nudging the preferences so the leaning matches what pays off.</p>
+
+  <div class="box annot">
+    <b>Why this is a big deal.</b> Value-based RL learns numbers <i>about</i> actions and derives a policy as an afterthought (argmax). Policy-based RL learns the <b>policy directly</b>. This is the conceptual seed of <b>policy-gradient / actor-critic</b> methods (REINFORCE, A2C, PPO) — the entire right-hand branch of the deep-RL family tree starts right here, in the bandit.
+  </div>
+
+  <h3>From preferences to a policy: hardmax vs softmax</h3>
+  <p>Given preferences, how do we turn them into an action? The naïve route is <b>hardmax</b> — just take the argmax:</p>
+
+  <div class="f-block">
+    <span class="lbl">Hardmax selection (the naïve route)</span>
+    <span class="s">A<sub>t</sub></span> <span class="op">=</span> <span class="g">argmax<sub>a</sub></span> <span class="v">H<sub>t</sub>(a)</span>
+  </div>
+
+  <p>Hardmax has <b>two fatal flaws</b>. (1) It is <b>deterministic</b> — same preferences ⇒ same action every time ⇒ <b>no exploration</b>. (2) It is <b>not differentiable</b>: nudging H(a) a little does nothing to the output until it crosses the max and the choice snaps, so <span class="f">∂Pr(a)/∂H(a) = NA</span>. With no gradient there is nothing to do gradient ascent <i>on</i>. We need a smooth bridge from preferences to probabilities.</p>
+
+  <h4>Softmax — preferences → probability distribution</h4>
+  <p><b>Softmax</b> exponentiates each preference and normalises, producing a valid probability distribution over the actions:</p>
+
+  <div class="f-block">
+    <span class="lbl">Softmax (Boltzmann) action probabilities</span>
+    <span class="s">Pr{A<sub>t</sub> = a}</span> <span class="op">=</span> <span class="v">e<sup>H<sub>t</sub>(a)</sup></span> <span class="op">/</span> <span class="op">(</span> <span class="r">Σ<sub>a′</sub> e<sup>H<sub>t</sub>(a′)</sup></span> <span class="op">)</span> <span class="op">=</span> <span class="a">π<sub>t</sub>(a)</span>
+  </div>
+
+  <p>This single move buys us <b>both</b> things hardmax lacked: every action gets a non-zero probability (<b>exploration ✓</b>), and the function is smooth, so the gradient <span class="f">∂Pr(a)/∂H(a)</span> exists (<b>differentiable ✓</b>). A softmax over preferences <i>is</i> a <b>differentiable policy</b> — the foundational object of all policy-gradient methods.</p>
+
+  <p><b>Prof.'s numeric example</b> — three actions with preferences H = (6, 9, 2):</p>
+  <div class="f-block">
+    <span class="lbl">softmax of the preference vector (6, 9, 2)</span>
+    <span class="v">H<sub>t</sub></span> <span class="op">=</span> <span class="op">(</span> <span class="v">6</span>, <span class="v">9</span>, <span class="v">2</span> <span class="op">)</span>
+    <br><span class="op">→</span> softmax <span class="op">=</span> <span class="op">(</span> <span class="s">0.047</span>, <span class="g">0.952</span>, <span class="s">0.00087</span> <span class="op">)</span>
+    <br><span class="op"># </span><span class="g">Pr ≈ 0.95 → a<sub>2</sub></span><span class="op">,  </span><span class="s">Pr ≈ 0.05 → a<sub>1</sub></span><span class="op">,  </span><span class="r">Pr &lt; 0.01 → a<sub>3</sub></span>
+  </div>
+  <p class="mut" style="font-size:14px">Notice softmax is <b>not</b> winner-take-all: a<sub>2</sub> dominates (preference 9) but a<sub>1</sub> still gets a real ~5% share, and even the worst action a<sub>3</sub> keeps a tiny &lt;0.1% chance. That residual probability <i>is</i> the exploration — and because the gap is exponential, a 3-point lead (9 vs 6) already translates into a 20× probability ratio.</p>
+
+  <pre><span class="c"># Differentiability: hardmax vs softmax</span>
+<span class="c"># Suppose a1 starts giving good relative performance.</span>
+<span class="c"># HARDMAX  A_t = argmax_a H(a)         d Pr(a1) / d H(a1) = NA   (flat, then a jump)</span>
+<span class="c"># SOFTMAX  Pr(a1) = e^H(a1) / Σ e^H(a')  d Pr(a1) / d H(a1) EXISTS  -> we can ascend it</span></pre>
+
+  <h3>Gradient bandit — learning the preferences</h3>
+  <p>Because the policy is differentiable, we can do <b>gradient ascent on expected reward</b>: after taking A<sub>t</sub> and seeing R<sub>t</sub>, nudge the preferences in the direction that makes good actions more probable. The update compares the reward to a <b>baseline</b> <span class="f"><span class="a">R̄<sub>t</sub></span></span> (the running mean of all rewards so far):</p>
+
+  <div class="f-block">
+    <span class="lbl">Gradient bandit update — α = step size, π<sub>t</sub>(a) = softmax prob., R̄<sub>t</sub> = baseline</span>
+    <span class="v">H<sub>t+1</sub>(A<sub>t</sub>)</span> <span class="op">=</span> <span class="v">H<sub>t</sub>(A<sub>t</sub>)</span> <span class="op">+</span> <span class="a">α</span> <span class="op">(</span><span class="r">R<sub>t</sub> − R̄<sub>t</sub></span><span class="op">)</span> <span class="op">(</span>1 − <span class="g">π<sub>t</sub>(A<sub>t</sub>)</span><span class="op">)</span>   <span class="op"># the chosen action</span>
+    <br><span class="v">H<sub>t+1</sub>(a)</span> <span class="op">&nbsp;&nbsp;</span> <span class="op">=</span> <span class="v">H<sub>t</sub>(a)</span> <span class="op">&nbsp;&nbsp;</span> <span class="op">−</span> <span class="a">α</span> <span class="op">(</span><span class="r">R<sub>t</sub> − R̄<sub>t</sub></span><span class="op">)</span> <span class="g">π<sub>t</sub>(a)</span> <span class="op">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> <span class="op"># ∀ a ≠ A<sub>t</sub></span>
+  </div>
+
+  <p>Read it as a tug-of-war driven by the sign of <span class="f">(R<sub>t</sub> − R̄<sub>t</sub></span><span class="f">)</span>:</p>
+  <ul>
+    <li><b>Reward beats the baseline</b> (R<sub>t</sub> &gt; R̄<sub>t</sub>): push the <b>chosen</b> action's preference <b>up</b>, and pull <b>every other</b> action's preference <b>down</b>. "That was better than my average — do it more."</li>
+    <li><b>Reward below the baseline</b> (R<sub>t</sub> &lt; R̄<sub>t</sub>): do the <b>opposite</b> — push the chosen action <b>down</b>, others <b>up</b>. "That was worse than my average — back off it."</li>
+  </ul>
+
+  <h4>Why the baseline matters — the results</h4>
+  <p>The baseline R̄<sub>t</sub> is not optional decoration. It re-centres rewards so the update reacts to <i>relative</i> performance, not raw magnitude — which sharply <b>reduces the variance</b> of the gradient estimate. On the 10-armed testbed the difference is dramatic:</p>
+  <table>
+    <tr><th>Setting</th><th>α = 0.1</th><th>α = 0.4</th></tr>
+    <tr><td class="g">With baseline R̄<sub>t</sub></td><td>~85% optimal</td><td>~73% optimal</td></tr>
+    <tr><td class="r">Without baseline</td><td>~48% optimal</td><td>~27% optimal</td></tr>
+  </table>
+  <p class="mut" style="font-size:14px">Same algorithm, same step sizes — adding the baseline roughly <b>doubles</b> the % optimal-action rate. The baseline substantially improves performance.</p>
+
+  <div class="box why">
+    <h4>Why this matters</h4>
+    <p>Softmax-over-preferences is your <b>first differentiable policy</b>, and that is the entire idea behind <b>policy-gradient methods</b>. Swap the K preference scalars for a neural network π<sub>θ</sub>(a|s) and the gradient-bandit update generalises into <b>REINFORCE</b> (Williams 1992) and then <b>actor-critic</b> — the actor in <b>A2C/A3C, TRPO, PPO</b> is exactly this softmax policy trained by gradient ascent. And the humble baseline R̄<sub>t</sub> is the direct ancestor of the <b>advantage</b> term A(s,a)=Q−V used by every modern actor-critic: subtracting a baseline to cut variance is the same trick, scaled up. The bandit is where the entire policy-based branch of deep RL is born.</p>
+  </div>
+
+  <div class="box research">
+    <span class="tag">Research Enhanced</span>
+    <p><b>The gradient bandit is a true stochastic gradient ascent.</b> Sutton &amp; Barto (Ch. 2.8) prove the preference update is, in expectation, <span class="f">𝔼[ΔH] ∝ ∂𝔼[R<sub>t</sub>]/∂H</span> — genuine ascent on expected reward — and that <b>any baseline independent of the chosen action leaves the expected update unchanged while reducing its variance</b>, which is why R̄<sub>t</sub> helps without introducing bias. This is the bandit-sized instance of <b>Williams' REINFORCE</b> (R. J. Williams, "Simple statistical gradient-following algorithms for connectionist reinforcement learning," <i>Machine Learning</i> 1992), whose score-function estimator and baseline-as-variance-reduction underpin today's policy-gradient and actor-critic algorithms. <span class="mut">— Sutton &amp; Barto Ch. 2.8; Williams 1992.</span></p>
+  </div>
+
+  <h3>Worked examples</h3>
+  <div class="tabs" data-ex="ex8">
+    <button data-d="e" class="on" onclick="tab('ex8',0,this)">Easy</button>
+    <button data-d="m" onclick="tab('ex8',1,this)">Medium</button>
+    <button data-d="c" onclick="tab('ex8',2,this)">Complex</button>
+  </div>
+  <div class="panel on" id="ex8-0">
+    <p class="qs">Q. Two actions have preferences H = (2, 0). Compute the softmax probabilities. (Use e<sup>2</sup>≈7.389, e<sup>0</sup>=1.)</p>
+    <ol>
+      <li>Numerators: e<sup>2</sup>≈7.389, e<sup>0</sup>=1. Denominator = 7.389 + 1 = 8.389.</li>
+      <li>π(a<sub>1</sub>) = 7.389 / 8.389 ≈ 0.881; π(a<sub>2</sub>) = 1 / 8.389 ≈ 0.119.</li>
+    </ol>
+    <div class="answer">π ≈ (<b>0.88</b>, <b>0.12</b>). The higher-preference action gets ~88%, but the other still keeps ~12% — that residual is the built-in exploration. (Check: 0.88 + 0.12 = 1 ✓)</div>
+    <div class="insight"><b>Key insight:</b> softmax depends only on preference <i>differences</i> — adding a constant to every H leaves all probabilities unchanged.</div>
+  </div>
+  <div class="panel" id="ex8-1">
+    <p class="qs">Q. One gradient-bandit step. Action A<sub>t</sub>=2 is chosen; reward R<sub>t</sub>=3 with baseline R̄<sub>t</sub>=1; α=0.1; current policy π=(0.2, 0.5, 0.3) for actions (1,2,3). Update the preference of the chosen action and of action 1.</p>
+    <ol>
+      <li>Surprise term: (R<sub>t</sub> − R̄<sub>t</sub>) = 3 − 1 = <b>2</b> (positive → push chosen up, others down).</li>
+      <li>Chosen (a=2): H ← H + α·2·(1 − π<sub>2</sub>) = H + 0.1·2·(1 − 0.5) = H + <b>0.10</b>.</li>
+      <li>Other (a=1): H ← H − α·2·π<sub>1</sub> = H − 0.1·2·0.2 = H − <b>0.04</b>.</li>
+    </ol>
+    <div class="answer">Chosen action 2's preference rises by <b>+0.10</b>; action 1's falls by <b>−0.04</b> (and action 3 by −0.1·2·0.3 = −0.06). Reward beat the baseline, so the taken action is reinforced and the rest are suppressed.</div>
+    <div class="insight"><b>Key insight:</b> the sign of (R<sub>t</sub>−R̄<sub>t</sub>) decides direction; π weights the size — high-probability "others" are pushed down hardest.</div>
+  </div>
+  <div class="panel" id="ex8-2">
+    <p class="qs">Q. <b>Ex-2.</b> k=4 actions {1,2,3,4}, ε-greedy + sample-average, Q<sub>1</sub>(a)=0 for all a. Sequence: A1=1,R1=1; A2=2,R2=1; A3=2,R3=2; A4=2,R4=2; A5=3,R5=0. On which steps did the ε (random) case <b>definitely</b> occur, and on which could it <b>possibly</b> have occurred?</p>
+    <p>Method: before each step list the Q estimates, find the greedy (argmax) action, and compare it to the action actually chosen. If the chosen action is <b>not</b> a greedy candidate ⇒ exploration was forced (definite). If it <b>is</b> a greedy candidate ⇒ it could be greedy or a lucky random pick (possible).</p>
+    <table>
+      <tr><th>Step</th><th>Q before (1,2,3,4)</th><th>Greedy</th><th>Chose</th><th>Verdict</th></tr>
+      <tr><td>1</td><td>0, 0, 0, 0</td><td>all tied</td><td>1</td><td class="g">possibly random</td></tr>
+      <tr><td>2</td><td>1, 0, 0, 0</td><td>1</td><td>2</td><td class="r">DEFINITELY random</td></tr>
+      <tr><td>3</td><td>1, 1, 0, 0</td><td>{1, 2} tie</td><td>2</td><td class="g">possibly random</td></tr>
+      <tr><td>4</td><td>1, 1.5, 0, 0</td><td>2</td><td>2</td><td class="g">possibly random</td></tr>
+      <tr><td>5</td><td>1, 1.67, 0, 0</td><td>2</td><td>3</td><td class="r">DEFINITELY random</td></tr>
+    </table>
+    <ol>
+      <li><b>Step 1:</b> all Q=0 (tie). Any pick is consistent with a greedy tie-break <i>or</i> a random pull → possible, not certain. R1=1 ⇒ Q(1)=1.</li>
+      <li><b>Step 2:</b> greedy is action 1 (Q=1), but we chose 2 → must be exploration → <b>definite</b>. R2=1 ⇒ Q(2)=1.</li>
+      <li><b>Step 3:</b> Q(1)=Q(2)=1 tie, so action 2 <i>is</i> a greedy candidate → could be greedy or random → possible. R3=2 ⇒ Q(2)=(1+2)/2=1.5.</li>
+      <li><b>Step 4:</b> action 2 is now the sole greedy (Q=1.5) and we chose 2 → could be greedy, but a random pull could also land on 2 → possible. R4=2 ⇒ Q(2)=(1+2+2)/3≈1.67.</li>
+      <li><b>Step 5:</b> greedy is action 2 (Q≈1.67), but we chose 3 → must be exploration → <b>definite</b>.</li>
+    </ol>
+    <div class="answer">ε (random) DEFINITELY occurred on <b>steps 2 and 5</b> (chosen action was not greedy). It could POSSIBLY have occurred on <b>steps 1, 3, and 4</b> (chosen action was a greedy candidate, so a random pick could also explain it) — and trivially on 2 and 5 as well, but those are certain.</div>
+    <div class="insight"><b>Key insight:</b> a non-greedy choice <i>proves</i> exploration; a greedy-consistent choice can <i>never</i> rule it out, because in the ε branch the greedy action is still in the pool. Recompute Q only for the action actually pulled.</div>
+  </div>
+
+  <div class="box exam">
+    <span class="tag">Exam Alert · closed book</span>
+    <p><b>Likely question:</b> compute the <b>softmax</b> of a small preference vector (e.g. (6,9,2)→(0.047,0.952,0.00087)), and explain why softmax — unlike hardmax — gives both exploration and a <b>differentiable</b> policy.</p>
+    <p><b>Also likely:</b> apply one <b>gradient-bandit update</b> H<sub>t+1</sub>(A<sub>t</sub>)=H<sub>t</sub>(A<sub>t</sub>)+α(R<sub>t</sub>−R̄<sub>t</sub>)(1−π<sub>t</sub>(A<sub>t</sub>)) and the ∀a≠A<sub>t</sub> line; state the role of the <b>baseline</b> R̄<sub>t</sub> and the with-vs-without performance gap (~85% vs ~48% at α=0.1).</p>
+    <p><b>Exam-critical (Ex-2):</b> the "definitely vs possibly random" analysis — track Q after each step, compare each chosen action to the current argmax. Answer: <b>definite = steps 2 &amp; 5; possible = steps 1, 3, 4</b>.</p>
+    <p><b>Common mistakes:</b> treating preferences as values; thinking hardmax is differentiable; forgetting the baseline; in Ex-2, calling a tie/greedy-consistent step "definitely random" (it's only <i>possible</i>), or dividing Q by total steps instead of per-action count.</p>
+  </div>
+</section>
+
+<!-- ============ INTERACTIVE ============ -->
+<section id="lab">
+  <div class="kic">// interactive</div>
+  <h2 class="sec">Live Demos</h2>
+  <p class="mut">Four no-library widgets to build intuition. Play with them — they implement the exact formulas above.</p>
+
+  <!-- 1 epsilon donut -->
+  <div class="demo">
+    <h4>① ε-Greedy Probability Calculator</h4>
+    <div class="ctl"><label>K (number of actions)</label><input type="range" id="kK" min="2" max="10" value="2" oninput="eps()"><span class="val" id="kKv">2</span></div>
+    <div class="ctl"><label>ε (exploration rate)</label><input type="range" id="kE" min="0" max="1" step="0.05" value="0.5" oninput="eps()"><span class="val" id="kEv">0.50</span></div>
+    <div class="dwrap">
+      <div class="donut" id="donut"></div>
+      <div class="leg">
+        <div><span class="sw" style="background:var(--gold)"></span>P(greedy) = <span id="pg" style="color:var(--gold)">0.75</span></div>
+        <div><span class="sw" style="background:var(--sky)"></span>P(each non-greedy) = <span id="pn" style="color:var(--sky)">0.25</span></div>
+        <div class="mut" style="margin-top:8px">P(greedy) = (1−ε) + ε/K</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2 bandit tracker -->
+  <div class="demo">
+    <h4>② Bandit Q-Value Tracker</h4>
+    <p class="mut" style="font-size:14px">Four arms with hidden true means. Pull arms to watch sample-average Q estimates converge. The gold row is the current greedy arm. "Auto-play" uses ε-greedy for 100 pulls.</p>
+    <div class="ctl"><label>ε (auto-play)</label><input type="range" id="bE" min="0" max="0.5" step="0.05" value="0.1" oninput="document.getElementById('bEv').textContent=(+this.value).toFixed(2)"><span class="val" id="bEv">0.10</span></div>
+    <table id="btab">
+      <tr><th>Arm</th><th>Pulls N(a)</th><th>Q(a) estimate</th><th>Pull</th></tr>
+    </table>
+    <div class="ctl" style="margin-top:12px">
+      <button class="act" onclick="autoplay()">▶ Auto-play 100 (ε-greedy)</button>
+      <button class="act gho" onclick="bReset()">↺ Reset</button>
+      <span class="mono" style="color:var(--lime)">Total reward: <span id="btot">0.0</span></span>
+      <span class="mono mut">Steps: <span id="bsteps">0</span></span>
+    </div>
+  </div>
+
+  <!-- 3 TD sim -->
+  <div class="demo">
+    <h4>③ TD Learning Simulator (2-state chain)</h4>
+    <p class="mut" style="font-size:14px">Chain: A → B (reward 0), then B → terminal (reward 1). γ=1, α=0.5. True values: V(A)=1, V(B)=1. Click "TD step" and watch both converge from 0 via <span class="f">V ← V + α[R + γV(s′) − V(s)]</span>.</p>
+    <div class="ctl"><label>α (learning rate)</label><input type="range" id="tA" min="0" max="1" step="0.1" value="0.5" oninput="document.getElementById('tAv').textContent=(+this.value).toFixed(1)"><span class="val" id="tAv">0.5</span></div>
+    <div class="dwrap" style="font-family:'JetBrains Mono',monospace">
+      <div class="cell" style="min-width:120px">V(A) = <span id="vA" style="color:var(--teal)">0.00</span></div>
+      <div class="cell" style="min-width:120px">V(B) = <span id="vB" style="color:var(--teal)">0.00</span></div>
+      <div class="mut" id="tdmsg" style="font-size:13px">TD error shown after a step.</div>
+    </div>
+    <div class="ctl" style="margin-top:10px">
+      <button class="act" onclick="tdStep()">▶ TD step</button>
+      <button class="act gho" onclick="tdReset()">↺ Reset</button>
+      <span class="mono mut">updates: <span id="tdN">0</span></span>
+    </div>
+  </div>
+
+  <!-- 4 explore vs exploit -->
+  <div class="demo">
+    <h4>④ Explore vs Exploit Game</h4>
+    <p class="mut" style="font-size:14px">A 2×2 grid of states with shown values. "Greedy" always moves to the highest-value visible neighbour. "Explore" jumps randomly — and can discover a hidden high-value state (the ★ cell secretly pays 1.0). Run 10 steps each way and compare reward.</p>
+    <div class="grid2" id="game"></div>
+    <div class="ctl">
+      <button class="act" onclick="play('greedy')">Greedy ×10</button>
+      <button class="act gho" onclick="play('explore')">Explore ×10</button>
+      <button class="act gho" onclick="gReset()">↺ Reset</button>
+    </div>
+    <p class="mono" style="font-size:14px">Greedy total: <span id="gG" style="color:var(--gold)">0.0</span> &nbsp;|&nbsp; Explore total: <span id="gE" style="color:var(--lime)">0.0</span></p>
+  </div>
+</section>
+
+<!-- ============ DEEP DIVES ============ -->
+<section id="deep">
+  <div class="kic">// deep dives</div>
+  <h2 class="sec">Conceptual Deep Dives</h2>
+
+  <h3>A · Reward vs Value — why both are necessary</h3>
+  <p>A <b>Markov Reward Process</b> assigns each state a value equal to the expected discounted return. Values satisfy the <b>Bellman equation</b> — a self-consistency between a state and its successors:</p>
+  <div class="f-block">
+    <span class="v">V(s)</span> <span class="op">=</span> <span class="a">𝔼</span><span class="op">[</span> <span class="r">R<sub>t+1</sub></span> <span class="op">+</span> γ <span class="v">V(s<sub>t+1</sub>)</span> <span class="op">|</span> s<sub>t</sub><span class="op">=</span>s <span class="op">]</span>
+  </div>
+  <p>Reward alone is the <span class="r">R<sub>t+1</sub></span> term; value adds the discounted future <span class="v">γV(s′)</span>. Drop the future term and you're back to greedy-on-reward — blind to the chess checkmate. The bandit is the degenerate case: one state, γ irrelevant, so value collapses to "expected immediate reward" = q*(a).</p>
+
+  <h3>B · The dilemma quantified — regret</h3>
+  <div class="f-block">
+    <span class="lbl">Cumulative regret over T rounds</span>
+    <span class="r">R<sub>T</sub></span> <span class="op">=</span> T·<span class="g">μ*</span> <span class="op">−</span> <span class="a">Σ<sub>t=1..T</sub> μ<sub>A<sub>t</sub></sub></span>
+  </div>
+  <ul>
+    <li><b>Pure greedy:</b> can be Θ(T) — <b>linear</b> regret (one unlucky start → permanent loss).</li>
+    <li><b>ε-greedy (fixed ε):</b> linear in the exploration term (wastes ε·T random pulls forever).</li>
+    <li><b>ε-greedy (decaying ε) / UCB:</b> <b>O(log T)</b> — sublinear; provably near-optimal (Lai–Robbins lower bound is also log T).</li>
+  </ul>
+
+  <h3>C · Sample average vs constant step-size (the non-stationary fix)</h3>
+  <p>The sample average can be computed online without storing history — derive the <b>incremental form</b>:</p>
+  <div class="f-block">
+    <span class="lbl">Incremental update (derivation)</span>
+    <span class="q">Q<sub>n+1</sub></span> = (1/n) Σ<sub>i=1..n</sub> R<sub>i</sub>
+    = (1/n)( R<sub>n</sub> + (n−1)Q<sub>n</sub> )
+    = <span class="q">Q<sub>n</sub></span> + (<span class="a">1/n</span>)[ <span class="r">R<sub>n</sub> − Q<sub>n</sub></span> ]
+  </div>
+  <p>The step-size here is <span class="f">1/n</span> (shrinks → true average, great for <b>stationary</b>). For <b>non-stationary</b> problems, replace it with a <b>constant α</b>:</p>
+  <div class="f-block">
+    <span class="lbl">Constant-α → exponential recency-weighted average</span>
+    <span class="q">Q<sub>n+1</sub></span> <span class="op">=</span> <span class="q">Q<sub>n</sub></span> <span class="op">+</span> <span class="a">α</span><span class="op">[</span><span class="r">R<sub>n</sub> − Q<sub>n</sub></span><span class="op">]</span> <span class="op">=</span> (1−α)<sup>n</sup>Q<sub>1</sub> <span class="op">+</span> <span class="g">Σ<sub>i</sub> α(1−α)<sup>n−i</sup> R<sub>i</sub></span>
+  </div>
+  <p>The weight on reward R<sub>i</sub> is <span class="f">α(1−α)<sup>n−i</sup></span> — it <b>decays exponentially</b> the older the reward. Recent rewards dominate, so the estimate tracks a drifting q*(a). This is the concrete fix for the casino-changes-the-range scenario from Section 3. <span class="mut">Convergence rule (Robbins–Monro): Σα<sub>n</sub>=∞ and Σα<sub>n</sub>²&lt;∞ — satisfied by 1/n (converges), violated by constant α (keeps adapting, by design).</span></p>
+
+  <h3>D · From bandits to MDPs — the full RL framework</h3>
+  <table>
+    <tr><th></th><th>K-armed bandit</th><th>Full MDP (RL)</th></tr>
+    <tr><td>States</td><td>1 (no state)</td><td>many, with transitions</td></tr>
+    <tr><td>Action affects</td><td>only the reward</td><td>reward <b>and</b> next state</td></tr>
+    <tr><td>Goal</td><td>best single action</td><td>best <b>policy</b> π(s)→a</td></tr>
+    <tr><td>Value</td><td>q*(a)</td><td>Q*(s,a), V*(s)</td></tr>
+    <tr><td>Exploration</td><td>ε-greedy / UCB</td><td>same ε-greedy, in DQN</td></tr>
+  </table>
+  <p>The bridge is <b>associative</b> (contextual) tasks: a bandit where the best action depends on a context/situation — "a mapping from situations to the actions that are best." Add state <i>transitions</i> on top and you have a Markov Decision Process, the subject of the rest of the course.</p>
+  <pre><span class="c"># ε-greedy survives unchanged into DQN action selection</span>
+<span class="k">def</span> <span class="fn">select_action</span>(state, q_net, epsilon):
+    <span class="k">if</span> random.random() &lt; epsilon:
+        <span class="k">return</span> env.action_space.sample()     <span class="c"># explore</span>
+    <span class="k">return</span> q_net(state).argmax().item()      <span class="c"># exploit: argmax_a Q(s,a)</span></pre>
+
+  <h3>E · Beyond ε-greedy — UCB, Thompson, softmax</h3>
+  <div class="f-block">
+    <span class="lbl">UCB — optimism in the face of uncertainty (next session)</span>
+    <span class="s">A<sub>t</sub></span> = <span class="g">argmax<sub>a</sub></span> [ <span class="q">Q<sub>t</sub>(a)</span> + <span class="a">c·√( ln t / N<sub>t</sub>(a) )</span> ]
+  </div>
+  <ul>
+    <li><b>UCB:</b> adds a bonus that's large for rarely-tried actions → explores by <i>uncertainty</i>, not coin-flip. Beats ε-greedy on bandits; harder to scale to deep RL.</li>
+    <li><b>Thompson sampling:</b> Bayesian — keep a posterior over each arm's value, sample from it, act greedily on the sample. Excellent empirical performance.</li>
+    <li><b>Softmax / Boltzmann:</b> pick action a with prob ∝ e<sup>Q(a)/τ</sup>; temperature τ tunes exploration smoothly (a differentiable policy → leads into policy-gradient methods).</li>
+  </ul>
+
+  <h3>F · The learning rate α in deep RL</h3>
+  <p>The α in TD is conceptually the same α that becomes the <b>optimiser learning rate</b> (Adam, RMSprop) when Q is a neural net. The DQN loss is literally the squared TD error <span class="f">(R + γ max<sub>a′</sub>Q(s′,a′) − Q(s,a))²</span>; gradient descent with learning rate α nudges the network weights down that error — the same "New = Old + α·error" Prof. wrote, now applied to millions of parameters.</p>
+</section>
+
+<!-- ============ QUIZ ============ -->
+<section id="quiz">
+  <div class="kic">// assessment</div>
+  <h2 class="sec">Exam Quiz · 10 Questions</h2>
+  <p class="mut">Click an option to check it (turns green if correct, red if not), then read the full explanation. Mix of recall, calculation, and reasoning — mirrors the closed-book mid-sem style.</p>
+  <div id="quizbox"></div>
+</section>
+
+<!-- ============ PAST EXAM QUESTIONS (BANDIT ONLY) ============ -->
+<section id="exam-past">
+  <div class="kic">// exam prep · real papers</div>
+  <h2 class="sec">Past Exam Questions — Bandit Topics Only</h2>
+  <p class="mut">Pulled <b>verbatim</b> from the actual DRL mid-sem papers (AIMLCZG512), filtered <b>strictly</b> to this chapter — k-armed bandit, action-value estimates, ε-greedy, recency-weighted average, optimistic initial values, UCB, and the explore/exploit framing. MDP / Monte-Carlo / DP parts of those papers are intentionally excluded. Each card shows the question, full working, and the answer.</p>
+
+  <!-- PE1 -->
+  <div class="qz">
+    <div class="head"><span class="dif e">Easy</span><span class="tg">21-Dec-2025 · Q1(a)</span><span class="tg">1.5 M</span></div>
+    <p class="qs"><b>Q.</b> A wristband picks among 3 modes each hour. State why <b>Reinforcement Learning (not supervised learning)</b> fits, and give a one-line distinction between <b>immediate reward</b> and <b>long-term value</b>.</p>
+    <div class="answer">RL fits because there is <b>no labelled "correct mode"</b> — the band only sees a scalar reward per choice and must <b>learn by trial-and-error from its own actions</b> (evaluative, not instructive, feedback), with choices affecting what it learns next. Distinction: <b>immediate reward</b> = the benefit received right now for the mode just chosen; <b>long-term value</b> = the expected cumulative future reward from being in / acting from a situation.</div>
+    <div class="insight"><b>Key:</b> supervised learning needs the right answer per example; RL only gets a reward signal. (See §01.) In the pure bandit the two collapse — value of an action = its expected immediate reward, q*(a)=𝔼[R|A=a].</div>
+  </div>
+
+  <!-- PE2 -->
+  <div class="qz">
+    <div class="head"><span class="dif e">Easy</span><span class="tg">21-Dec-2025 · Q1(b)</span><span class="tg">2 M</span></div>
+    <p class="qs"><b>Q.</b> <b>Case 1:</b> the user's activity is independent of the mode chosen (today's choice does not affect future rewards). <b>Case 2:</b> a firmware rule — sampling Mode C too long raises battery temperature, reducing future rewards for power-hungry modes. (i) Classify Case 1 as MAB or finite MDP. (ii) Classify Case 2 — does the dependency change the problem class?</p>
+    <div class="answer">(i) <b>Multi-Armed Bandit.</b> Actions do not influence future states/rewards → effectively a single state, repeated independent choice → MAB. (ii) <b>Finite MDP.</b> Now an action (prolonged Mode C) <b>changes future rewards</b> → there is state (battery/thermal condition) that actions transition between → it is no longer a bandit; the added dependency <b>does</b> change the class.</div>
+    <div class="insight"><b>Key:</b> bandit ⇔ action affects only the immediate reward; MDP ⇔ action affects reward <i>and</i> next state. (Deep-dive D.)</div>
+  </div>
+
+  <!-- PE3 -->
+  <div class="qz">
+    <div class="head"><span class="dif h">Hard · flagship</span><span class="tg">21-Dec-2025 · Q3</span><span class="tg">6.5 M</span></div>
+    <p class="qs"><b>Q.</b> Online pharma MAB. Interventions S, T, R, C. Observations (time, action, reward): (1,S,7) (2,T,5) (3,R,6) (4,C,4) (5,S,8) (6,T,6) (7,R,7) (8,C,5).
+    <br><b>(a)</b> Using <b>exponential recency-weighted average</b> with <b>α=0.5</b> and all Q initialised to 0, revise Q for every action and pick the best intervention.
+    <br><b>(b)</b> Significance of α; what if α=1?
+    <br><b>(c)</b> Significance of the confidence level in UCB-based selection.
+    <br><b>(d)</b> Until the 5th step, on which steps did the ε-case <b>definitely</b> occur, and on which could it <b>possibly</b> have occurred?</p>
+
+    <div class="f-block">
+      <span class="lbl">(a) update rule Q ← Q + α(R − Q), α=0.5 — each action seen twice</span>
+      <span class="s">S</span>: 0 → 0+.5(7−0)=<span class="g">3.5</span> → 3.5+.5(8−3.5)=<span class="g">5.75</span>
+      <br><span class="s">T</span>: 0 → <span class="g">2.5</span> → 2.5+.5(6−2.5)=<span class="g">4.25</span>
+      <br><span class="s">R</span>: 0 → <span class="g">3.0</span> → 3.0+.5(7−3)=<span class="g">5.0</span>
+      <br><span class="s">C</span>: 0 → <span class="g">2.0</span> → 2.0+.5(5−2)=<span class="g">3.5</span>
+    </div>
+    <div class="answer">(a) Q(S)=<b>5.75</b>, Q(R)=<b>5.0</b>, Q(T)=<b>4.25</b>, Q(C)=<b>3.5</b> → <b>best intervention = S (SMS reminder)</b>.</div>
+    <div class="answer">(b) α weights <b>recent rewards more</b> than old ones (exponential recency weighting), letting Q track a drifting (non-stationary) value. At <b>α=1</b>, Q ← R: each update <b>fully overwrites</b> the estimate, keeping <b>only the latest reward</b> (zero memory). Then Q(S)=8, Q(T)=6, Q(R)=7, Q(C)=5 — best would flip to S=8 but the estimate becomes pure noise / no averaging.</div>
+    <div class="answer">(c) The confidence level <b>c</b> scales the uncertainty bonus c·√(ln t/N(a)); it sets <b>how strongly UCB favours under-tried interventions</b>. Large c → more exploration (e.g. keeps trying C/R even at low Q); small c → behaves almost greedily on current Q.</div>
+
+    <div class="f-block">
+      <span class="lbl">(d) greedy (argmax Q) before each step vs the action actually chosen</span>
+      <span class="op">step1:</span> Q all 0 (tie) → chose S → <span class="s">possible</span>
+      <br><span class="op">step2:</span> S=3.5 max → chose T → <span class="r">DEFINITE</span>
+      <br><span class="op">step3:</span> S=3.5 max → chose R → <span class="r">DEFINITE</span>
+      <br><span class="op">step4:</span> S=3.5 max → chose C → <span class="r">DEFINITE</span>
+      <br><span class="op">step5:</span> S=3.5 max → chose S → <span class="s">possible (greedy or random)</span>
+    </div>
+    <div class="answer">(d) <b>Definitely random: steps 2, 3, 4</b> (a non-greedy action was taken). <b>Possibly random: steps 1 and 5</b> (step 1 all-tied; step 5 chose the greedy S, which the ε-branch could also pick).</div>
+    <div class="insight"><b>Key:</b> a non-greedy pick proves exploration; a greedy-consistent pick can never rule it out. Recompute Q only for the action actually pulled.</div>
+  </div>
+
+  <!-- PE4 -->
+  <div class="qz">
+    <div class="head"><span class="dif m">Medium</span><span class="tg">27-Jan-2024 · Q2</span><span class="tg">6 M</span></div>
+    <p class="qs"><b>Q.</b> (a) Give one application modellable as a MAB, with all identifying elements. (b) Write an <b>ε-greedy bandit algorithm</b> (pseudocode only). (c) Comment on its efficiency. (d) How does it balance exploration vs exploitation?</p>
+    <div class="answer">(a) <b>Online ad selection:</b> each <i>ad</i> = an arm (action); showing an ad → a <b>reward</b> = click/no-click (1/0) from a fixed (stationary) click-through distribution; a single context repeated; goal = maximise total clicks. No state transition → MAB.</div>
+    <pre><span class="c"># (b) Incremental ε-greedy bandit</span>
+Initialize, for a = 1..k:  Q(a) = 0,  N(a) = 0
+<span class="k">loop</span> forever:
+    A = argmax_a Q(a)   <span class="c"># with prob 1-ε  (ties broken randomly)</span>
+        random action   <span class="c"># with prob ε</span>
+    R = bandit(A)
+    N(A) = N(A) + 1
+    Q(A) = Q(A) + (1/N(A)) * [R - Q(A)]</pre>
+    <div class="answer">(c) <b>Efficient:</b> O(1) memory and time per step (just Q(a), N(a) per arm; incremental update — no stored history). Limitation: a <b>fixed ε wastes ε-fraction of pulls forever</b>, so it never fully stops exploring → it is simple and cheap but not regret-optimal unless ε is decayed.</div>
+    <div class="answer">(d) With probability <b>(1−ε) it exploits</b> (argmax Q — uses current knowledge) and with probability <b>ε it explores</b> (uniform random — gathers new info). ε is the tunable knob trading the two; raising ε explores more, lowering it exploits more.</div>
+  </div>
+
+  <!-- PE5 -->
+  <div class="qz">
+    <div class="head"><span class="dif h">Hard</span><span class="tg">23-Jul-2023 (open) · Q2</span><span class="tg">7.5 M</span></div>
+    <p class="qs"><b>Q.</b> Netflix recommends a genre ∈ {a,b,c,d}, reward ∈ {0,1,2,3}. Sequence (step:(genre,reward)): 1:(a,2) 2:(b,3) 3:(c,1) 4:(a,1) 5:(b,1) 6:(d,2) 7:(b,1) 8:(d,1) 9:(c,3) 10:(c,3) 11:(c,1) 12:(d,1). Initial Q = (last digit of student-ID)/2. <b>(a)</b> Stationary, ε-greedy + sample averages — which suggestions are exploratory, and why? <b>(b)</b> Non-stationary, weighted average α=0.5 — which are exploratory? <b>(c)</b> Compare (a) and (b). <b>(d)</b> If all Q init to 5, do exploratory moves behave differently? <b>(e)</b> For n individuals with different tastes, how to extend the bandit solution?</p>
+    <p class="mut" style="font-size:13.5px">Working below assumes <b>last digit = 0 → init Q = 0</b> (state your own digit in the exam and recompute). "Exploratory" = a chosen action that is <b>not</b> the current greedy (argmax) action.</p>
+    <div class="f-block">
+      <span class="lbl">(a) sample-average Q before each step → greedy vs chosen</span>
+      <span class="op">1:</span> all 0, chose a (tie) <span class="op">·</span> 2: greedy a, chose b → <span class="r">explore</span> <span class="op">·</span> 3: greedy b, chose c → <span class="r">explore</span>
+      <br><span class="op">4:</span> greedy b, chose a → <span class="r">explore</span> <span class="op">·</span> 5: greedy b, chose b → greedy
+      <br><span class="op">6:</span> greedy b, chose d → <span class="r">explore</span> <span class="op">·</span> 7: b,d tie max, chose b → greedy
+      <br><span class="op">8:</span> greedy d, chose d → greedy <span class="op">·</span> 9: greedy b, chose c → <span class="r">explore</span>
+      <br><span class="op">10:</span> greedy c, chose c → greedy <span class="op">·</span> 11: greedy c, chose c → greedy <span class="op">·</span> 12: greedy c, chose d → <span class="r">explore</span>
+    </div>
+    <div class="answer">(a) Exploratory steps (non-greedy): <b>2, 3, 4, 6, 9, 12</b>. (Step 1 is a tie, steps 5,7,8,10,11 picked the greedy action.) <i>Assumes init 0; a different ID digit can shift early ties.</i></div>
+    <div class="answer">(b) With α=0.5 recency weighting the Q values differ, so the greedy action at each step can change — recompute Q←Q+0.5(R−Q) and re-test each pick against the new argmax. The <b>method is identical</b>; only the Q numbers (and hence which steps count as exploratory) shift because recent rewards dominate.</div>
+    <div class="answer">(c) Same ε-greedy logic; the <b>difference is how Q is estimated</b> — sample-average weights all past rewards equally (good for stationary), constant-α down-weights old rewards (tracks non-stationary). Different Q ⇒ possibly different greedy action ⇒ a step labelled "exploratory" under one scheme may be "greedy" under the other.</div>
+    <div class="answer">(d) Yes. Init Q=5 (≫ rewards ≤3) is <b>optimistic initialisation</b>: early on, every tried genre disappoints (reward &lt; 5), so its Q drops below the untried genres and the agent is driven to <b>try all genres first</b> — the early picks look exploratory even from greedy alone. Once estimates settle near true values, behaviour reverts to normal ε-greedy.</div>
+    <div class="answer">(e) Move from a context-free bandit to a <b>contextual / associative bandit</b>: treat each individual (or user-feature vector) as a <b>context</b> and learn a separate Q per (user, genre) — i.e. a mapping from situations to best actions. Equivalently, run a per-user bandit or share structure across users via features.</div>
+    <div class="insight"><b>Key:</b> (d) is optimistic initial values (§07); (e) is the associative/contextual bridge to full RL (§43 / deep-dive D).</div>
+  </div>
+
+  <!-- PE6 -->
+  <div class="qz">
+    <div class="head"><span class="dif h">Hard</span><span class="tg">28-Jul-2024 · Q3(b)</span><span class="tg">4 M</span></div>
+    <p class="qs"><b>Q.</b> k=5 bandit, ε-greedy + sample-average, <b>initial estimates Q₁(a)=4 for all a</b>. Sequence: A₁=1,R₁=2; A₂=2,R₂=2; A₃=5,R₃=1; A₄=2,R₄=1; A₅=4,R₅=1; A₆=3,R₆=5. (i) On which steps did ε <b>definitely</b> occur? (ii) On which could it <b>possibly</b> have occurred?</p>
+    <div class="f-block">
+      <span class="lbl">Q before each step (sample-average; the optimistic 4 is replaced by the observed mean once an arm is pulled)</span>
+      <span class="op">1:</span> all = 4 (tie) → chose 1 → <span class="s">possible</span>; Q(1)=2
+      <br><span class="op">2:</span> Q=(2,4,4,4,4) max=4 {2,3,4,5} → chose 2 (=4) → <span class="s">possible</span>; Q(2)=2
+      <br><span class="op">3:</span> Q=(2,2,4,4,4) max=4 {3,4,5} → chose 5 (=4) → <span class="s">possible</span>; Q(5)=1
+      <br><span class="op">4:</span> Q=(2,2,4,4,1) max=4 {3,4} → chose 2 (=2 ≠ max) → <span class="r">DEFINITE</span>; Q(2)=1.5
+      <br><span class="op">5:</span> Q=(2,1.5,4,4,1) max=4 {3,4} → chose 4 (=4) → <span class="s">possible</span>; Q(4)=1
+      <br><span class="op">6:</span> Q=(2,1.5,4,1,1) max=4 {3} → chose 3 (=4) → <span class="s">possible</span>; Q(3)=5
+    </div>
+    <div class="answer">(i) <b>Definitely random: step 4</b> only (action 2 had Q=2 while the greedy value was 4). (ii) <b>Possibly random: steps 1, 2, 3, 5, 6</b> — each picked an action still sitting at the optimistic max 4, consistent with either greedy or a random pull.</div>
+    <div class="insight"><b>Key:</b> optimistic init (4) keeps many arms tied at the top, so almost every early pick is "possible" and only a clearly-below-max pick (step 4) is "definite."</div>
+  </div>
+
+  <!-- PE7 -->
+  <div class="qz">
+    <div class="head"><span class="dif e">Easy</span><span class="tg">21-Jul-2024 · Q2(b,c)</span><span class="tg">2.5 M</span></div>
+    <p class="qs"><b>Q.</b> (b) State one situation in which <b>greedy</b> action selection works better than <b>ε-greedy</b>. (c) Give one workplace application modellable as a MAB (with identifying elements).</p>
+    <div class="answer">(b) When the action values are <b>known / already well-estimated</b> and the task is <b>stationary and deterministic (low/zero reward noise)</b> — e.g. at <b>deployment after learning has converged</b>. Then exploration only wastes pulls, so ε=0 (pure greedy) is optimal. (Also: very short horizon where there is no time to benefit from exploring.)</div>
+    <div class="answer">(c) E.g. <b>A/B testing of website layouts:</b> each layout = an arm; a visitor session → reward = conversion (1/0); repeated visitors form the trials; goal = route traffic to the highest-converting layout. Single context, action affects only immediate reward → MAB.</div>
+  </div>
+
+  <!-- PE8 -->
+  <div class="qz">
+    <div class="head"><span class="dif m">Medium</span><span class="tg">21-Jul-2024 · Q3(a,b)</span><span class="tg">4 M</span></div>
+    <p class="qs"><b>Q.</b> (a) How do you use the rule Q<sub>k+1</sub> = Q<sub>k</sub> + α[R<sub>k</sub> − Q<sub>k</sub>] for a <b>non-stationary</b> MAB? (two statements). (b) For <b>Optimistic Initial Values</b> and <b>UCB</b>, give one scenario each when it works and when it doesn't.</p>
+    <div class="answer">(a) Use a <b>constant α</b> (not 1/n): it forms an <b>exponential recency-weighted average</b>, weighting recent rewards more so the estimate <b>tracks a drifting q*(a)</b>. This sacrifices convergence to a fixed value (bias never fully dies) in exchange for the ability to follow a changing target.</div>
+    <table>
+      <tr><th>Method</th><th>Works when…</th><th>Doesn't work when…</th></tr>
+      <tr><td class="g">Optimistic Initial Values</td><td>Stationary problem; a one-time parameter-free exploration burst suffices</td><td>Non-stationary — optimism is spent at the start; later drift triggers no re-exploration</td></tr>
+      <tr><td class="g">UCB</td><td>Stationary bandit with a fixed, small action set; want near-optimal O(log T) regret via uncertainty-driven exploration</td><td>Large/continuous state-action spaces or full RL (needs per-action counts N(a)); non-stationary unless the bonus is reset</td></tr>
+    </table>
+  </div>
+
+  <div class="box why">
+    <h4>Pattern across all papers</h4>
+    <p>Three bandit problem-types recur in <i>every</i> sitting: <b>(1)</b> compute Q with sample-average <i>or</i> exponential recency-weighted average (constant α) and pick the best arm; <b>(2)</b> the "<b>which steps were ε / definitely-vs-possibly random</b>" trajectory analysis; <b>(3)</b> conceptual contrasts — reward vs value, MAB vs MDP, optimistic-init vs UCB, exploration vs exploitation, greedy-better-than-ε-greedy. Drill those three and you cover the chapter's exam surface.</p>
+  </div>
+</section>
+
+<!-- ============ SAMPLE PRACTICE QUESTIONS (NEW, BANDIT ONLY) ============ -->
+<section id="exam-sample">
+  <div class="kic">// exam prep · fresh set</div>
+  <h2 class="sec">Sample Practice Questions — Exam-Style (New)</h2>
+  <p class="mut">Six <b>new</b> questions written to mirror the previous-year DRL paper style and mark weighting, <b>strictly</b> on this chapter (Multi-Armed Bandits). Full worked solutions follow each. Use them as a closed-book mock.</p>
+
+  <!-- SQ1 -->
+  <div class="qz">
+    <div class="head"><span class="dif m">Medium</span><span class="tg">Sample Q1 · recency average</span><span class="tg">4.5 M</span></div>
+    <p class="qs"><b>Q.</b> A smart thermostat chooses among 3 fan speeds — <b>Low, Med, High</b> — each cycle, earning a comfort reward. Observations (time, speed, reward): (1,Low,4) (2,Med,6) (3,High,3) (4,Low,8) (5,Med,4) (6,High,7).
+    <br><b>(a) [3]</b> Using an <b>exponential recency-weighted average</b> with <b>α=0.5</b> and all Q initialised to 0, compute the final Q for each speed and name the best.
+    <br><b>(b) [1.5]</b> What changes if <b>α=1</b>? Illustrate with this data (≤30 words).</p>
+    <div class="f-block">
+      <span class="lbl">(a) Q ← Q + 0.5(R − Q)</span>
+      <span class="s">Low</span>: 0→0+.5(4)=<span class="g">2</span> → 2+.5(8−2)=<span class="g">5</span>
+      <br><span class="s">Med</span>: 0→<span class="g">3</span> → 3+.5(4−3)=<span class="g">3.5</span>
+      <br><span class="s">High</span>: 0→<span class="g">1.5</span> → 1.5+.5(7−1.5)=<span class="g">4.25</span>
+    </div>
+    <div class="answer">(a) Q(Low)=<b>5</b>, Q(High)=<b>4.25</b>, Q(Med)=<b>3.5</b> → <b>best = Low</b>. (b) α=1 ⇒ Q←R, keeping <b>only the last reward</b>: Low=8, Med=4, High=7 — full overwrite, no averaging, so the estimate is just the most recent sample (noisy, no memory).</div>
+  </div>
+
+  <!-- SQ2 -->
+  <div class="qz">
+    <div class="head"><span class="dif h">Hard</span><span class="tg">Sample Q2 · ε random steps</span><span class="tg">4 M</span></div>
+    <p class="qs"><b>Q.</b> A 3-armed bandit {X,Y,Z} uses ε-greedy + sample-average, Q₁(a)=0. Sequence: A₁=X,R₁=3; A₂=Y,R₂=2; A₃=Y,R₃=4; A₄=X,R₄=1; A₅=Z,R₅=0. (i) [2] On which steps did ε <b>definitely</b> occur? (ii) [2] On which could it <b>possibly</b> have occurred?</p>
+    <div class="f-block">
+      <span class="lbl">greedy before each step vs chosen</span>
+      <span class="op">1:</span> all 0 tie, chose X → <span class="s">possible</span>; Q(X)=3
+      <br><span class="op">2:</span> X=3 max, chose Y → <span class="r">DEFINITE</span>; Q(Y)=2
+      <br><span class="op">3:</span> X=3 max, chose Y → <span class="r">DEFINITE</span>; Q(Y)=(2+4)/2=3
+      <br><span class="op">4:</span> X=3,Y=3 tie max, chose X → <span class="s">possible</span>; Q(X)=(3+1)/2=2
+      <br><span class="op">5:</span> Y=3 max, chose Z → <span class="r">DEFINITE</span>
+    </div>
+    <div class="answer">(i) <b>Definitely random: steps 2, 3, 5</b> (non-greedy action taken). (ii) <b>Possibly random: steps 1 and 4</b> (step 1 all-tied; step 4 picked X which was tied for the max, so greedy or random both explain it).</div>
+  </div>
+
+  <!-- SQ3 -->
+  <div class="qz">
+    <div class="head"><span class="dif m">Medium</span><span class="tg">Sample Q3 · UCB</span><span class="tg">4 M</span></div>
+    <p class="qs"><b>Q.</b> At step <b>t=10</b> a recommender (c=2) holds: Arm1 Q=2.0,N=6; Arm2 Q=1.5,N=2; Arm3 Q=2.2,N=8. (a) [2.5] Compute each UCB score and state which arm is chosen. (b) [0.5] Role of c. (c) [1] What happens for an arm with N=0? (ln 10 ≈ 2.303.)</p>
+    <div class="f-block">
+      <span class="lbl">UCB(a) = Q(a) + c·√(ln t / N(a)),  c=2,  ln10≈2.303</span>
+      Arm1: 2.0 + 2√(2.303/6)=2.0+2(0.620)=2.0+1.239 = <span class="g">3.239</span>
+      <br>Arm2: 1.5 + 2√(2.303/2)=1.5+2(1.073)=1.5+2.146 = <span class="g">3.646</span>
+      <br>Arm3: 2.2 + 2√(2.303/8)=2.2+2(0.537)=2.2+1.073 = <span class="g">3.273</span>
+    </div>
+    <div class="answer">(a) UCB = (3.24, <b>3.65</b>, 3.27) → <b>Arm 2 is selected</b>, despite its lowest Q (1.5), because it has been tried least (N=2) so its uncertainty bonus dominates. (b) <b>c</b> scales the exploration bonus — larger c → explore under-tried arms more; c→0 → pure greedy on Q. (c) N=0 ⇒ ln t / N → ∞ ⇒ <b>infinite bonus</b>, so an untried arm is selected first (automatic warm-up).</div>
+  </div>
+
+  <!-- SQ4 -->
+  <div class="qz">
+    <div class="head"><span class="dif m">Medium</span><span class="tg">Sample Q4 · optimistic init</span><span class="tg">3.5 M</span></div>
+    <p class="qs"><b>Q.</b> (a) [2] Explain how <b>optimistic initial values</b> (e.g. Q₁=+5, ε=0) produce exploration even with a pure-greedy policy. (b) [1.5] Fill the table for when each encourages exploration usefully.</p>
+    <div class="answer">(a) Setting Q₁ far above any real reward makes every arm look great. A greedy agent pulls one, but the actual reward is <b>below</b> the inflated estimate, so that arm's Q is updated <b>downward</b> below the still-untried arms. Greedy is then "disappointed" into switching to a fresh arm; repeating this <b>sweeps through all arms several times</b> before estimates settle — exploration with <b>no ε and no extra parameters</b>.</div>
+    <table>
+      <tr><th>Method</th><th>Useful when</th><th>Fails when</th></tr>
+      <tr><td class="g">Optimistic Initial Values</td><td>Stationary task; cheap one-shot early exploration</td><td>Non-stationary — the optimism is spent once estimates settle; later drift gets no re-exploration</td></tr>
+      <tr><td class="g">UCB</td><td>Stationary, small fixed action set; wants uncertainty-directed, near-optimal exploration throughout</td><td>Large/continuous or full-RL state-action spaces; harder to maintain per-action counts</td></tr>
+    </table>
+  </div>
+
+  <!-- SQ5 -->
+  <div class="qz">
+    <div class="head"><span class="dif h">Hard</span><span class="tg">Sample Q5 · softmax / gradient bandit</span><span class="tg">4.5 M</span></div>
+    <p class="qs"><b>Q.</b> A gradient bandit over 3 actions has preferences H = (1, 2, 0). (a) [2] Compute the softmax probabilities. (b) [1.5] Action a₂ is taken, reward R=2, baseline R̄=0.5, α=0.1. Update all three preferences. (c) [1] Why is the baseline used? (e¹≈2.718, e²≈7.389, e⁰=1.)</p>
+    <div class="f-block">
+      <span class="lbl">(a) π(a) = e^{H(a)} / Σ e^{H}</span>
+      Σ = 2.718 + 7.389 + 1 = 11.107
+      <br>π = ( 2.718/11.107, 7.389/11.107, 1/11.107 ) = ( <span class="g">0.245</span>, <span class="g">0.665</span>, <span class="g">0.090</span> )
+    </div>
+    <div class="f-block">
+      <span class="lbl">(b) chosen a₂: H+α(R−R̄)(1−π);  others: H−α(R−R̄)π;  (R−R̄)=1.5</span>
+      H(a₂) ← 2 + 0.1(1.5)(1−0.665) = 2 + 0.1·1.5·0.335 = 2 + <span class="g">0.050</span>
+      <br>H(a₁) ← 1 − 0.1(1.5)(0.245) = 1 − <span class="g">0.037</span>
+      <br>H(a₃) ← 0 − 0.1(1.5)(0.090) = 0 − <span class="g">0.013</span>
+    </div>
+    <div class="answer">(a) π ≈ (<b>0.245, 0.665, 0.090</b>). (b) H ≈ (<b>0.963, 2.050, −0.013</b>) — reward beat the baseline so the chosen a₂ is pushed up, the others down. (c) The baseline R̄ re-centres rewards to <b>relative</b> performance, which <b>reduces the variance</b> of the gradient estimate (without biasing it) → faster, more stable learning.</div>
+  </div>
+
+  <!-- SQ6 -->
+  <div class="qz">
+    <div class="head"><span class="dif e">Easy</span><span class="tg">Sample Q6 · concepts</span><span class="tg">5 M</span></div>
+    <p class="qs"><b>Q.</b> Short answers. (a) [1.5] Distinguish a <b>reward</b> from a <b>value</b>; what is q*(a) for a bandit? (b) [1.5] A vending route picks a snack to restock each day; restocking choices do not change future demand. MAB or MDP? Justify. Now demand <i>does</i> shift with past stocking — what changes? (c) [1] How does ε-greedy balance exploration vs exploitation? (d) [1] One case where greedy beats ε-greedy.</p>
+    <div class="answer">(a) <b>Reward</b> = immediate scalar feedback for one action; <b>value</b> = expected cumulative future reward. For a single-state bandit, value of an action is just its expected immediate reward: <b>q*(a)=𝔼[R | A=a]</b>. (b) <b>MAB</b> — choices don't affect future demand → no state transitions, single repeated decision. If past stocking shifts future demand, an action now affects future rewards/state → it becomes a <b>finite MDP</b>. (c) It <b>exploits</b> (argmax Q) with prob 1−ε and <b>explores</b> (uniform random) with prob ε, so ε tunes the trade-off. (d) When learning has converged / the task is stationary and (near-)deterministic — at <b>deployment</b>, where exploration only wastes pulls (set ε=0).</div>
+  </div>
+
+  <div class="box exam">
+    <span class="tag">How to use this set</span>
+    <p>Time yourself ~90 min closed-book, write answers before opening the solutions, then grade against the worked steps. The three recurring skills — <b>recency-weighted Q computation</b>, <b>ε definitely/possibly-random analysis</b>, and <b>UCB/softmax calculation</b> — are where marks are won or lost. For any "student-ID" style constant, substitute your own digit and recompute.</p>
+  </div>
+</section>
+
+</main>
+</div>
+<button id="top" onclick="scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+/* ---------- fade-up + nav highlight + progress ---------- */
+const secs=[...document.querySelectorAll('section')];
+const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('show')})},{threshold:.08});
+secs.forEach(s=>io.observe(s));
+const navlinks=[...document.querySelectorAll('#nav a')];
+function onScroll(){
+  const sc=scrollY, h=document.body.scrollHeight-innerHeight;
+  document.getElementById('prog').style.width=(100*sc/h)+'%';
+  document.getElementById('top').classList.toggle('show',sc>500);
+  let cur=secs[0].id;
+  for(const s of secs){ if(s.getBoundingClientRect().top<=140) cur=s.id; }
+  navlinks.forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+cur));
+}
+addEventListener('scroll',onScroll,{passive:true}); onScroll();
+
+/* ---------- tabs ---------- */
+function tab(ex,i,btn){
+  for(let j=0;j<3;j++){const p=document.getElementById(ex+'-'+j); if(p)p.classList.toggle('on',j===i);}
+  btn.parentElement.querySelectorAll('button').forEach((b,j)=>b.classList.toggle('on',j===i));
+}
+
+/* ---------- 1: epsilon donut ---------- */
+function eps(){
+  const K=+document.getElementById('kK').value, E=+document.getElementById('kE').value;
+  document.getElementById('kKv').textContent=K;
+  document.getElementById('kEv').textContent=E.toFixed(2);
+  const pg=(1-E)+E/K, pn=E/K;
+  document.getElementById('pg').textContent=pg.toFixed(3);
+  document.getElementById('pn').textContent=pn.toFixed(3);
+  const gdeg=pg*360;
+  document.getElementById('donut').style.background=
+    `conic-gradient(var(--gold) 0 ${gdeg}deg, var(--sky) ${gdeg}deg 360deg)`;
+}
+eps();
+
+/* ---------- 2: bandit tracker ---------- */
+const TRUE=[1.2,2.5,0.8,1.8]; // hidden means
+let N=[0,0,0,0], Q=[0,0,0,0], tot=0, steps=0;
+function gauss(m){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();
+  return m+Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+function pull(a){
+  const r=gauss(TRUE[a]); N[a]++; Q[a]+=(r-Q[a])/N[a]; tot+=r; steps++; renderB();
+}
+function greedyArm(){let b=0;for(let i=1;i<4;i++)if(Q[i]>Q[b])b=i;return b;}
+function renderB(){
+  const g=greedyArm();
+  let h='<tr><th>Arm</th><th>Pulls N(a)</th><th>Q(a) estimate</th><th>Pull</th></tr>';
+  for(let a=0;a<4;a++){
+    h+=`<tr${a===g&&steps>0?' style="color:var(--gold)"':''}><td>A${a+1}</td><td>${N[a]}</td>`+
+       `<td>${N[a]?Q[a].toFixed(2):'—'} <div class="bar"><i style="width:${Math.min(100,Math.max(0,(Q[a]+1)/4*100))}%"></i></div></td>`+
+       `<td><button class="act gho" style="padding:4px 10px" onclick="pull(${a})">pull</button></td></tr>`;
+  }
+  document.getElementById('btab').innerHTML=h;
+  document.getElementById('btot').textContent=tot.toFixed(1);
+  document.getElementById('bsteps').textContent=steps;
+}
+function autoplay(){
+  const E=+document.getElementById('bE').value;
+  for(let i=0;i<4;i++)if(N[i]===0)pull(i); // warm-up
+  for(let t=0;t<100;t++){
+    let a = Math.random()<E ? Math.floor(Math.random()*4) : greedyArm();
+    pull(a);
+  }
+}
+function bReset(){N=[0,0,0,0];Q=[0,0,0,0];tot=0;steps=0;renderB();}
+renderB();
+
+/* ---------- 3: TD sim ---------- */
+let vA=0,vB=0,tdN=0;
+function tdStep(){
+  const al=+document.getElementById('tA').value;
+  // B -> terminal, R=1, V(term)=0
+  const eB=1+0-vB; vB+=al*eB;
+  // A -> B, R=0
+  const eA=0+vB-vA; vA+=al*eA;
+  tdN++;
+  document.getElementById('vA').textContent=vA.toFixed(2);
+  document.getElementById('vB').textContent=vB.toFixed(2);
+  document.getElementById('tdN').textContent=tdN;
+  document.getElementById('tdmsg').textContent=`TD error: B=${eB.toFixed(2)}, A=${eA.toFixed(2)} → both converging to 1.`;
+}
+function tdReset(){vA=0;vB=0;tdN=0;
+  document.getElementById('vA').textContent='0.00';
+  document.getElementById('vB').textContent='0.00';
+  document.getElementById('tdN').textContent='0';
+  document.getElementById('tdmsg').textContent='TD error shown after a step.';}
+
+/* ---------- 4: explore/exploit game ---------- */
+const VAL=[0.3,0.2,0.6,0.1]; // visible values; cell 2 (index) is ★ hidden 1.0
+const HIDDEN=2; let totG=0,totE=0;
+function gReset(){totG=0;totE=0;drawGame();updateG();}
+function drawGame(){
+  let h='';
+  for(let i=0;i<4;i++){
+    const star=i===HIDDEN?' ★':'';
+    h+=`<div class="cell${i===HIDDEN?' hot':''}">S${i+1}${star}<br>val ${VAL[i]}</div>`;
+  }
+  document.getElementById('game').innerHTML=h;
+}
+function play(mode){
+  for(let s=0;s<10;s++){
+    if(mode==='greedy'){
+      let b=0;for(let i=1;i<4;i++)if(VAL[i]>VAL[b])b=i; // always visible max = S3 (0.6)
+      totG+=VAL[b];
+    }else{
+      const i=Math.floor(Math.random()*4);
+      totE+= i===HIDDEN ? 1.0 : VAL[i]; // explore can hit the hidden jackpot
+    }
+  }
+  updateG();
+}
+function updateG(){document.getElementById('gG').textContent=totG.toFixed(1);
+  document.getElementById('gE').textContent=totE.toFixed(1);}
+drawGame();
+
+/* ---------- quiz ---------- */
+const QUIZ=[
+ {d:'e',t:'RewardValue',ref:'≈23:41',q:'What is the fundamental difference between a reward and a value function?',
+  o:['Reward is immediate feedback; value is expected future (cumulative) return',
+     'Reward is long-term; value is the instantaneous signal',
+     'They are identical, just different names',
+     'Reward applies to states, value applies only to actions'],c:0,
+  e:'Reward is the immediate signal after one action; value estimates the expected cumulative future return from a state/action. Option B reverses them. C is wrong — they differ exactly because reward can be flat (chess: both moves give 0) while value separates them. D is wrong — both V(s) and Q(s,a) exist.'},
+ {d:'e',t:'Bandit',ref:'≈1:11:42',q:'Action A2 was pulled twice giving rewards 3 and 3. What is Q(A2)?',
+  o:['3','2.5','6','1.5'],c:0,
+  e:'Q(A2)=(3+3)/2=3. The 2.5 trap appears if you wrongly assume only one 3; 6 forgets to divide; 1.5 divides by total plays instead of A2-only count. Always divide by how many times THAT action was taken.'},
+ {d:'e',t:'EpsilonGreedy',ref:'≈2:01:50',q:'In ε-greedy, what does ε=0 reduce the algorithm to, and ε=1?',
+  o:['ε=0 → pure greedy; ε=1 → pure random (uniform)',
+     'ε=0 → pure random; ε=1 → pure greedy',
+     'Both make it greedy','Both make it random'],c:0,
+  e:'ε is the explore probability. ε=0 never explores → always argmax Q → pure greedy. ε=1 always explores → uniform random → never exploits. ε interpolates between these extremes.'},
+ {d:'m',t:'Bandit',ref:'≈1:09:00',q:'Reward history A:[1,2,3,4]. Compute Q(A).',
+  o:['2.5','10','4','3'],c:0,
+  e:'Q(A)=(1+2+3+4)/4=10/4=2.5. 10 forgets the divide; 4 takes only the last/max; 3 is the median, not the mean. Sample-average = sum ÷ count.'},
+ {d:'m',t:'EpsilonGreedy',ref:'≈1:53:00',q:'ε=0.3, K=5 actions. Probability the greedy action is selected?',
+  o:['0.76','0.70','0.30','0.86'],c:0,
+  e:'P(greedy)=(1−ε)+ε/K=0.7+0.3/5=0.7+0.06=0.76. 0.70 forgets the ε/K re-pick bonus; 0.30 confuses it with ε; 0.86 uses K=… miscount. Exploration can still land on greedy → always add ε/K.'},
+ {d:'m',t:'TD',ref:'≈45:00',q:'TD update with V(s)=0.5, V(s′)=0.8, R=0.2, α=0.1, γ=1. New V(s)?',
+  o:['0.55','0.50','0.80','0.05'],c:0,
+  e:'TD error=R+γV(s′)−V(s)=0.2+0.8−0.5=0.5. V(s)←0.5+0.1·0.5=0.55. 0.50 forgets to update; 0.80 just copies V(s′); 0.05 reports only the increment, not the new value.'},
+ {d:'m',t:'Exploration',ref:'≈1:30:45',q:'In the food-stall story, why can pure greedy permanently miss a good stall?',
+  o:['One unlucky sample (chef on leave) lowers its estimate and greedy never re-samples it',
+     'Greedy tries every stall every day','Averages are always exact','Greedy explores too much'],c:0,
+  e:'A single off-day depresses the noodle estimate; greedy only ever picks the current max, so it never revisits noodles to correct the estimate → permanent miss. Greedy does NOT re-sample (that\'s the whole flaw) and averages of few noisy samples are NOT exact.'},
+ {d:'h',t:'EpsilonGreedy',ref:'≈1:54:00',q:'Prove-style: two actions, ε=0.5. P(greedy selected)?',
+  o:['0.75','0.50','0.25','1.00'],c:0,
+  e:'P=P(greedy|exploit)(1−ε)+P(greedy|explore)(ε)=1·0.5+(1/2)·0.5=0.5+0.25=0.75. 0.50 ignores that exploration can re-pick greedy; 0.25 is only the explore contribution; 1.00 ignores exploration entirely. This is THE derivation Prof. promised to repeat — expect it.'},
+ {d:'h',t:'Bandit',ref:'≈1:24:00',q:'A casino changes each machine\'s reward range weekly. Why does plain sample-averaging fail?',
+  o:['The problem is non-stationary, so equal-weight averaging chases an outdated, moving target',
+     'Because rewards become constant','Because there are too many arms','Because ε is too large'],c:0,
+  e:'Changing ranges = non-stationary (q*(a) drifts). Sample-average weights all past data equally, so stale rewards drag the estimate and it never tracks the current truth. Fix: constant step-size α (exponential recency weighting). Constant rewards would make the game pointless, not break averaging; arm count and ε are irrelevant here.'},
+ {d:'h',t:'RewardValue',ref:'≈14:00',q:'Why prefer Q(s,a) over V(s) when the environment cannot be modelled?',
+  o:['Q embeds the action, so the greedy policy is argmax_a Q(s,a) — no transition model needed',
+     'Q is always smaller and easier to store','V(s) cannot be estimated from data','Q ignores rewards entirely'],c:0,
+  e:'Acting from V(s) requires P(s′|s,a) to look ahead — i.e. a model. Q(s,a) already conditions on the action, so you pick argmax_a Q directly from experience → model-free (this is why DQN outputs Q). B/C/D are false: V is estimable, Q isn\'t inherently smaller, and Q is built from rewards.'},
+];
+const qb=document.getElementById('quizbox');
+QUIZ.forEach((Qz,i)=>{
+  const dmap={e:['e','Easy'],m:['m','Medium'],h:['h','Hard']};
+  const div=document.createElement('div'); div.className='qz';
+  div.innerHTML=`<div class="head"><span class="dif ${dmap[Qz.d][0]}">${dmap[Qz.d][1]}</span>`+
+    `<span class="tg">${Qz.t}</span><span class="tg">Transcript ${Qz.ref}</span></div>`+
+    `<p class="qs"><b>Q${i+1}.</b> ${Qz.q}</p><div class="opts"></div>`+
+    `<div class="expl" id="ex-${i}"><b>Explanation.</b> ${Qz.e}</div>`;
+  const opts=div.querySelector('.opts');
+  Qz.o.forEach((txt,j)=>{
+    const b=document.createElement('button'); b.className='opt'; b.textContent=String.fromCharCode(65+j)+'. '+txt;
+    b.onclick=()=>{
+      opts.querySelectorAll('.opt').forEach(x=>{x.disabled=true;});
+      b.classList.add(j===Qz.c?'right':'wrong');
+      if(j!==Qz.c) opts.children[Qz.c].classList.add('right');
+      document.getElementById('ex-'+i).classList.add('show');
+    };
+    opts.appendChild(b);
+  });
+  qb.appendChild(div);
+});
+
+/* ---------- show/hide solution on exam-prep cards ---------- */
+document.querySelectorAll('#exam-past .qz, #exam-sample .qz').forEach(card=>{
+  const qs = card.querySelector('.qs');
+  if(!qs) return;
+  const sol = document.createElement('div');
+  sol.className = 'sol';
+  let node = qs.nextSibling;
+  while(node){ const next = node.nextSibling; sol.appendChild(node); node = next; }
+  if(!sol.querySelector('.answer, .f-block, table, .insight, ol')) { card.appendChild(sol); return; }
+  const btn = document.createElement('button');
+  btn.className = 'solbtn';
+  btn.textContent = 'Show Solution';
+  btn.addEventListener('click', ()=>{
+    const open = sol.classList.toggle('show');
+    btn.textContent = open ? 'Hide Solution' : 'Show Solution';
+  });
+  card.appendChild(btn);
+  card.appendChild(sol);
+});
+</script>
+</body>
+</html>
