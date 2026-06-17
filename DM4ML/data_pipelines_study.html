@@ -1,0 +1,1615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Pipelines & Modern Data Stack — DM4ML Study Tool</title>
+<style>
+:root {
+  --bg: #0f1117;
+  --bg2: #161b22;
+  --bg3: #1c2333;
+  --bg4: #21262d;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text2: #8b949e;
+  --purple: #a371f7;
+  --purple-bg: #1a1040;
+  --teal: #3dc9b0;
+  --teal-bg: #0d2f2a;
+  --amber: #e3b341;
+  --amber-bg: #2d2000;
+  --sky: #58a6ff;
+  --sky-bg: #0d1f3c;
+  --orange: #f0883e;
+  --orange-bg: #2d1a00;
+  --coral: #ff6b6b;
+  --green: #3fb950;
+  --red: #f85149;
+  --sidebar-w: 260px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 15px; line-height: 1.65; display: flex; min-height: 100vh; }
+
+/* ── SIDEBAR ── */
+#sidebar {
+  width: var(--sidebar-w); background: var(--bg2); border-right: 1px solid var(--border);
+  position: fixed; top: 0; left: 0; height: 100vh; overflow-y: auto; z-index: 100;
+  display: flex; flex-direction: column;
+}
+#sidebar-header { padding: 18px 16px 12px; border-bottom: 1px solid var(--border); }
+#sidebar-header h2 { font-size: 13px; color: var(--purple); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+#sidebar-header p { font-size: 11px; color: var(--text2); }
+#progress-wrap { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+#progress-label { font-size: 11px; color: var(--text2); margin-bottom: 6px; display: flex; justify-content: space-between; }
+#progress-bar-outer { background: var(--bg4); border-radius: 4px; height: 6px; }
+#progress-bar-inner { background: linear-gradient(90deg, var(--purple), var(--teal)); height: 6px; border-radius: 4px; transition: width 0.4s; }
+#mode-tabs { display: flex; gap: 4px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.mode-tab { flex: 1; padding: 6px 0; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text2); font-size: 12px; cursor: pointer; text-align: center; transition: all 0.2s; }
+.mode-tab.active { background: var(--purple); color: #fff; border-color: var(--purple); }
+#nav-list { flex: 1; overflow-y: auto; padding: 8px 0; }
+.nav-item { padding: 8px 16px; font-size: 13px; color: var(--text2); cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.15s; border-left: 3px solid transparent; }
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active { background: var(--bg3); color: var(--purple); border-left-color: var(--purple); }
+.nav-item.visited::after { content: '✓'; margin-left: auto; color: var(--teal); font-size: 11px; }
+.nav-num { font-size: 11px; color: var(--text2); min-width: 20px; }
+
+/* ── MAIN ── */
+#main { margin-left: var(--sidebar-w); flex: 1; padding: 32px 40px; max-width: 960px; }
+.page { display: none; }
+.page.active { display: block; }
+h1 { font-size: 28px; background: linear-gradient(90deg, var(--purple), var(--teal)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 6px; }
+h2 { font-size: 20px; color: var(--text); margin: 28px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+h3 { font-size: 16px; color: var(--purple); margin: 20px 0 8px; }
+h4 { font-size: 14px; color: var(--teal); margin: 14px 0 6px; }
+p { margin-bottom: 12px; color: var(--text); }
+.subtitle { color: var(--text2); font-size: 14px; margin-bottom: 24px; }
+
+/* ── CALLOUT BOXES ── */
+.callout { border-radius: 8px; padding: 14px 16px; margin: 16px 0; border-left: 4px solid; }
+.callout-def { background: var(--purple-bg); border-color: var(--purple); }
+.callout-def .callout-title { color: var(--purple); }
+.callout-insight { background: var(--teal-bg); border-color: var(--teal); }
+.callout-insight .callout-title { color: var(--teal); }
+.callout-exam { background: var(--amber-bg); border-color: var(--amber); }
+.callout-exam .callout-title { color: var(--amber); }
+.callout-research { background: var(--sky-bg); border-color: var(--sky); }
+.callout-research .callout-title { color: var(--sky); }
+.callout-warn { background: var(--orange-bg); border-color: var(--orange); }
+.callout-warn .callout-title { color: var(--orange); }
+.callout-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+
+/* ── TABLE ── */
+.tbl-wrap { overflow-x: auto; margin: 16px 0; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead tr { background: var(--bg3); }
+th { padding: 10px 12px; text-align: left; color: var(--purple); font-weight: 600; border-bottom: 1px solid var(--border); }
+td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+tr:hover td { background: var(--bg3); }
+
+/* ── EXPANDABLE CARDS ── */
+.card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; margin: 10px 0; overflow: hidden; }
+.card-header { padding: 12px 16px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: background 0.2s; }
+.card-header:hover { background: var(--bg3); }
+.card-title { font-size: 14px; font-weight: 600; color: var(--text); }
+.card-arrow { color: var(--text2); transition: transform 0.3s; font-size: 12px; }
+.card.open .card-arrow { transform: rotate(180deg); }
+.card-body { padding: 0 16px; max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.3s; }
+.card.open .card-body { max-height: 1200px; padding: 4px 16px 16px; }
+
+/* ── TABS ── */
+.tab-group { margin: 16px 0; }
+.tab-buttons { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 0; }
+.tab-btn { padding: 7px 14px; border-radius: 6px 6px 0 0; border: 1px solid var(--border); border-bottom: none; background: var(--bg3); color: var(--text2); font-size: 13px; cursor: pointer; transition: all 0.2s; }
+.tab-btn.active { background: var(--bg2); color: var(--teal); border-top: 2px solid var(--teal); }
+.tab-pane { display: none; padding: 16px; background: var(--bg2); border: 1px solid var(--border); border-radius: 0 6px 6px 6px; }
+.tab-pane.active { display: block; }
+
+/* ── CODE ── */
+pre { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 14px; overflow-x: auto; margin: 12px 0; }
+code { font-family: 'Fira Code', 'Cascadia Code', monospace; font-size: 13px; color: var(--teal); }
+.inline-code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 12px; color: var(--amber); }
+
+/* ── FLOW DIAGRAM ── */
+.flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 16px 0; padding: 16px; background: var(--bg2); border-radius: 8px; border: 1px solid var(--border); }
+.flow-step { background: var(--bg3); border: 1px solid var(--purple); border-radius: 6px; padding: 8px 14px; font-size: 13px; color: var(--text); text-align: center; min-width: 90px; }
+.flow-arrow { color: var(--teal); font-size: 18px; }
+.flow-alt { border-color: var(--teal); }
+.flow-dest { border-color: var(--amber); background: var(--amber-bg); }
+
+/* ── BAR CHART ── */
+.bar-chart { margin: 16px 0; }
+.bar-row { display: flex; align-items: center; gap: 10px; margin: 6px 0; font-size: 13px; }
+.bar-label { min-width: 140px; color: var(--text2); font-size: 12px; }
+.bar-track { flex: 1; background: var(--bg3); border-radius: 4px; height: 18px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; transition: width 1s ease; display: flex; align-items: center; padding-left: 8px; font-size: 11px; color: #fff; font-weight: 600; }
+
+/* ── QUIZ ── */
+#quiz-container { max-width: 720px; }
+.q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.q-counter { font-size: 14px; color: var(--text2); }
+.q-score { font-size: 14px; color: var(--teal); font-weight: 600; }
+.q-dots { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 20px; }
+.q-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--bg4); border: 1px solid var(--border); }
+.q-dot.correct { background: var(--green); border-color: var(--green); }
+.q-dot.wrong { background: var(--red); border-color: var(--red); }
+.q-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+.q-text { font-size: 16px; line-height: 1.6; margin-bottom: 20px; color: var(--text); }
+.q-options { display: flex; flex-direction: column; gap: 10px; }
+.q-option { padding: 12px 16px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+.q-option:hover:not(.disabled) { border-color: var(--purple); background: var(--purple-bg); }
+.q-option.correct { background: #0d2e1a; border-color: var(--green); color: var(--green); }
+.q-option.wrong { background: #2d0d0d; border-color: var(--red); color: var(--red); }
+.q-option.disabled { cursor: not-allowed; }
+.q-explain { margin-top: 16px; padding: 14px; background: var(--bg3); border-radius: 8px; font-size: 13px; color: var(--text2); display: none; border-left: 3px solid var(--teal); }
+.q-explain.show { display: block; }
+#q-next { margin-top: 20px; padding: 10px 24px; background: var(--purple); color: #fff; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; display: none; }
+#q-next:hover { background: #b280ff; }
+#q-score-screen { text-align: center; display: none; padding: 40px; }
+#q-score-screen h2 { font-size: 32px; color: var(--amber); margin-bottom: 12px; -webkit-text-fill-color: var(--amber); }
+#q-restart { margin-top: 20px; padding: 12px 28px; background: var(--teal); color: #0f1117; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; font-weight: 700; }
+
+/* ── FLASHCARDS ── */
+#fc-container { max-width: 660px; }
+.fc-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.fc-counter { font-size: 14px; color: var(--text2); }
+.fc-ratings { display: flex; gap: 8px; font-size: 12px; }
+.fc-rating-count { padding: 3px 8px; border-radius: 12px; }
+.fc-hard { background: #3d1010; color: var(--coral); }
+.fc-good { background: #102d20; color: var(--teal); }
+.fc-easy { background: #2d2800; color: var(--amber); }
+.fc-scene { perspective: 1000px; height: 280px; margin: 20px 0; cursor: pointer; }
+.fc-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4,0,0.2,1); }
+.fc-scene.flipped .fc-inner { transform: rotateY(180deg); }
+.fc-front, .fc-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 12px; padding: 28px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+.fc-front { background: var(--bg2); border: 1px solid var(--purple); }
+.fc-back { background: var(--purple-bg); border: 1px solid var(--purple); transform: rotateY(180deg); }
+.fc-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text2); margin-bottom: 12px; }
+.fc-front .fc-label { color: var(--purple); }
+.fc-back .fc-label { color: var(--teal); }
+.fc-q { font-size: 17px; color: var(--text); line-height: 1.5; }
+.fc-a { font-size: 14px; color: var(--text); line-height: 1.6; }
+.fc-hint { font-size: 12px; color: var(--text2); margin-top: 14px; }
+.fc-actions { display: flex; gap: 12px; justify-content: center; margin-top: 8px; }
+.fc-btn { padding: 9px 20px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+.fc-btn-hard { background: var(--coral); color: #fff; }
+.fc-btn-good { background: var(--teal); color: #0f1117; }
+.fc-btn-easy { background: var(--amber); color: #0f1117; }
+.fc-btn:hover { opacity: 0.85; }
+.fc-nav { display: flex; gap: 10px; justify-content: center; margin-top: 12px; }
+.fc-nav-btn { padding: 7px 16px; background: var(--bg3); border: 1px solid var(--border); color: var(--text2); border-radius: 6px; cursor: pointer; font-size: 13px; }
+.fc-nav-btn:hover { border-color: var(--teal); color: var(--teal); }
+.fc-progress-row { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 12px; }
+.fc-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bg4); border: 1px solid var(--border); }
+.fc-dot.hard { background: var(--coral); }
+.fc-dot.good { background: var(--teal); }
+.fc-dot.easy { background: var(--amber); }
+
+/* ── GLOSSARY ── */
+#gloss-search { width: 100%; padding: 10px 14px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; margin-bottom: 16px; }
+#gloss-search:focus { outline: none; border-color: var(--purple); }
+
+/* ── CHECKLIST ── */
+.checklist-group { margin: 16px 0; }
+.checklist-group h3 { color: var(--amber); font-size: 14px; margin-bottom: 10px; }
+.check-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: background 0.15s; margin-bottom: 4px; }
+.check-item:hover { background: var(--bg2); }
+.check-item input { width: 16px; height: 16px; accent-color: var(--teal); margin-top: 2px; flex-shrink: 0; cursor: pointer; }
+.check-item label { cursor: pointer; font-size: 13px; color: var(--text); }
+.check-item.checked label { text-decoration: line-through; color: var(--text2); }
+#check-progress { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+#check-progress span { font-size: 14px; color: var(--teal); font-weight: 600; }
+#reset-checks { padding: 6px 14px; background: transparent; border: 1px solid var(--border); color: var(--text2); border-radius: 6px; cursor: pointer; font-size: 12px; }
+#reset-checks:hover { border-color: var(--coral); color: var(--coral); }
+
+/* ── MISC ── */
+ul, ol { padding-left: 20px; margin-bottom: 12px; }
+li { margin-bottom: 4px; color: var(--text); }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; margin: 2px; }
+.tag-purple { background: var(--purple-bg); color: var(--purple); }
+.tag-teal { background: var(--teal-bg); color: var(--teal); }
+.tag-amber { background: var(--amber-bg); color: var(--amber); }
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 12px; font-size: 12px; border: 1px solid; margin: 3px; }
+.badge-purple { border-color: var(--purple); color: var(--purple); background: var(--purple-bg); }
+.badge-teal { border-color: var(--teal); color: var(--teal); background: var(--teal-bg); }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 12px 0; }
+.stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; text-align: center; }
+.stat-num { font-size: 24px; font-weight: 700; color: var(--amber); }
+.stat-label { font-size: 12px; color: var(--text2); margin-top: 4px; }
+.formula { background: var(--bg3); border: 1px solid var(--amber); border-radius: 6px; padding: 12px 16px; font-family: monospace; font-size: 14px; color: var(--amber); margin: 10px 0; text-align: center; }
+
+@media (max-width: 768px) {
+  #sidebar { width: 100%; height: auto; position: relative; }
+  #main { margin-left: 0; padding: 16px; }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══ -->
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h2>DM4ML · Session 4</h2>
+    <p>Data Pipelines & Modern Data Stack</p>
+  </div>
+  <div id="progress-wrap">
+    <div id="progress-label"><span>Study Progress</span><span id="prog-text">0 / 8 topics</span></div>
+    <div id="progress-bar-outer"><div id="progress-bar-inner" style="width:0%"></div></div>
+  </div>
+  <div id="mode-tabs">
+    <button class="mode-tab active" onclick="switchMode('study')">Study</button>
+    <button class="mode-tab" onclick="switchMode('quiz')">Quiz</button>
+    <button class="mode-tab" onclick="switchMode('fc')">Cards</button>
+  </div>
+  <div id="nav-list">
+    <div class="nav-item active" onclick="showPage(0)" id="nav-0"><span class="nav-num">01</span>Introduction & Why</div>
+    <div class="nav-item" onclick="showPage(1)" id="nav-1"><span class="nav-num">02</span>Modes of Data Flow</div>
+    <div class="nav-item" onclick="showPage(2)" id="nav-2"><span class="nav-num">03</span>Modern Data Stack</div>
+    <div class="nav-item" onclick="showPage(3)" id="nav-3"><span class="nav-num">04</span>Data Pipelines</div>
+    <div class="nav-item" onclick="showPage(4)" id="nav-4"><span class="nav-num">05</span>Pipeline Architecture</div>
+    <div class="nav-item" onclick="showPage(5)" id="nav-5"><span class="nav-num">06</span>Pipeline Implementation</div>
+    <div class="nav-item" onclick="showPage(6)" id="nav-6"><span class="nav-num">07</span>Tools & Platforms</div>
+    <div class="nav-item" onclick="showPage(7)" id="nav-7"><span class="nav-num">08</span>Glossary & Checklist</div>
+  </div>
+</nav>
+
+<!-- ══ MAIN CONTENT ══ -->
+<main id="main">
+
+<!-- ════════════════════════════════
+     PAGE 0 — INTRODUCTION
+════════════════════════════════ -->
+<section class="page active" id="page-0">
+  <h1>Introduction & Why Data Pipelines?</h1>
+  <p class="subtitle">Session 4 · Dr. D. Venkata Subramanian, BITS Pilani | DM4ML</p>
+
+  <div class="callout callout-def">
+    <div class="callout-title">📚 Core Definition</div>
+    A <strong>Data Pipeline</strong> is a series of steps that allow data from one system to move and become useful in another system — particularly analytics, data science, or AI/ML systems. It works by <em>pulling</em> data from the source, applying rules for transformation and processing, then <em>pushing</em> data to its destination.
+  </div>
+
+  <h2>The IMD Case Study: Why Pipelines Matter</h2>
+  <p>The India Meteorological Department (IMD) collects data from a massive network of heterogeneous sensors. Can any of this be done manually multiple times every day?</p>
+  <div class="grid-3">
+    <div class="stat-card"><div class="stat-num">806</div><div class="stat-label">Automatic Weather Stations (AWS)</div></div>
+    <div class="stat-card"><div class="stat-num">1,382</div><div class="stat-label">Automatic Rain Gauges (ARG)</div></div>
+    <div class="stat-card"><div class="stat-num">5,896</div><div class="stat-label">DRMS Stations</div></div>
+    <div class="stat-card"><div class="stat-num">39</div><div class="stat-label">Doppler Weather Radars</div></div>
+    <div class="stat-card"><div class="stat-num">83</div><div class="stat-label">Lightning Sensors</div></div>
+    <div class="stat-card"><div class="stat-num">2</div><div class="stat-label">Geostationary Satellites</div></div>
+  </div>
+  <div class="callout callout-insight">
+    <div class="callout-title">💡 Real-World Insight</div>
+    <p>IMD's network proves that the <strong>"5 Vs" of big data</strong> (Volume, Velocity, Variety, Veracity, Value) make manual data handling impossible. The IMD must produce weather forecasts continuously — data from thousands of sensors must flow, transform, and render as warnings in near-real-time. This is only achievable through automated data pipelines.</p>
+  </div>
+
+  <h2>The 5 V's of Big Data</h2>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>V</th><th>Meaning</th><th>IMD Example</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge badge-purple">Volume</span></td><td>Sheer amount of data generated</td><td>Thousands of sensors, 24/7</td></tr>
+        <tr><td><span class="badge badge-teal">Velocity</span></td><td>Speed at which data arrives</td><td>Real-time weather events, sub-minute updates</td></tr>
+        <tr><td><span class="badge badge-purple">Variety</span></td><td>Different data formats and sources</td><td>Radar, satellite, rain gauge, manual observations</td></tr>
+        <tr><td><span class="badge badge-teal">Veracity</span></td><td>Uncertainty and trustworthiness</td><td>Faulty sensors producing bad readings</td></tr>
+        <tr><td><span class="badge badge-purple">Value</span></td><td>Usefulness for decision-making</td><td>Storm warnings that save lives</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout callout-exam">
+    <div class="callout-title">🎯 Exam Tip</div>
+    The "5 V's" are a classic exam question. Remember that a well-designed data pipeline must handle ALL five simultaneously. The IMD example is perfect for illustrating this — use it in any essay question about why data pipelines are necessary.
+  </div>
+
+  <h2>Hospital Management System Example</h2>
+  <p>Another classic example from lecture: a doctor's prescription app and the pharmacist's dispensing app are <em>different applications</em>. So how does data flow between them?</p>
+  <div class="flow">
+    <div class="flow-step">Doctor's App</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step flow-alt">HMS Database</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step flow-alt">Pharmacist's App</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step flow-dest">Patient Gets Meds</div>
+  </div>
+  <p>The central HMS database acts as a shared intermediary — data flows <em>through</em> the database, enabling independent applications to communicate without direct coupling.</p>
+
+  <div class="callout callout-research">
+    <div class="callout-title">🔬 Research Addition — Source: Stitch Data / Streamsets, 2024</div>
+    <p>Data pipelines trace their origin to the <strong>Big Data era (2010–2015)</strong>. Data lakes created democratized access to raw data, spawning a "feeding frenzy" among developers and data scientists. This drove the creation of diverse workflows to clean, filter, aggregate, and move data — the origin of what we call modern data pipelines. Industry analyst firm Gartner estimates that data engineers spend 40–60% of their time on pipeline maintenance rather than building new capabilities — a key driver of DataOps automation.</p>
+  </div>
+
+  <h2>Where Data Pipelines Are Used (Lecture Purposes)</h2>
+  <ul>
+    <li>Deliver sales data to sales/marketing for Customer 360 analytics</li>
+    <li>Link global networks of scientists and doctors to speed drug discovery</li>
+    <li>Recommend financial services to small businesses</li>
+    <li>Track COVID-19 cases and inform community health decisions</li>
+    <li>Combine diverse sensor data with AI for predictive maintenance</li>
+  </ul>
+
+  <div class="callout callout-warn">
+    <div class="callout-title">⚠️ Warning — The "Data Outlives Code" Problem</div>
+    From the lecture scenarios on databases: when you deploy a new application version, you replace the old code in minutes. But the <em>data</em> written by the old code version may remain in the database for years. A value written 5 years ago by V1.0 may be read today by V5.0 — both forward and backward compatibility must be planned for.
+  </div>
+</section>
+
+<!-- ════════════════════════════════
+     PAGE 1 — MODES OF DATA FLOW
+════════════════════════════════ -->
+<section class="page" id="page-1">
+  <h1>Modes of Data Flow</h1>
+  <p class="subtitle">Three fundamental ways data moves between systems</p>
+
+  <div class="callout callout-def">
+    <div class="callout-title">📚 Overview</div>
+    Data flows between systems in three primary modes: <strong>Through Databases</strong>, <strong>Through Services</strong>, and <strong>Through Message Passing</strong>. Each mode has different coupling characteristics, latency profiles, and compatibility requirements.
+  </div>
+
+  <div class="tab-group">
+    <div class="tab-buttons">
+      <button class="tab-btn active" onclick="openTab(this,'tab-db')">1. Through Databases</button>
+      <button class="tab-btn" onclick="openTab(this,'tab-svc')">2. Through Services</button>
+      <button class="tab-btn" onclick="openTab(this,'tab-msg')">3. Message Passing</button>
+    </div>
+    <div id="tab-db" class="tab-pane active">
+      <h3>Data Flow Through Databases</h3>
+      <p>One process writes data to a shared database; another process reads from it. The database acts as an intermediary — <em>without the two processes needing to know about each other</em>.</p>
+      <h4>Three Scenarios (from lecture)</h4>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Scenario</th><th>Description</th><th>Compatibility Requirement</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Scenario 1</strong></td><td>Process 1 encodes (writes) → DB → Process 2 decodes (reads)</td><td>Encoding/decoding contract between two processes</td></tr>
+            <tr><td><strong>Scenario 2</strong></td><td>Single process V1.01 writes, V1.02 reads later</td><td>Backward compatibility — newer code must read older data</td></tr>
+            <tr><td><strong>Scenario 3</strong></td><td>Multiple processes (1,2,3,4) all access the same DB concurrently</td><td>Forward + backward compatibility both required</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-exam">
+        <div class="callout-title">🎯 Exam Trap</div>
+        Students confuse Backward and Forward Compatibility. <strong>Backward Compatibility:</strong> newer code can read data written by <em>older</em> code. <strong>Forward Compatibility:</strong> older code can read data written by <em>newer</em> code (and must ignore unknown fields gracefully). Both are required in a live rolling upgrade scenario.
+      </div>
+      <h4>Schema Evolution</h4>
+      <p>When a new field is added to a record schema, newer code writes it, but older code reading the record must keep the new field intact even if it cannot interpret it. The database appears to use a single unified schema even though underlying records may have been encoded with different historical schema versions.</p>
+      <h4>Archival Storage</h4>
+      <p>Database snapshots are typically encoded with the <em>latest</em> schema when taken, even if the source records were written at different schema versions. This ensures consistent analytical queries on the snapshot.</p>
+    </div>
+    <div id="tab-svc" class="tab-pane">
+      <h3>Data Flow Through Services</h3>
+      <p>Processes communicate over a network. The server exposes an API; clients make requests to that API.</p>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this)"><span class="card-title">Client-Server Architecture</span><span class="card-arrow">▼</span></div>
+        <div class="card-body">
+          <p>Servers expose APIs; clients connect and request data. Web browsers make GET requests for HTML/CSS/JS; POST for submitting data. The server's response to programmatic clients is typically JSON, not HTML.</p>
+          <div class="callout callout-insight"><div class="callout-title">💡 Insight</div>Because web standards (HTTP, URLs, SSL, HTML) are agreed upon universally, any browser can access any website — this is the power of standardization over proprietary interfaces.</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this)"><span class="card-title">Service Oriented Architecture (SOA)</span><span class="card-arrow">▼</span></div>
+        <div class="card-body">
+          <p>Large applications are decomposed into smaller services by area of functionality. A server can itself be a client to another service. Key design goal: services are <strong>independently deployable and evolvable</strong> — one team can release without coordinating with others.</p>
+          <p><strong>Implication:</strong> old and new versions of services run simultaneously during rolling deployments. Data encoding across versions must be compatible.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this)"><span class="card-title">SOA vs Microservices</span><span class="card-arrow">▼</span></div>
+        <div class="card-body">
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>Aspect</th><th>SOA</th><th>Microservices</th></tr></thead>
+            <tbody>
+              <tr><td>Scope</td><td>Enterprise-wide service exposure</td><td>Application-level architecture</td></tr>
+              <tr><td>Communication</td><td>Enterprise Service Bus (ESB)</td><td>Lightweight REST/gRPC APIs</td></tr>
+              <tr><td>Database</td><td>Often shared DB</td><td>Each service has its own DB</td></tr>
+              <tr><td>Coupling</td><td>Heavier infrastructure</td><td>Flexible, lightweight</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this)"><span class="card-title">REST vs SOAP Web Services</span><span class="card-arrow">▼</span></div>
+        <div class="card-body">
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>Feature</th><th>REST</th><th>SOAP</th></tr></thead>
+            <tbody>
+              <tr><td>Type</td><td>Design philosophy (not protocol)</td><td>XML-based protocol</td></tr>
+              <tr><td>Transport</td><td>HTTP (uses features natively)</td><td>HTTP (avoids most HTTP features)</td></tr>
+              <tr><td>Format</td><td>JSON, XML, any</td><td>XML only (WSDL)</td></tr>
+              <tr><td>Human-readable</td><td>Yes — testable with curl/browser</td><td>No — requires IDE tooling</td></tr>
+              <tr><td>Trend</td><td>Gaining popularity, microservices</td><td>Declining (used in large enterprises)</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" onclick="toggleCard(this)"><span class="card-title">Remote Procedure Calls (RPC)</span><span class="card-arrow">▼</span></div>
+        <div class="card-body">
+          <p>RPC makes a remote network request look like a local function call — <em>location transparency</em>. However this is <strong>fundamentally flawed</strong>: a network call has unpredictable latency, can fail, and may be retried — none of which apply to local function calls. Modern RPC frameworks (gRPC with Protocol Buffers, Thrift, Avro RPC) are more explicit about this distinction and add service discovery.</p>
+          <div class="callout callout-exam"><div class="callout-title">🎯 Exam Tip</div>The key critique of RPC: <em>don't try to make remote calls look like local calls</em>. Focus of modern RPC is intra-organization, intra-datacenter communication where custom binary encoding (Protocol Buffers) outperforms JSON over REST.</div>
+        </div>
+      </div>
+    </div>
+    <div id="tab-msg" class="tab-pane">
+      <h3>Asynchronous Message Passing</h3>
+      <div class="callout callout-def">
+        <div class="callout-title">📚 Definition</div>
+        Asynchronous message-passing systems sit between RPC (low latency) and databases (persistent storage). A message broker intermediary stores messages temporarily. Also called <strong>message queue</strong> or <strong>message-oriented middleware</strong>.
+      </div>
+      <h4>How It Works</h4>
+      <ol>
+        <li>A producer process sends a message to a named <strong>queue or topic</strong></li>
+        <li>The broker stores it temporarily</li>
+        <li>One or more consumers subscribe and receive the message</li>
+      </ol>
+      <h4>Advantages Over Direct RPC</h4>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Advantage</th><th>Explanation</th></tr></thead>
+        <tbody>
+          <tr><td>Buffering</td><td>Acts as buffer if recipient is unavailable or overloaded → improves reliability</td></tr>
+          <tr><td>Auto-redeliver</td><td>Can redeliver to crashed processes → prevents message loss</td></tr>
+          <tr><td>Decoupling</td><td>Sender doesn't need IP/port of recipient</td></tr>
+          <tr><td>Fan-out</td><td>One message can reach multiple consumers</td></tr>
+          <tr><td>Loose coupling</td><td>Sender publishes without caring who consumes</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout callout-insight">
+        <div class="callout-title">💡 Insight — Why Asynchronous?</div>
+        <p>The sender does <em>not wait</em> for the message to be delivered — it sends and forgets. This is fundamentally different from RPC where the caller blocks until a response is received. Message-passing is one-way; if a response is needed, it goes on a <em>separate</em> channel.</p>
+      </div>
+      <h4>Popular Message Brokers</h4>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Era</th><th>Products</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Legacy</td><td>TIBCO, IBM WebSphere, webMethods</td><td>Commercial, proprietary, enterprise-heavy</td></tr>
+          <tr><td>Modern Open Source</td><td>RabbitMQ, ActiveMQ, HornetQ, NATS, Apache Kafka</td><td>Popular, widely adopted, cloud-native</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout callout-research">
+        <div class="callout-title">🔬 Research Addition — Confluent/Kafka, 2024</div>
+        <p>Apache Kafka has become the de facto standard for streaming data pipelines, capable of handling <strong>millions of events per second</strong> with sub-10ms latency. Kafka is used by over 80% of Fortune 100 companies. Its key design innovation is treating a message queue as a <em>durable, replayable log</em> — messages are not deleted after consumption but retained for a configurable period, enabling consumers to replay historical events. This turns Kafka from a simple queue into a system of record for event-driven architectures. (Confluent State of Data Streaming, 2024)</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════
+     PAGE 2 — MODERN DATA STACK
+════════════════════════════════ -->
+<section class="page" id="page-2">
+  <h1>Modern Data Stack (MDS)</h1>
+  <p class="subtitle">From legacy infrastructure to cloud-native, modular data platforms</p>
+
+  <div class="callout callout-def">
+    <div class="callout-title">📚 Definition</div>
+    The <strong>Modern Data Stack (MDS)</strong> refers to integrated, cloud-based tools and technologies that enable the collection, ingestion, storage, cleaning, transformation, analysis, and governance of data. It is a cloud-native, modular solution designed to streamline automation, optimize costs, and accelerate insights — empowering self-service analytics and AI applications.
+  </div>
+
+  <h2>Traditional vs. Modern Data Stack</h2>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Dimension</th><th>Traditional Data Stack (TDS)</th><th>Modern Data Stack (MDS)</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Infrastructure</strong></td><td>Relies on physical on-premises servers</td><td>Cloud-native</td></tr>
+        <tr><td><strong>Scalability</strong></td><td>Requires manual scaling (costly)</td><td>Scales dynamically with demand</td></tr>
+        <tr><td><strong>Integration</strong></td><td>Relies on custom workflows</td><td>Automates data ingestion</td></tr>
+        <tr><td><strong>Flexibility</strong></td><td>Monolithic — breaking one part can break all</td><td>Modular — plug-and-play components</td></tr>
+        <tr><td><strong>Analytics</strong></td><td>Supports batch reporting only</td><td>Real-time insights + interactive dashboards</td></tr>
+        <tr><td><strong>Cost Model</strong></td><td>Significant upfront CapEx</td><td>Pay-as-you-go OpEx model</td></tr>
+        <tr><td><strong>Response Time</strong></td><td>New data update takes weeks of refactoring</td><td>Near real-time, automated processing</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Problems with the Traditional Stack</h2>
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)"><span class="card-title">Long Turnaround Time</span><span class="card-arrow">▼</span></div>
+    <div class="card-body"><p>On-premise companies bear all infrastructure costs. Deeply interconnected systems mean a minor change can break other parts. Finding logical coupling requires many work-hours before any improvement can be made.</p></div>
+  </div>
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)"><span class="card-title">Expensive Journey to Insights</span><span class="card-arrow">▼</span></div>
+    <div class="card-body"><p>Report generation is manual — manually generated, cleaned, and transferred to Excel. Leads to errors, time lost from critical tasks, inability to scale. Analysts cannot efficiently perform their roles due to complexity.</p></div>
+  </div>
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)"><span class="card-title">Slow Response to New Information</span><span class="card-arrow">▼</span></div>
+    <div class="card-body"><p>As the company grows, so does data and compute needs. Scaling on-premises is very costly. Data pipelines can take hours. A TDS requires slow ETL operations before new data can conform to the data model. A new data update can take weeks of refactoring before insights appear — by then, the opportunity has passed.</p></div>
+  </div>
+
+  <div class="callout callout-exam">
+    <div class="callout-title">🎯 Exam Summary</div>
+    TDS is summarized as: <em>"Relies on rigid, on-premises infrastructure that can struggle with scalability, flexibility, and real-time processing."</em> This is a direct quote from the lecture to memorize.
+  </div>
+
+  <h2>MDS Key Characteristics</h2>
+  <div class="grid-2">
+    <div class="callout callout-insight">
+      <div class="callout-title">✅ Enable Self-Service</div>
+      <ul>
+        <li>Easily discover and analyze data</li>
+        <li>Understand column descriptions, history, lineage</li>
+        <li>Derive insights with minimal IT dependency</li>
+      </ul>
+    </div>
+    <div class="callout callout-insight">
+      <div class="callout-title">✅ Agile Data Management</div>
+      <ul>
+        <li><strong>Availability:</strong> Data lake/warehouse separates compute from storage — large data at low cost</li>
+        <li><strong>Elasticity:</strong> Auto-scale on-demand (e.g., Friday afternoon peak → scale up, scale down later)</li>
+      </ul>
+    </div>
+    <div class="callout callout-insight">
+      <div class="callout-title">✅ Flexible & Pay-as-you-go</div>
+      <ul>
+        <li><strong>Easy to set up</strong> — no lengthy sales cycles, just login and go</li>
+        <li><strong>Pay as you go</strong> — no million-dollar licensing fees</li>
+        <li><strong>Plug and play</strong> — open standards & APIs, no vendor lock-in</li>
+      </ul>
+    </div>
+    <div class="callout callout-research">
+      <div class="callout-title">🔬 FinOps Principle — Source: Reis & Housley, 2022</div>
+      Cloud spending is inherently dynamic. <strong>FinOps</strong> — collaborative financial management between engineering, finance, and business — ensures data projects deliver maximum value. Monitor spending continuously; adopt hard limits with graceful failure modes. "Cost attacks" via excessive S3 downloads are a real threat.
+    </div>
+  </div>
+
+  <h2>The 7 Layers of the Modern Data Stack</h2>
+  <div class="flow" style="flex-direction: column; align-items: stretch; gap: 6px;">
+    <div class="flow-step" style="min-width:auto; text-align:left; padding: 10px 16px; border-color: var(--purple);">🔄 Layer 1: Data Ingestion — Fivetran, Stitch, Singer, Kafka, Sqoop</div>
+    <div class="flow-step" style="min-width:auto; text-align:left; padding: 10px 16px; border-color: var(--teal);">💾 Layer 2: Cloud Data Warehouse / Data Lake / Lake House — BigQuery, Snowflake, S3+Delta Lake</div>
+    <div class="flow-step" style="min-width:auto; text-align:left; padding: 10px 16px; border-color: var(--amber);">⚙️ Layer 3: Data Transformation (The Heart) — dbt, Matillion, Airflow+Python</div>
+    <div class="flow-step" style="min-width:auto; text-align:left; padding: 10px 16px; border-color: var(--sky);">📊 Layer 4: BI & Data Science/AI — Looker, Tableau, Dataiku, SageMaker</div>
+    <div class="flow-step" style="min-width:auto; text-align:left; padding: 10px 16px; border-color: var(--purple);">📋 Layer 5: Data Catalog & Governance — Atlan, Apache Atlas, DataHub</div>
+    <div class="flow-step" style="min-width:auto; text-align:left; padding: 10px 16px; border-color: var(--teal);">🔒 Layer 6: Data Privacy & Access Governance — Immuta, Okera, Privacera, Apache Ranger</div>
+    <div class="flow-step" style="min-width:auto; text-align:left; padding: 10px 16px; border-color: var(--coral);">🛡️ Layer 7: Data Security & Compliance — GDPR, HIPAA, PCI-DSS frameworks</div>
+  </div>
+
+  <h2>Storage: Warehouse vs Lake vs Lake House</h2>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Feature</th><th>Data Warehouse</th><th>Data Lake</th><th>Lake House</th></tr></thead>
+      <tbody>
+        <tr><td>Data Types</td><td>Structured only</td><td>All types (unstructured, semi-structured)</td><td>All types</td></tr>
+        <tr><td>Schema</td><td>Schema-on-write</td><td>Schema-on-read</td><td>Both</td></tr>
+        <tr><td>SQL Performance</td><td>Excellent</td><td>Limited</td><td>Excellent</td></tr>
+        <tr><td>Cost</td><td>Higher</td><td>Lower</td><td>Balanced</td></tr>
+        <tr><td>AI/ML Support</td><td>Moderate</td><td>Excellent (raw data access)</td><td>Excellent</td></tr>
+        <tr><td>ACID Transactions</td><td>Yes</td><td>Limited</td><td>Yes (Delta Lake, Iceberg, Hudi)</td></tr>
+        <tr><td>Examples</td><td>BigQuery, Snowflake, Redshift</td><td>S3 + Databricks, ADLS</td><td>Databricks, Snowflake + Delta Lake</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout callout-research">
+    <div class="callout-title">🔬 Research Addition — Databricks, 2024</div>
+    <p>The <strong>Lake House</strong> pattern emerged because pure data lakes often became "data swamps" — disorganized, undocumented, untrustworthy repositories. Technologies like <strong>Delta Lake</strong>, <strong>Apache Iceberg</strong>, and <strong>Apache Hudi</strong> add ACID transactions, time travel (query historical snapshots), schema enforcement, and upsert/delete capabilities on top of cheap object storage (S3). This combines warehouse governance with lake economics. The dominant open-source Lake House stack in 2024: <em>AWS S3 + Delta Lake + Databricks</em>. (Databricks State of Data + AI, 2024)</p>
+  </div>
+
+  <h2>Modern Data Tools Summary</h2>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Component</th><th>Tools</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Data Ingestion</strong></td><td>SaaS: Fivetran, Hevo Data, Stitch | OSS: Singer, StreamSets | Custom: Airflow pipelines</td></tr>
+        <tr><td><strong>Data Warehouses</strong></td><td>BigQuery, Redshift, Snowflake, Azure Synapse</td></tr>
+        <tr><td><strong>Data Lakes</strong></td><td>Storage: Amazon S3, Azure ADLS, GCS | Processing: Databricks, Spark, Athena, Presto</td></tr>
+        <tr><td><strong>Lake Houses</strong></td><td>Databricks, Snowflake, Google BigLake, Delta Lake, Apache Iceberg</td></tr>
+        <tr><td><strong>Data Transformation</strong></td><td>With warehouses: dbt, Matillion | With orchestration: Apache Airflow + Python/R/SQL</td></tr>
+        <tr><td><strong>BI & Analytics</strong></td><td>Looker, Mode, Redash, Sigma, Sisense, Superset, Tableau, Power BI</td></tr>
+        <tr><td><strong>Data Catalog</strong></td><td>SaaS: Atlan | OSS: Apache Atlas, LinkedIn DataHub, Lyft Amundsen</td></tr>
+        <tr><td><strong>Privacy Governance</strong></td><td>Immuta, Okera, Privacera, Apache Ranger</td></tr>
+        <tr><td><strong>Real-time Streaming</strong></td><td>Confluent Kafka, Apache Flink; Analytics: Druid, Imply</td></tr>
+        <tr><td><strong>Data Science</strong></td><td>Jupyter Notebooks, Dataiku, DataRobot, Domino, SageMaker</td></tr>
+        <tr><td><strong>Event Collectors</strong></td><td>Segment, Snowplow</td></tr>
+        <tr><td><strong>Data Quality</strong></td><td>Great Expectations (OSS), Amazon Deequ, Atlan</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>MDS Use Cases</h2>
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)"><span class="card-title">AI-Powered Personalization</span><span class="card-arrow">▼</span></div>
+    <div class="card-body"><p>Using Apache Spark for real-time processing and Databricks for scalable analytics, data scientists analyze customer preferences to improve recommendation engines for e-commerce, streaming platforms, and SaaS applications.</p></div>
+  </div>
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)"><span class="card-title">Customer Insights & Sales Optimization</span><span class="card-arrow">▼</span></div>
+    <div class="card-body"><p>Snowflake and Looker generate real-time dashboards for purchase patterns and pricing optimization — helping businesses boost conversion rates and retention.</p></div>
+  </div>
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)"><span class="card-title">Logistics & Supply Chain Optimization</span><span class="card-arrow">▼</span></div>
+    <div class="card-body"><p>Fivetran for ingestion + dbt for transformation → monitor inventory in real time + predict supply disruptions. Benefits: faster fulfillment, reduced costs, improved demand planning in retail, manufacturing, and transportation.</p></div>
+  </div>
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)"><span class="card-title">Fraud Detection & Risk Management</span><span class="card-arrow">▼</span></div>
+    <div class="card-body"><p>Financial institutions use ML models + Amazon Redshift + REST APIs to identify suspicious transactions and automate fraud detection at scale.</p></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════
+     PAGE 3 — DATA PIPELINES
+════════════════════════════════ -->
+<section class="page" id="page-3">
+  <h1>Data Pipelines</h1>
+  <p class="subtitle">What they are, where they came from, their purpose and challenges</p>
+
+  <div class="callout callout-def">
+    <div class="callout-title">📚 Definition (Lecture)</div>
+    A data pipeline is a <strong>series of steps</strong> that allow data from one system to move and become useful in another system — particularly analytics, data science, or AI/ML systems. It works by <em>pulling data from the source</em>, applying transformation/processing rules, then <em>pushing data to its destination</em>.
+  </div>
+
+  <h2>Origin</h2>
+  <p>Data pipelines <strong>emerged from the big data community</strong>. Data lakes created a "feeding frenzy" among developers, data scientists, and analysts who for the first time gained unfettered access to a nearly limitless supply of raw data from multiple internal and external systems. This created a wide diversity of workflows — or data pipelines — to process that data (clean, filter, aggregate, move, load) for a variety of purposes.</p>
+
+  <h2>The Situation Problem</h2>
+  <div class="callout callout-warn">
+    <div class="callout-title">⚠️ The Current Painful Reality</div>
+    <p>The development of data and analytics pipelines is <em>"still a handcrafted and largely non-repeatable process with minimal reuse, managed by individuals working in isolation with different tools and approaches."</em> This results in:</p>
+    <ul>
+      <li>A plodding development environment that can't keep pace with data-driven business demands</li>
+      <li>An error-prone operational environment that is slow to respond to change requests</li>
+      <li>Business and IT drawing swords and going to war instead of partnering (<em>"Drawing Swords"</em> metaphor from lecture)</li>
+    </ul>
+  </div>
+
+  <h2>Benefits of Well-Designed Data Pipelines</h2>
+  <div class="grid-3">
+    <div class="callout callout-insight" style="margin:0">
+      <div class="callout-title">🔓 Self-Service Data</div>
+      <p>Created ad hoc by data scientists — breaks the IT bottleneck. People can test ideas, fail fast, and innovate faster.</p>
+    </div>
+    <div class="callout callout-insight" style="margin:0">
+      <div class="callout-title">⚡ Real-Time Analytics</div>
+      <p>Streaming data pipelines deliver continuous data to real-time applications and analytics — not just batch reports.</p>
+    </div>
+    <div class="callout callout-insight" style="margin:0">
+      <div class="callout-title">☁️ Cloud Acceleration</div>
+      <p>Enables cloud migration. Cloud computing offers processing speeds, cost-effectiveness, and bursting capacity impossible with on-premises — enabling NLP, sentiment analysis, image processing.</p>
+    </div>
+  </div>
+
+  <h2>Challenges</h2>
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)"><span class="card-title">⚒️ Always Under Construction</span><span class="card-arrow">▼</span></div>
+    <div class="card-body"><p>Building and debugging pipelines takes time. Schema alignment, setting sources/destinations, checking work, finding errors — all back and forth until going live, by which time business requirements may have changed again. This is why data engineers have such a massive backlog.</p></div>
+  </div>
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)"><span class="card-title">🔄 Out of Order / Data Drift</span><span class="card-arrow">▼</span></div>
+    <div class="card-body"><p>Even a small change to a row or table can mean hours of rework, updating each stage, debugging, and redeploying. Pipelines often go offline for updates. Unexpected, unplanned, unrelenting changes are called <strong>"data drift"</strong>. Hidden breakages from unplanned changes can take months to uncover.</p></div>
+  </div>
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)"><span class="card-title">🏗️ Build It and They Will Come</span><span class="card-arrow">▼</span></div>
+    <div class="card-body"><p>Pipelines are built for specific frameworks, processors, and platforms. Changing any infrastructure technology to take advantage of cost savings or optimizations can mean weeks or months of rebuilding before deployment.</p></div>
+  </div>
+
+  <div class="callout callout-research">
+    <div class="callout-title">🔬 Research Addition — Gartner / Stitch Data, 2024</div>
+    <p>Industry research shows data engineers spend <strong>40–60% of their time on pipeline maintenance</strong> rather than new development — the key driver behind the DataOps movement. The concept of <strong>"data drift"</strong> has been formalized: data drift occurs when the statistical properties or schema of data change over time, degrading pipeline reliability and ML model accuracy. Tools like Great Expectations and Monte Carlo Data provide automated drift detection as part of data observability platforms. (Gartner Data & Analytics Summit, 2024)</p>
+  </div>
+</section>
+
+<!-- ════════════════════════════════
+     PAGE 4 — PIPELINE ARCHITECTURE
+════════════════════════════════ -->
+<section class="page" id="page-4">
+  <h1>Data Pipeline Architecture</h1>
+  <p class="subtitle">Components, types, and processing models</p>
+
+  <h2>Components of a Data Pipeline</h2>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Component</th><th>Description</th><th>Example Technologies</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Origin</strong></td><td>The point of data entry — where raw data comes from</td><td>Databases, APIs, IoT sensors, flat files</td></tr>
+        <tr><td><strong>Destination</strong></td><td>Final point to which data is transferred</td><td>Data warehouse, data lake, BI tool, ML system</td></tr>
+        <tr><td><strong>Dataflow</strong></td><td>Movement of data from origin to destination, including changes and intermediate stores</td><td>Kafka, Spark Streaming</td></tr>
+        <tr><td><strong>Storage</strong></td><td>Systems preserving data at different stages</td><td>Data warehouse, data mart, data lake</td></tr>
+        <tr><td><strong>Processing</strong></td><td>Activities for ingesting, transforming, and delivering data</td><td>ETL (Extract-Transform-Load), ELT</td></tr>
+        <tr><td><strong>Workflow</strong></td><td>Sequence of tasks and their dependencies</td><td>Apache Airflow, dbt</td></tr>
+        <tr><td><strong>Monitoring</strong></td><td>Checking how the pipeline and its stages are working</td><td>Grafana, Monte Carlo, Great Expectations</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>ETL vs. ELT</h2>
+  <div class="callout callout-def">
+    <div class="callout-title">📚 Both are types of Data Pipeline Architecture</div>
+    <p><strong>ETL</strong> = Extract → Transform → Load (transform <em>before</em> loading). <strong>ELT</strong> = Extract → Load → Transform (load raw data first, transform <em>inside</em> the target system on demand).</p>
+  </div>
+
+  <div class="flow">
+    <div class="flow-step">Sources</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" style="border-color:var(--amber)">Extract</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" style="border-color:var(--amber)">Transform</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step flow-dest">Load → DW</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step flow-alt">Analyze</div>
+    <span style="color:var(--text2);font-size:12px;width:100%;text-align:center">↑ ETL Pipeline</span>
+  </div>
+  <div class="flow" style="margin-top:8px">
+    <div class="flow-step">Sources</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" style="border-color:var(--amber)">Extract</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step flow-dest">Load → DW (raw)</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" style="border-color:var(--teal)">Transform inside DW</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step flow-alt">Analyze</div>
+    <span style="color:var(--text2);font-size:12px;width:100%;text-align:center">↑ ELT Pipeline</span>
+  </div>
+
+  <div class="tbl-wrap" style="margin-top:16px">
+    <table>
+      <thead><tr><th>Use Case</th><th>Choose ETL</th><th>Choose ELT</th></tr></thead>
+      <tbody>
+        <tr><td>Data quality</td><td>You need high data quality and governance upfront</td><td>Flexibility to define quality rules later</td></tr>
+        <tr><td>Target system</td><td>Legacy warehouse with limited compute/storage</td><td>Cloud platform with massive parallel compute</td></tr>
+        <tr><td>Data structure</td><td>Structured, curated, analytical data needed</td><td>Semi-structured / unstructured data to store</td></tr>
+        <tr><td>Transformations</td><td>Complex or depend on business rules outside DB</td><td>Reusability for multiple downstream consumers</td></tr>
+        <tr><td>Example use cases</td><td>Enterprise DW, Regulatory Reporting, ERP Integration</td><td>Data Lake/Lakehouse pipelines, ML pipelines</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout callout-exam">
+    <div class="callout-title">🎯 Classic Exam Trick Question</div>
+    <em>"Which side is ETL and which is ELT?"</em> — from the lecture's own slide. The slide had two columns describing use cases without labels, then revealed ETL on the right (compliance, governance) and ELT on the left (cloud, flexible). Remember: <strong>ETL = transform before load (old-school compliance)</strong> | <strong>ELT = load first, transform on demand (cloud-native, modern)</strong>.
+  </div>
+
+  <h2>Batch vs. Stream Processing</h2>
+  <div class="tab-group">
+    <div class="tab-buttons">
+      <button class="tab-btn active" onclick="openTab(this,'tab-batch')">Batch Processing</button>
+      <button class="tab-btn" onclick="openTab(this,'tab-stream')">Stream Processing</button>
+      <button class="tab-btn" onclick="openTab(this,'tab-cdc')">Change Data Capture (CDC)</button>
+      <button class="tab-btn" onclick="openTab(this,'tab-unified')">Unified Model</button>
+    </div>
+    <div id="tab-batch" class="tab-pane active">
+      <h3>Batch Processing Pipeline</h3>
+      <p>Loads "batches" of data into a repository during set time intervals — typically scheduled during off-peak business hours.</p>
+      <div class="callout callout-insight">
+        <div class="callout-title">💡 Insight</div>
+        <p>Batch processing was a <strong>critical step</strong> in building reliable, scalable data infrastructures. Batch jobs form a workflow of <em>sequenced commands</em> where the output of one command becomes the input of the next. Optimal when there's no immediate need for real-time analysis (e.g., monthly accounting, end-of-day reports).</p>
+      </div>
+      <div class="bar-chart">
+        <div class="bar-row"><span class="bar-label">Latency</span><div class="bar-track"><div class="bar-fill" style="width:15%;background:var(--teal)">Low latency</div></div></div>
+        <div class="bar-row"><span class="bar-label">Throughput</span><div class="bar-track"><div class="bar-fill" style="width:90%;background:var(--purple)">Very High</div></div></div>
+        <div class="bar-row"><span class="bar-label">Reliability</span><div class="bar-track"><div class="bar-fill" style="width:85%;background:var(--green)">High</div></div></div>
+        <div class="bar-row"><span class="bar-label">Implementation Complexity</span><div class="bar-track"><div class="bar-fill" style="width:30%;background:var(--amber)">Low-Medium</div></div></div>
+      </div>
+      <p><strong>Associated with:</strong> ETL process, data warehousing, end-of-day financial reconciliation, overnight ML model retraining.</p>
+    </div>
+    <div id="tab-stream" class="tab-pane">
+      <h3>Stream Processing Pipeline</h3>
+      <p>Also known as event-driven architectures — continuously processes events generated by IoT devices, sensors, or user interactions in an application. Events are processed, analyzed, then stored in databases or sent downstream.</p>
+      <div class="callout callout-warn">
+        <div class="callout-title">⚠️ Trade-off</div>
+        <p>Streaming systems have <strong>lower latency</strong> than batch systems, but are <strong>not as reliable</strong> — messages can be unintentionally dropped or spend a long time in the queue. When data absolutely cannot be lost (financial transactions), use exactly-once semantics (Kafka's transactional API) or implement idempotent consumers.</p>
+      </div>
+      <div class="bar-chart">
+        <div class="bar-row"><span class="bar-label">Latency</span><div class="bar-track"><div class="bar-fill" style="width:90%;background:var(--teal)">Milliseconds</div></div></div>
+        <div class="bar-row"><span class="bar-label">Throughput</span><div class="bar-track"><div class="bar-fill" style="width:70%;background:var(--purple)">High</div></div></div>
+        <div class="bar-row"><span class="bar-label">Reliability</span><div class="bar-track"><div class="bar-fill" style="width:55%;background:var(--amber)">Moderate</div></div></div>
+        <div class="bar-row"><span class="bar-label">Implementation Complexity</span><div class="bar-track"><div class="bar-fill" style="width:80%;background:var(--coral)">High</div></div></div>
+      </div>
+      <p><strong>Use when:</strong> Fraud detection, live dashboards, IoT monitoring, real-time recommendations, stock trading.</p>
+    </div>
+    <div id="tab-cdc" class="tab-pane">
+      <h3>Change Data Capture (CDC)</h3>
+      <div class="callout callout-def">
+        <div class="callout-title">📚 Definition</div>
+        <p>CDC is a method for extracting <strong>each change event</strong> (INSERT, UPDATE, DELETE) that occurs in a database, then streaming those changes to downstream systems.</p>
+      </div>
+      <div class="flow">
+        <div class="flow-step">Source DB Changes</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step flow-alt">CDC Engine (Debezium)</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step flow-alt">Staging Area</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step flow-dest">Target System</div>
+      </div>
+      <h4>CDC Implementation Mechanisms (4 Types)</h4>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Method</th><th>Mechanism</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Triggers</strong></td><td>DB triggers fire on INSERT/UPDATE/DELETE, write to a change log table</td><td>Simple to set up, but adds overhead to source DB</td></tr>
+          <tr><td><strong>Transaction Log</strong></td><td>Read the DB's binlog/WAL (MySQL binlog, PostgreSQL WAL, Oracle redo log)</td><td>Zero overhead on source; gold standard for CDC at scale</td></tr>
+          <tr><td><strong>Stored Procedures</strong></td><td>Custom procedures capture changes within transactions</td><td>Application-specific; maintenance burden</td></tr>
+          <tr><td><strong>Message Queues</strong></td><td>Application publishes change events to Kafka/RabbitMQ on write</td><td>Requires application-level instrumentation; very scalable</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout callout-exam">
+        <div class="callout-title">🎯 Exam Scenario</div>
+        <p>The lecture CDC scenario: an e-commerce inventory system must replicate to a backup database with <strong>no service interruption and minimum data loss</strong>. The answer: Transaction Log-based CDC (binlog reading via Debezium → Kafka). The RDBMS generates event logs which can be used for replication. Cloud-based NoSQL systems send events (trigger CDC). Best-practice open-source CDC stack: <strong>Kafka + Debezium</strong>.</p>
+      </div>
+    </div>
+    <div id="tab-unified" class="tab-pane">
+      <h3>Dataflow Model & Unified Batch + Streaming</h3>
+      <p>One central problem: managing batch and stream processing requires unifying multiple code paths.</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Architecture</th><th>Description</th><th>Issue</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Lambda Architecture</strong></td><td>Separate batch layer + speed (stream) layer + serving layer</td><td>Two code paths to maintain (batch logic ≠ stream logic)</td></tr>
+          <tr><td><strong>Kappa Architecture</strong></td><td>Unified streaming layer only — no separate batch layer</td><td>Still needs different tools for real-time stats vs batch aggregation</td></tr>
+          <tr><td><strong>Dataflow Model</strong></td><td>Google's model: view all data as events; aggregation over windows</td><td>Elegant solution — batch is just bounded streaming</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout callout-insight">
+        <div class="callout-title">💡 Key Insight — "Batch as a Special Case of Streaming"</div>
+        <p>Google's Dataflow model (implemented as Apache Beam) views ALL data as events:</p>
+        <ul>
+          <li><strong>Real-time streams</strong> = unbounded event streams</li>
+          <li><strong>Data batches</strong> = bounded event streams (the batch boundary provides a natural time window)</li>
+          <li>Real-time and batch processing happen in the same system using nearly identical code</li>
+          <li>Windows can be tumbling (non-overlapping) or sliding (overlapping)</li>
+        </ul>
+        <p>Apache Flink and Apache Spark have adopted this approach. This philosophy is now pervasive in modern streaming systems.</p>
+      </div>
+      <div class="callout callout-research">
+        <div class="callout-title">🔬 Research Addition — Google / Apache Beam, 2024</div>
+        <p>The Dataflow programming model introduced by Google (Akidau et al., 2015) is now the foundation of Apache Beam, which provides a unified API that runs on multiple execution engines (Flink, Spark, Dataflow, Samza). In 2024, Apache Flink 2.0's "unified batch and streaming" has essentially made the Lambda Architecture obsolete for new greenfield projects. Flink processes billions of events per day at companies like Alibaba and Netflix. (Apache Beam blog, 2024)</p>
+      </div>
+    </div>
+  </div>
+
+  <h2>Data Integration Pipeline (Full View)</h2>
+  <div class="flow" style="flex-wrap: wrap; justify-content: space-between;">
+    <div style="text-align:center">
+      <div style="color:var(--text2);font-size:12px;margin-bottom:8px">DATA SOURCES</div>
+      <div class="flow-step" style="margin-bottom:6px">APIs</div>
+      <div class="flow-step" style="margin-bottom:6px">Databases</div>
+      <div class="flow-step" style="margin-bottom:6px">Files</div>
+      <div class="flow-step">Hadoop</div>
+    </div>
+    <div class="flow-arrow" style="align-self:center">→</div>
+    <div style="text-align:center">
+      <div style="color:var(--text2);font-size:12px;margin-bottom:8px">INGEST</div>
+      <div class="flow-step flow-alt">Streaming</div>
+      <div class="flow-step flow-alt" style="margin-top:6px">CDC</div>
+      <div class="flow-step flow-alt" style="margin-top:6px">Batch</div>
+    </div>
+    <div class="flow-arrow" style="align-self:center">→</div>
+    <div style="text-align:center">
+      <div style="color:var(--text2);font-size:12px;margin-bottom:8px">RAW STORAGE</div>
+      <div class="flow-step" style="border-color:var(--sky)">Object Stores / Landing Areas</div>
+    </div>
+    <div class="flow-arrow" style="align-self:center">→</div>
+    <div style="text-align:center">
+      <div style="color:var(--text2);font-size:12px;margin-bottom:8px">ETL TRANSFORM</div>
+      <div class="flow-step" style="border-color:var(--amber)">dbt / Matillion</div>
+    </div>
+    <div class="flow-arrow" style="align-self:center">→</div>
+    <div style="text-align:center">
+      <div style="color:var(--text2);font-size:12px;margin-bottom:8px">CONSUMERS</div>
+      <div class="flow-step flow-dest" style="margin-bottom:6px">Data Science / AI</div>
+      <div class="flow-step flow-dest" style="margin-bottom:6px">Business Intelligence</div>
+      <div class="flow-step flow-dest">Analytics</div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════
+     PAGE 5 — IMPLEMENTATION
+════════════════════════════════ -->
+<section class="page" id="page-5">
+  <h1>Data Pipeline Implementation</h1>
+  <p class="subtitle">Simple vs. complex pipelines, development vs. execution, micro-pipelines</p>
+
+  <h2>Simple vs. Complex Pipelines</h2>
+  <div class="grid-2">
+    <div class="callout callout-teal-bg" style="background:var(--teal-bg);border:1px solid var(--teal);border-radius:8px;padding:14px">
+      <h4 style="color:var(--teal)">Simple Pipeline</h4>
+      <div class="flow" style="padding:8px">
+        <div class="flow-step" style="font-size:12px;padding:6px">CSV</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step flow-alt" style="font-size:12px;padding:6px">Database</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step flow-dest" style="font-size:12px;padding:6px">Dashboard</div>
+      </div>
+      <p style="font-size:13px;margin-top:8px">Data from CSV files (e.g., sales or IoT logs) is ingested daily into a relational database, then visualized in a BI dashboard. Simple ETL/ELT. Grab a simple tool or hand-code the steps.</p>
+    </div>
+    <div class="callout callout-amber-bg" style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:8px;padding:14px">
+      <h4 style="color:var(--amber)">Complex Pipeline</h4>
+      <p style="font-size:13px">Move tables from 10 sources into a target database, merge common fields, array into a dimensional schema, aggregate by year, flag null values, convert into a BI tool extract, and generate personalized dashboards. <em>Most real-world pipelines are here.</em></p>
+    </div>
+  </div>
+
+  <h2>Two Scenarios: Development vs. Execution Pipeline</h2>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Pipeline Type</th><th>Purpose</th><th>Team</th><th>Risk When Separated</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Development Pipeline</strong></td><td>Creates code to process data for a new pipeline</td><td>Development team</td><td rowspan="2">Developers can build/change code without being responsible for downstream impacts → increased error rates, delayed delivery, frustrated business users</td></tr>
+        <tr><td><strong>Execution Pipeline</strong></td><td>Runs the pipeline in production (Data Ingestion → Transformation → Analysis → Visualization)</td><td>Operations team</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout callout-exam">
+    <div class="callout-title">🎯 Exam Insight</div>
+    In most IT shops, Development and Execution pipelines are managed by <em>different teams</em>, creating "tremendous inefficiencies." The solution is DevOps/DataOps practices that unify both pipelines under shared ownership with CI/CD automation.
+  </div>
+
+  <div class="flow">
+    <div class="flow-step flow-alt">Requirement</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step flow-alt">Development</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step flow-alt">Testing / Tuning</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step" style="border-color:var(--amber)">Deploy ↑</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step flow-dest">Production Execution</div>
+    <span style="color:var(--text2);font-size:11px;width:100%;text-align:center">Development Pipeline (Innovation) feeds into ↑ Execution Pipeline (Operations)</span>
+  </div>
+
+  <h2>Micro-Pipelines</h2>
+  <div class="callout callout-def">
+    <div class="callout-title">📚 Definition</div>
+    To manage complexity, individual stages are divided into <strong>micro-pipelines</strong> — ensuring changes can be made to each step without disrupting the entire flow. Each micro-pipeline is a small, independently deployable unit of data processing logic.
+  </div>
+
+  <h4>Steps in a Micro-Pipeline</h4>
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)"><span class="card-title">1. Requirement</span><span class="card-arrow">▼</span></div>
+    <div class="card-body"><p>Agile methods (Scrum, Kanban) elicit requirements iteratively from stakeholders. A requirement could be integrating a new data source in an ETL process or adding a new field to a database table.</p></div>
+  </div>
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)"><span class="card-title">2. Development</span><span class="card-arrow">▼</span></div>
+    <div class="card-body"><p>In data and analytics, development doesn't necessarily mean programming — it can comprise tasks like changing a data model or reconfiguring a dashboard. Requires a high level of automation (e.g., auto-generating DB queries when a model changes).</p></div>
+  </div>
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)"><span class="card-title">3. Testing / Tuning</span><span class="card-arrow">▼</span></div>
+    <div class="card-body"><p>Validate the pipeline step against real data samples. Test for schema compliance, null values, referential integrity, and performance benchmarks. Tools: Great Expectations (unit testing for data), dbt tests, Apache Deequ.</p></div>
+  </div>
+  <div class="card">
+    <div class="card-header" onclick="toggleCard(this)"><span class="card-title">4. Production / Deployment</span><span class="card-arrow">▼</span></div>
+    <div class="card-body"><p>Deploy the micro-pipeline to production. Monitoring and alerting are configured. The deployed pipeline feeds into the execution layer. Rollback capability is essential — if a deployed step breaks downstream systems, you must revert quickly.</p></div>
+  </div>
+
+  <div class="callout callout-research">
+    <div class="callout-title">🔬 Research Addition — DataOps Manifesto / Gartner, 2024</div>
+    <p>The <strong>DataOps Manifesto</strong> (datakitchen.io) defines 18 principles for industrializing data pipeline development. Core principle: <em>"Data pipelines are software — treat them with software engineering discipline."</em> This means version control (Git for dbt models), CI/CD (automated testing before deployment), and observability (monitoring pipeline SLAs). Gartner predicts that by 2026, 75% of large enterprises will adopt a DataOps automation platform. (Gartner, 2024)</p>
+  </div>
+</section>
+
+<!-- ════════════════════════════════
+     PAGE 6 — TOOLS & PLATFORMS
+════════════════════════════════ -->
+<section class="page" id="page-6">
+  <h1>Data Pipeline Tools & Platforms</h1>
+  <p class="subtitle">Choosing the right tool for the right job</p>
+
+  <h2>Key Considerations When Choosing Tools</h2>
+  <div class="callout callout-exam">
+    <div class="callout-title">🎯 Decision Framework (Lecture)</div>
+    <ol>
+      <li>Are we grabbing data from one place to put it somewhere else? Or do we need to transform it to fit downstream analytics requirements?</li>
+      <li>Is our data environment stable and fully under control? Or dynamic, pulling from systems outside our control?</li>
+      <li>Will the pipeline move data once (short-term project)? Or must it be operationalized to handle data flows over time?</li>
+    </ol>
+  </div>
+
+  <h2>Three Tool Categories</h2>
+  <div class="tab-group">
+    <div class="tab-buttons">
+      <button class="tab-btn active" onclick="openTab(this,'tab-t1')">1. Data Ingestion Tools</button>
+      <button class="tab-btn" onclick="openTab(this,'tab-t2')">2. Integration Platforms</button>
+      <button class="tab-btn" onclick="openTab(this,'tab-t3')">3. Data Engineering Platforms</button>
+    </div>
+    <div id="tab-t1" class="tab-pane active">
+      <h3>Data Ingestion & Loading Tools</h3>
+      <p>These tools make pipelines easy to set up, build, and deploy — solving the "under construction" problem. <em>But only if data scientists can do the prep work later.</em></p>
+      <div class="callout callout-warn">
+        <div class="callout-title">⚠️ Limitations</div>
+        <ul>
+          <li>Only support the most <strong>basic transformations</strong> — work best for simply copying data</li>
+          <li>Pipelines are <strong>rigid</strong> and embedded with the specifics of data structure and semantics</li>
+          <li>When data drift happens, they must be <strong>rebuilt and redeployed</strong> from scratch</li>
+        </ul>
+      </div>
+      <h4>Tools in this category</h4>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Tool</th><th>Type</th><th>Best For</th></tr></thead>
+        <tbody>
+          <tr><td>Fivetran</td><td>SaaS, commercial</td><td>Automated connector-based ingestion; auto schema change detection</td></tr>
+          <tr><td>Stitch</td><td>SaaS, commercial</td><td>Rapid integration of SaaS platforms into warehouses</td></tr>
+          <tr><td>Singer</td><td>Open-source</td><td>Custom taps and targets; highly extensible</td></tr>
+          <tr><td>StreamSets</td><td>Open-source/commercial</td><td>Drift-aware data collection pipelines</td></tr>
+          <tr><td>Apache Sqoop</td><td>Open-source</td><td>Bulk transfer between RDBMS and Hadoop/HDFS</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div id="tab-t2" class="tab-pane">
+      <h3>Data Integration & Transformation Platforms</h3>
+      <p>More complex ETL software with hundreds of connectors, integrations, and transformations for every possible scenario.</p>
+      <div class="callout callout-warn">
+        <div class="callout-title">⚠️ Critical Limitation</div>
+        <p>These platforms were designed for an era when <em>data drift hardly happened</em> — things stayed the same for years. At the first hint of change, these pipelines <strong>break and require massive rework</strong>. Digital transformation moves too fast to plan for every possible outcome with rigid pre-built connectors.</p>
+      </div>
+      <h4>Tools in this category</h4>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Tool</th><th>Focus</th></tr></thead>
+        <tbody>
+          <tr><td>dbt (data build tool)</td><td>SQL-based transformation inside the warehouse; version control, testing, documentation</td></tr>
+          <tr><td>Matillion</td><td>GUI-based ETL/ELT transformation for cloud warehouses (Snowflake, BigQuery, Redshift)</td></tr>
+          <tr><td>Apache Airflow</td><td>Workflow orchestration; DAG-based scheduling of pipeline tasks</td></tr>
+          <tr><td>Informatica</td><td>Enterprise ETL; legacy but still widely used in large corporations</td></tr>
+          <tr><td>Talend</td><td>Open-source ETL with commercial extensions</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div id="tab-t3" class="tab-pane">
+      <h3>Data Engineering Platforms (DataOps)</h3>
+      <div class="callout callout-def">
+        <div class="callout-title">📚 Definition</div>
+        <p>A data engineering platform builds <strong>smart data pipelines</strong> according to DataOps principles. Smart pipelines abstract away the "how" so you can focus on the <em>what, who, and where</em> of data — they are the fundamental difference between data integration and data engineering.</p>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>DataOps Capability</th><th>How It Helps</th></tr></thead>
+        <tbody>
+          <tr><td>Design and deploy in hours, not weeks</td><td>Smart pipelines adapt to changes instead of requiring rebuild</td></tr>
+          <tr><td>Built-in resiliency</td><td>Pipelines handle schema drift, source changes gracefully</td></tr>
+          <tr><td>Platform portability</td><td>Point to a new platform in minutes, not months</td></tr>
+          <tr><td>Continuous monitoring</td><td>Automated alerts when pipeline SLAs are breached</td></tr>
+        </tbody>
+      </table></div>
+      <h4>Tools in this category</h4>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Tool</th><th>Focus</th></tr></thead>
+        <tbody>
+          <tr><td>Apache Airflow</td><td>DAG-based workflow orchestration; Python-native; widely adopted for complex pipeline scheduling</td></tr>
+          <tr><td>Prefect</td><td>Modern Airflow alternative with better error handling and dynamic task mapping</td></tr>
+          <tr><td>Dagster</td><td>Asset-oriented orchestration; data-aware scheduling</td></tr>
+          <tr><td>StreamSets DataOps Platform</td><td>Drift-aware smart pipelines; no-code/low-code</td></tr>
+          <tr><td>Dataiku</td><td>End-to-end data science platform; no-code/low-code + ML</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout callout-research">
+        <div class="callout-title">🔬 Research Addition — Source: a16z / DataOps Trends, 2024</div>
+        <p>The rise of <strong>no-code/low-code/AI-powered platforms</strong> is reshaping pipeline development: <em>Dataiku</em> provides a collaborative AI platform, <em>MongoDB Atlas</em> offers an AI chatbot for database operations, and <em>Metabase</em> supports natural language querying ("show me sales by region last quarter" → SQL). Andreessen Horowitz (a16z) calls this the "Third Wave BI" — moving beyond dashboards to conversational analytics. The 2024 Fivetran benchmark showed that Fivetran-powered pipelines are 2.6× faster to deploy than custom-coded equivalents, with 76% fewer incidents. (a16z data infrastructure report, 2024)</p>
+      </div>
+    </div>
+  </div>
+
+  <h2>Performance Benchmark: Batch vs. Stream Latency</h2>
+  <div class="bar-chart">
+    <div class="bar-row"><span class="bar-label">Kafka Streaming</span><div class="bar-track"><div class="bar-fill" style="width:95%;background:var(--teal)">~10ms latency</div></div></div>
+    <div class="bar-row"><span class="bar-label">Apache Flink</span><div class="bar-track"><div class="bar-fill" style="width:90%;background:var(--teal)">~50ms latency</div></div></div>
+    <div class="bar-row"><span class="bar-label">Apache Spark Streaming</span><div class="bar-track"><div class="bar-fill" style="width:70%;background:var(--purple)">~1s micro-batch</div></div></div>
+    <div class="bar-row"><span class="bar-label">Hourly Batch</span><div class="bar-track"><div class="bar-fill" style="width:25%;background:var(--amber)">~60 min delay</div></div></div>
+    <div class="bar-row"><span class="bar-label">Daily Batch</span><div class="bar-track"><div class="bar-fill" style="width:5%;background:var(--coral)">~24 hour delay</div></div></div>
+  </div>
+  <p style="font-size:12px;color:var(--text2)">Source: Confluent benchmarks, 2024. Higher bar = lower latency (better real-time performance).</p>
+</section>
+
+<!-- ════════════════════════════════
+     PAGE 7 — GLOSSARY & CHECKLIST
+════════════════════════════════ -->
+<section class="page" id="page-7">
+  <h1>Glossary & Revision Checklist</h1>
+  <p class="subtitle">Search terms and track your revision progress</p>
+
+  <div class="tab-group">
+    <div class="tab-buttons">
+      <button class="tab-btn active" onclick="openTab(this,'tab-gloss')">📖 Glossary</button>
+      <button class="tab-btn" onclick="openTab(this,'tab-check')">✅ Revision Checklist</button>
+    </div>
+    <div id="tab-gloss" class="tab-pane active">
+      <input id="gloss-search" type="text" placeholder="Search terms, abbreviations, definitions..." oninput="filterGloss(this.value)">
+      <div class="tbl-wrap">
+        <table id="gloss-table">
+          <thead><tr><th>Term / Abbreviation</th><th>Full Form</th><th>Definition & Usage</th></tr></thead>
+          <tbody>
+            <tr><td><strong>MDS</strong></td><td>Modern Data Stack</td><td>Integrated, cloud-native tools enabling the full data lifecycle from ingestion to analytics</td></tr>
+            <tr><td><strong>TDS</strong></td><td>Traditional Data Stack</td><td>Legacy on-premises data infrastructure relying on physical servers, monolithic architecture, and CapEx model</td></tr>
+            <tr><td><strong>ETL</strong></td><td>Extract, Transform, Load</td><td>Data pipeline pattern: extract from sources, transform data before loading into target. Used for compliance, governance, legacy warehouses.</td></tr>
+            <tr><td><strong>ELT</strong></td><td>Extract, Load, Transform</td><td>Modern pattern: load raw data into cloud warehouse first, then transform on-demand. Used for data lakes, ML pipelines, cloud-native.</td></tr>
+            <tr><td><strong>CDC</strong></td><td>Change Data Capture</td><td>Method for extracting each change event (INSERT, UPDATE, DELETE) from a database and streaming to downstream systems</td></tr>
+            <tr><td><strong>SOA</strong></td><td>Service Oriented Architecture</td><td>Architecture style decomposing large applications into smaller services communicating via an Enterprise Service Bus</td></tr>
+            <tr><td><strong>REST</strong></td><td>Representational State Transfer</td><td>Design philosophy for web APIs built on HTTP principles; uses URLs for resources, HTTP methods for operations, JSON/XML for data</td></tr>
+            <tr><td><strong>SOAP</strong></td><td>Simple Object Access Protocol</td><td>XML-based protocol for network API requests; described using WSDL; heavy tooling required; declining in favor of REST</td></tr>
+            <tr><td><strong>RPC</strong></td><td>Remote Procedure Call</td><td>Mechanism making remote network service requests look like local function calls (location transparency); fundamentally flawed for production use</td></tr>
+            <tr><td><strong>gRPC</strong></td><td>Google Remote Procedure Call</td><td>Modern RPC framework using Protocol Buffers for serialization; high performance; used for intra-org microservices</td></tr>
+            <tr><td><strong>DAG</strong></td><td>Directed Acyclic Graph</td><td>Data structure representing pipeline workflow tasks and their dependencies; used in Apache Airflow for orchestration</td></tr>
+            <tr><td><strong>AWS</strong></td><td>Amazon Web Services</td><td>Cloud platform providing S3 (object storage), Redshift (DW), Kinesis (streaming), Glue (ETL), Athena (query)</td></tr>
+            <tr><td><strong>IQR</strong></td><td>Interquartile Range</td><td>IQR = Q3 − Q1; used for outlier detection: outlier if < Q1 - 1.5×IQR or > Q3 + 1.5×IQR</td></tr>
+            <tr><td><strong>GDPR</strong></td><td>General Data Protection Regulation</td><td>EU data privacy regulation (2018) governing how personal data is collected, stored, processed, and deleted</td></tr>
+            <tr><td><strong>HIPAA</strong></td><td>Health Insurance Portability and Accountability Act</td><td>US regulation governing electronic protected health information (ePHI) storage, transmission, and processing</td></tr>
+            <tr><td><strong>ACID</strong></td><td>Atomicity, Consistency, Isolation, Durability</td><td>Properties guaranteeing database transaction reliability; Lake House formats (Delta Lake, Iceberg) bring ACID to data lakes</td></tr>
+            <tr><td><strong>CapEx</strong></td><td>Capital Expenditure</td><td>Upfront investment in physical infrastructure (servers, licenses); Traditional Data Stack model</td></tr>
+            <tr><td><strong>OpEx</strong></td><td>Operational Expenditure</td><td>Ongoing cloud consumption costs; pay-as-you-go; Modern Data Stack model</td></tr>
+            <tr><td><strong>RBAC</strong></td><td>Role-Based Access Control</td><td>Access management model where permissions are assigned to roles, and users are assigned to roles</td></tr>
+            <tr><td><strong>WAL</strong></td><td>Write-Ahead Log</td><td>PostgreSQL's transaction log used for CDC; records all changes before they are applied to the database</td></tr>
+            <tr><td><strong>HMS</strong></td><td>Hospital Management System</td><td>Lecture example: illustrates data flow through shared database between doctor's app and pharmacist's app</td></tr>
+            <tr><td><strong>IMD</strong></td><td>India Meteorological Department</td><td>Lecture motivating example: ~10,000+ sensor network demonstrating why automated data pipelines are essential</td></tr>
+            <tr><td><strong>Kafka</strong></td><td>Apache Kafka</td><td>Distributed streaming platform; de-facto standard for streaming data pipelines; handles millions of events/sec; durable, replayable log</td></tr>
+            <tr><td><strong>dbt</strong></td><td>Data Build Tool</td><td>SQL-first transformation tool for cloud warehouses; supports testing, documentation, versioning of transformation logic</td></tr>
+            <tr><td><strong>BI</strong></td><td>Business Intelligence</td><td>Tools and practices for analyzing business data and presenting actionable information to help executives and managers make informed decisions</td></tr>
+            <tr><td><strong>DataOps</strong></td><td>Data Operations</td><td>Agile practice combining DevOps principles with data engineering; aims to deliver data pipeline changes faster with fewer errors</td></tr>
+            <tr><td><strong>WSDL</strong></td><td>Web Services Description Language</td><td>XML-based language describing SOAP web service API; not human-readable; requires code generation tools</td></tr>
+            <tr><td><strong>CDC Debezium</strong></td><td>Database Capture via Debezium</td><td>Open-source CDC connector for Kafka; reads transaction logs from MySQL, PostgreSQL, Oracle; zero overhead on source DB</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div id="tab-check" class="tab-pane">
+      <div id="check-progress">
+        <span>Progress: <span id="check-count">0</span> / <span id="check-total">0</span> completed</span>
+        <button id="reset-checks" onclick="resetChecks()">Reset All</button>
+      </div>
+      <div class="checklist-group">
+        <h3>🟣 Introduction & Foundations</h3>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Explain what a data pipeline is and how it works (pull → transform → push)</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Describe the IMD example and connect it to the 5 V's of big data</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Name all 5 V's of big data with an example for each</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Explain the hospital management system example of database-mediated data flow</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Distinguish backward compatibility from forward compatibility with an example</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Explain the "data outlives code" problem and its implications for schema evolution</label></div>
+      </div>
+      <div class="checklist-group">
+        <h3>🟣 Modes of Data Flow</h3>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Name and describe all 3 modes of data flow (databases, services, message passing)</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Describe the 3 database data flow scenarios from lecture</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Explain the difference between SOA, Microservices, and Monolithic architecture</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Compare REST and SOAP web services on 5+ dimensions</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Explain what RPC is, why it seems convenient, and why it is fundamentally flawed</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Describe message broker advantages over direct RPC (5 advantages)</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Name popular message brokers (legacy and modern open-source)</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Explain why message-passing is called "asynchronous" (sender doesn't wait)</label></div>
+      </div>
+      <div class="checklist-group">
+        <h3>🟣 Modern Data Stack</h3>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Define the Modern Data Stack and its three fundamental shifts from legacy</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Compare TDS vs MDS across all 6+ dimensions from the lecture table</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Explain the 3 problems with TDS (long turnaround, expensive insights, slow response)</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Name all 7 layers of the MDS in order and give a tool example for each</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Differentiate Data Warehouse, Data Lake, and Lake House on 6 dimensions</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Explain what "schema-on-write" vs "schema-on-read" means</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Name specific tools for each MDS layer from the tools summary table</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Describe why Delta Lake, Apache Iceberg, and Apache Hudi exist (what problem they solve)</label></div>
+      </div>
+      <div class="checklist-group">
+        <h3>🟣 Data Pipeline Architecture</h3>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Name all 7 components of a data pipeline and describe each</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Distinguish ETL from ELT with flow diagrams and use-case comparison</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Correctly classify scenarios as ETL or ELT (the exam trick slide)</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Explain the 3 challenges of data pipelines (under construction, data drift, platform lock-in)</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Compare batch vs stream processing on latency, reliability, and complexity</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Define CDC and explain all 4 implementation mechanisms (triggers, log, stored proc, message queue)</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Describe the Dataflow model and what "batch as a special case of streaming" means</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Explain Lambda vs Kappa architecture — what problem each solves</label></div>
+      </div>
+      <div class="checklist-group">
+        <h3>🟣 Implementation & Tools</h3>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Describe the difference between development and execution pipelines</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Explain what micro-pipelines are and list the 4 steps</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Compare data ingestion tools vs integration platforms vs data engineering platforms</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Apply the 3-question decision framework for choosing data pipeline tools</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Explain what "data drift" is and why it breaks traditional pipeline tools</label></div>
+        <div class="check-item" onclick="toggleCheck(this)"><input type="checkbox"><label>Define DataOps and explain its three key capabilities (fast deploy, resiliency, portability)</label></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════
+     QUIZ PAGE
+════════════════════════════════ -->
+<section class="page" id="page-quiz">
+  <h1>Practice Quiz</h1>
+  <p class="subtitle">25+ questions covering every concept</p>
+  <div id="quiz-container">
+    <div id="q-header-row" class="q-header">
+      <span class="q-counter" id="q-counter">Question 1 of 26</span>
+      <span class="q-score" id="q-score">Score: 0</span>
+    </div>
+    <div class="q-dots" id="q-dots"></div>
+    <div id="quiz-active">
+      <div class="q-card">
+        <div class="q-text" id="q-text"></div>
+        <div class="q-options" id="q-options"></div>
+        <div class="q-explain" id="q-explain"></div>
+      </div>
+      <button id="q-next" onclick="nextQuestion()">Next Question →</button>
+    </div>
+    <div id="q-score-screen">
+      <div style="font-size:48px;margin-bottom:12px">🎯</div>
+      <h2 id="q-final-score"></h2>
+      <p id="q-final-msg" style="color:var(--text2);margin-bottom:20px"></p>
+      <button id="q-restart" onclick="startQuiz()">Retake Quiz</button>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════
+     FLASHCARD PAGE
+════════════════════════════════ -->
+<section class="page" id="page-fc">
+  <h1>Flashcards</h1>
+  <p class="subtitle">30+ cards — click to flip, rate yourself</p>
+  <div id="fc-container">
+    <div class="fc-meta">
+      <span class="fc-counter" id="fc-counter">Card 1 of 32</span>
+      <div class="fc-ratings">
+        <span class="fc-rating-count fc-hard">Hard: <span id="fc-hard-count">0</span></span>
+        <span class="fc-rating-count fc-good">Good: <span id="fc-good-count">0</span></span>
+        <span class="fc-rating-count fc-easy">Easy: <span id="fc-easy-count">0</span></span>
+      </div>
+    </div>
+    <div class="fc-scene" id="fc-scene" onclick="flipCard()">
+      <div class="fc-inner">
+        <div class="fc-front">
+          <div class="fc-label">QUESTION</div>
+          <div class="fc-q" id="fc-front-text"></div>
+          <div class="fc-hint">Click to reveal answer</div>
+        </div>
+        <div class="fc-back">
+          <div class="fc-label">ANSWER</div>
+          <div class="fc-a" id="fc-back-text"></div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-actions" id="fc-actions" style="display:none">
+      <button class="fc-btn fc-btn-hard" onclick="rateCard('hard')">😓 Hard</button>
+      <button class="fc-btn fc-btn-good" onclick="rateCard('good')">👍 Good</button>
+      <button class="fc-btn fc-btn-easy" onclick="rateCard('easy')">⚡ Easy</button>
+    </div>
+    <div class="fc-nav">
+      <button class="fc-nav-btn" onclick="prevCard()">← Prev</button>
+      <button class="fc-nav-btn" onclick="nextCard()">Next →</button>
+    </div>
+    <div class="fc-progress-row" id="fc-progress-row"></div>
+  </div>
+</section>
+
+</main>
+
+<script>
+// ══════════════════════════════
+// DATA
+// ══════════════════════════════
+const QUIZ = [
+  { q: "What does a data pipeline fundamentally do?", opts: ["Stores data in multiple databases simultaneously","Pulls data from a source, applies transformation/processing rules, and pushes data to its destination","Creates visualizations from raw data","Replaces ETL processes in legacy systems"], ans: 1, exp: "A data pipeline is a series of steps that allow data from one system to move and become useful in another — by pulling from the source, transforming it, and pushing to a destination. This was directly defined in the lecture." },
+  { q: "How many Automatic Weather Stations (AWS) does IMD operate according to the lecture?", opts: ["1,382","5,896","806","39"], ans: 2, exp: "IMD operates 806 AWS, 1,382 ARG, 5,896 DRMS stations, 39 Doppler radars, and more. The IMD example illustrates why automated pipelines are needed — manually feeding data from this scale is impossible." },
+  { q: "Which of the 5 V's refers to the trustworthiness and quality of data?", opts: ["Volume","Variety","Velocity","Veracity"], ans: 3, exp: "Veracity refers to uncertainty and trustworthiness of data — e.g., faulty IMD sensors producing bad readings. A well-designed pipeline must handle all 5 V's: Volume, Velocity, Variety, Veracity, and Value." },
+  { q: "In database-mediated data flow, what is 'Forward Compatibility'?", opts: ["Newer code can read data written by older code","Older code can read data written by newer code","New schema fields replace old ones automatically","Data is migrated to a new schema on every deploy"], ans: 1, exp: "Forward Compatibility means OLDER code can read data written by NEWER code (and must ignore unknown fields gracefully). Backward Compatibility is the opposite: NEWER code reads OLDER data. Both are needed during rolling upgrades." },
+  { q: "What is the key design goal of Service Oriented Architecture (SOA)?", opts: ["Centralize all services into a monolithic codebase","Make services independently deployable and evolvable","Replace REST APIs with SOAP web services","Eliminate the need for databases between services"], ans: 1, exp: "SOA's key design goal is to make the application easier to change by making services independently deployable. Each service is owned by one team and can release new versions without coordinating with other teams." },
+  { q: "REST is best described as:", opts: ["An XML-based protocol requiring WSDL descriptions","A design philosophy built upon HTTP principles","A type of remote procedure call framework","A database replication protocol"], ans: 1, exp: "REST (Representational State Transfer) is NOT a protocol — it is a design philosophy that builds upon HTTP principles. It uses URLs for resources, HTTP methods for operations, and JSON/XML for data. This distinction is frequently tested." },
+  { q: "Why is RPC (Remote Procedure Call) considered 'fundamentally flawed'?", opts: ["It is slower than REST in all cases","It makes a remote call look like a local call, hiding network uncertainty (latency, failures, retries)","It only works within the same datacenter","It requires XML serialization"], ans: 1, exp: "RPC is fundamentally flawed because it tries to make a remote network call look like a local function call (location transparency). But network calls have unpredictable latency, can fail silently, and may need retries — none of which apply locally." },
+  { q: "Which of these is NOT an advantage of message brokers over direct RPC?", opts: ["Can act as a buffer if recipient is unavailable","Allows one message to reach multiple consumers","Provides real-time synchronous responses","Logically decouples sender from recipient"], ans: 2, exp: "Message-passing communication is ASYNCHRONOUS and typically ONE-WAY — the sender does NOT get a synchronous response. If a response is needed, it must go on a separate channel. Synchronous real-time response is an RPC characteristic, not message broker." },
+  { q: "What does the Modern Data Stack's 'Elasticity' characteristic mean?", opts: ["Data can be stored in multiple formats simultaneously","Compute scales automatically on demand, then scales down","Pipelines can be rebuilt quickly after data drift","All tools are open-source and free to use"], ans: 1, exp: "Elasticity means compute is based on a cloud platform allowing auto-scaling. Example from lecture: if users consume most data on Friday afternoons, auto-scale processing power then, scale down within hours. This would be impossible with on-premises fixed infrastructure." },
+  { q: "What makes the Modern Data Stack 'plug-and-play'?", opts: ["All tools are from the same vendor","Tools are built on open standards and APIs, avoiding vendor lock-in","Data is automatically transformed between any two tools","Machine learning is built into every tool layer"], ans: 1, exp: "MDS tools are plug-and-play because they're built on open standards and APIs, not proprietary interfaces. Unlike legacy tools that enforced lock-in, modern tools allow easy integration and replacement with better alternatives as they emerge." },
+  { q: "In a Cloud Data Warehouse like Snowflake, storage and compute are:", opts: ["Tightly coupled — adding storage requires adding compute nodes","Separated — storage in cheap object storage, compute provisioned independently","Equally expensive — both priced at the same rate","Shared across all warehouse instances on the platform"], ans: 1, exp: "Cloud warehouses like Snowflake and BigQuery separate compute and storage. Storage lives in cheap object storage (S3, GCS); compute clusters are ephemeral and independently scalable. You can run multiple compute clusters on the same data without duplication." },
+  { q: "What is 'schema-on-read' (used in data lakes)?", opts: ["Schema is defined when data is written to the lake","Schema is applied only when data is read for analysis — data stored in raw format","The database automatically detects and enforces schema","Schema changes require full table rewrite"], ans: 1, exp: "Schema-on-read means data is stored in its raw/native format; the schema is only applied when the data is queried or read for analysis. This provides maximum flexibility — you can load data today and decide how to structure it tomorrow. Contrast with data warehouses' schema-on-write." },
+  { q: "What problem does the Lake House architecture primarily solve?", opts: ["Too many different programming languages in the same pipeline","The tension between warehouses (structured, expensive, rigid) and lakes (flexible, cheap, potentially disorganized)","The inability of cloud platforms to handle unstructured data","Slow ingestion speeds from legacy ETL systems"], ans: 1, exp: "The Lake House combines data warehouse governance (ACID transactions, SQL performance) with data lake economics (cheap object storage, flexibility). Technologies like Delta Lake, Apache Iceberg, and Apache Hudi make this possible by adding a transactional layer on top of Parquet files in object storage." },
+  { q: "In ETL vs ELT, when should you choose ETL?", opts: ["When the target system is a cloud data platform with massive parallel compute","When you need high data quality and governance BEFORE loading, especially in legacy warehouses","When you work with semi-structured or unstructured data","When you need data reusability for multiple downstream consumers"], ans: 1, exp: "ETL (transform before loading) is chosen when you need high data quality/governance upfront, the target system (e.g., legacy warehouse) has limited compute/storage, transformations are complex and depend on business rules, and the requirements are static. Use cases: Enterprise DW, Regulatory Reporting, ERP Integration." },
+  { q: "What is 'data drift' in the context of data pipelines?", opts: ["The movement of data from hot storage to cold archival storage","Unexpected, unplanned, unrelenting changes to data structure or statistics that break pipelines","The process of migrating data between cloud platforms","A type of CDC mechanism using transaction logs"], ans: 1, exp: "Data drift refers to unexpected, unplanned, and unrelenting changes to data schemas or statistical properties over time. Even a small change to a row or table can cause hours of rework — updating each pipeline stage, debugging, and redeploying. This is one of the core challenges of real-world data pipelines." },
+  { q: "Apache Kafka is best described as:", opts: ["A SQL-based data transformation tool","A distributed streaming platform that acts as a durable, replayable event log","A cloud data warehouse for SQL analytics","An ETL orchestration tool with DAG-based scheduling"], ans: 1, exp: "Apache Kafka is a distributed streaming platform capable of handling millions of events per second. Its key design innovation is treating the message queue as a DURABLE, REPLAYABLE LOG — messages are not deleted after consumption but retained for a configurable period, enabling consumers to replay historical events." },
+  { q: "Change Data Capture (CDC) captures which types of database events?", opts: ["Only SELECT queries","Only INSERT and UPDATE events","INSERT, UPDATE, and DELETE events","Only schema changes and DDL statements"], ans: 2, exp: "CDC captures ALL three DML change events: INSERT, UPDATE, and DELETE. It can be implemented via triggers, transaction log reading (binlog/WAL — the gold standard with zero overhead), stored procedures, or message queues." },
+  { q: "What is the core idea behind Google's Dataflow model?", opts: ["All batch processing should be replaced by streaming","View all data as events; batch is simply bounded event streams with natural time windows","Streaming data requires separate code paths from batch","Real-time and batch processing cannot run on the same system"], ans: 1, exp: "The Dataflow model views ALL data as events. Real-time streams are unbounded event streams; data batches are simply bounded event streams where the batch boundary provides a natural time window. Real-time and batch processing happen in the same system using nearly identical code. 'Batch as a special case of streaming.'" },
+  { q: "Which layer of the MDS is described as the 'heart' of the modern data stack?", opts: ["Data Ingestion","Data Catalog & Governance","Data Transformation","BI & Analytics"], ans: 2, exp: "Data Transformation is called the 'heart' of the MDS because it's where raw, messy, inconsistent source data is converted into business-ready, analytics-ready data. Without transformation, the warehouse or lake is simply a repository of unusable raw data." },
+  { q: "What is the key difference between a Development Pipeline and an Execution Pipeline?", opts: ["Development pipelines run in batch, execution pipelines run in stream mode","Development pipeline creates code for a new pipeline; execution pipeline runs it in production","Development pipelines use ETL, execution pipelines use ELT","Development pipelines are managed by data scientists, execution by business analysts"], ans: 1, exp: "A Development Pipeline creates the code/logic to process data for a new pipeline. An Execution Pipeline runs that pipeline in production (Ingestion → Transformation → Analysis → Visualization). In most IT shops, these are managed by DIFFERENT teams — creating inefficiencies where developers can change code without being accountable for downstream impacts." },
+  { q: "Micro-pipelines are used to:", opts: ["Process very small datasets (under 1GB)","Break complex pipelines into independently modifiable steps without disrupting the entire flow","Replace macro-batch processing with micro-batch streaming","Reduce the number of transformation steps in an ETL pipeline"], ans: 1, exp: "Micro-pipelines divide individual stages into smaller, independently manageable units to ensure changes can be made to each step without disrupting the entire flow. They follow the stages: Requirement → Development → Testing/Tuning → Production/Deployment." },
+  { q: "What does FinOps address in the context of the Modern Data Stack?", opts: ["Optimizing database query performance on cloud warehouses","Collaborative financial management ensuring cloud data projects deliver maximum business value","Financial reporting using BI dashboards","Cost allocation between ETL and ELT processing modes"], ans: 1, exp: "FinOps is collaborative financial management between engineering, finance, and business teams. In cloud MDS environments, spending is dynamic (OpEx). FinOps ensures data projects deliver maximum value — monitoring spending continuously, adopting hard limits, and protecting against 'cost attacks' like excessive S3 downloads." },
+  { q: "Which statement about Batch Processing Pipelines is TRUE?", opts: ["Batch processing has lower latency than streaming pipelines","Batch pipelines are optimal for real-time fraud detection","Batch processing is more reliable than streaming but has higher latency","Batch pipelines can only process structured data"], ans: 2, exp: "Batch processing is MORE RELIABLE than streaming (messages cannot be dropped or stuck in queue) but has HIGHER LATENCY (minutes to days, not milliseconds). It's optimal when immediate real-time analysis isn't needed — monthly accounting, end-of-day reports, overnight ML model retraining. Associated with ETL patterns." },
+  { q: "In the three database data flow scenarios, Scenario 3 involves:", opts: ["A single process with backward compatibility requirements","Two separate processes where one encodes and one decodes","Several different processes or instances accessing the same database simultaneously","A process updating its own previously written data"], ans: 2, exp: "Scenario 3 involves several different processes (or instances of the same service) accessing the same database at the same time — requiring BOTH forward AND backward compatibility since different processes may be running different versions simultaneously." },
+  { q: "What was the origin of data pipelines?", opts: ["They were invented by Oracle for enterprise data warehousing in the 1990s","They emerged from the big data community when data lakes gave developers unfettered access to raw data","They were developed as part of the SOAP web services standard","They originated from mainframe batch job scheduling systems"], ans: 1, exp: "Data pipelines emerged from the BIG DATA COMMUNITY. Data lakes created a 'feeding frenzy' among developers, data scientists, and analysts who gained unfettered access to raw data from many internal and external systems for the first time — creating diverse workflows (pipelines) to process that data." },
+  { q: "According to the lecture, why do data engineers have such a large backlog of work?", opts: ["Cloud infrastructure is too expensive to scale quickly","Pipeline development is still handcrafted and largely non-repeatable with minimal reuse","Data volumes have grown faster than tools can handle","Business users request too many custom reports"], ans: 1, exp: "The lecture states: pipeline development 'is still a handcrafted and largely non-repeatable process with minimal reuse, managed by individuals working in isolation with different tools and approaches.' Building and debugging pipelines takes time — aligning with schema, setting sources/destinations, checking work, and iterating — by which time business requirements may have changed again." }
+];
+
+const FLASHCARDS = [
+  { q: "What is a Data Pipeline?", a: "A series of steps that allow data from one system to move and become useful in another — particularly analytics, data science, or AI/ML systems. Works by: Pull from source → Apply transformation/processing rules → Push to destination." },
+  { q: "Name the 5 V's of Big Data", a: "Volume (amount of data), Velocity (speed of data arrival), Variety (different formats/types), Veracity (trustworthiness/accuracy), Value (usefulness for decision-making). A well-designed pipeline must handle ALL five simultaneously." },
+  { q: "What is Backward Compatibility?", a: "NEWER code can successfully read data that was written by OLDER code. Example: Application V1.02 reading data written by V1.01. Required when upgrading systems while old data remains in the database." },
+  { q: "What is Forward Compatibility?", a: "OLDER code can successfully read data written by NEWER code — typically by ignoring unknown fields gracefully. Required during rolling upgrades when old and new versions run simultaneously." },
+  { q: "What is the Modern Data Stack (MDS)?", a: "An integrated suite of cloud-native tools enabling the full data lifecycle. Three fundamental shifts: (1) CapEx → OpEx (pay-as-you-go), (2) Monolithic proprietary → Modular best-of-breed, (3) IT-gatekept → Self-service analytics." },
+  { q: "What are the 7 layers of the Modern Data Stack?", a: "1. Data Ingestion (Fivetran, Kafka)\n2. Cloud Storage: DW/Lake/Lakehouse (Snowflake, S3)\n3. Data Transformation (dbt, Airflow) — THE HEART\n4. BI & Data Science (Looker, Dataiku)\n5. Data Catalog & Governance (Atlan, Atlas)\n6. Privacy & Access Governance (Immuta, RBAC)\n7. Security & Compliance (GDPR, HIPAA)" },
+  { q: "ETL vs ELT — what's the key difference?", a: "ETL: Extract → Transform → Load (transform BEFORE loading, used for compliance/legacy warehouses, static requirements).\nELT: Extract → Load → Transform (load raw data first, transform ON DEMAND inside cloud warehouse, used for ML pipelines and data lakes, innovation-driven)." },
+  { q: "What is Change Data Capture (CDC)?", a: "A method for extracting each change event (INSERT, UPDATE, DELETE) from a database and streaming to downstream systems. Four mechanisms: (1) Triggers, (2) Transaction log/binlog — gold standard, zero overhead, (3) Stored procedures, (4) Message queues. Best stack: Kafka + Debezium." },
+  { q: "What is 'data drift'?", a: "Unexpected, unplanned, unrelenting changes to data schemas or statistical properties over time. Breaks rigid pipeline tools that must be rebuilt and redeployed from scratch. Modern DataOps platforms handle drift automatically." },
+  { q: "Batch Processing vs. Stream Processing — key trade-off?", a: "Batch: High reliability, high throughput, HIGH LATENCY (minutes to days). Optimal for non-real-time use cases (monthly accounting).\nStream: LOW LATENCY (milliseconds), but less reliable — messages can be dropped or stuck. Optimal for real-time fraud detection, live dashboards, IoT." },
+  { q: "What is the Dataflow Model's core idea?", a: "View ALL data as events. Ongoing streams = unbounded event streams. Data batches = bounded event streams (the batch boundary is a natural time window). Real-time and batch use NEARLY IDENTICAL CODE. 'Batch is a special case of streaming.' Implemented in Apache Beam; adopted by Flink and Spark." },
+  { q: "Data Warehouse vs. Data Lake vs. Lake House — in one line each", a: "Warehouse: Structured data only, schema-on-write, excellent SQL, ACID, expensive (BigQuery, Snowflake).\nLake: All data types, schema-on-read, flexible, cheap, great for ML (S3 + Databricks).\nLakehouse: Best of both — cheap storage + ACID + SQL performance (Delta Lake, Iceberg, Hudi)." },
+  { q: "What is REST?", a: "Representational State Transfer — NOT a protocol but a DESIGN PHILOSOPHY built on HTTP principles. Uses URLs for resources, HTTP methods (GET/POST/PUT/DELETE) for operations, JSON/XML for data. Gaining popularity over SOAP for microservices. APIs following REST principles are called RESTful." },
+  { q: "What is RPC and why is it 'fundamentally flawed'?", a: "Remote Procedure Call — makes a remote network request look like a local function call (location transparency). Flawed because: network calls have unpredictable latency, can fail silently, may need retries — none apply to local calls. Modern frameworks (gRPC) are explicit about this difference." },
+  { q: "Name 5 advantages of message brokers over direct RPC", a: "1. Buffers messages if recipient is unavailable → improves reliability\n2. Auto-redelivers to crashed processes → prevents loss\n3. Sender doesn't need IP/port of recipient\n4. One message can reach multiple consumers (fan-out)\n5. Logically decouples sender from recipient (sender publishes, doesn't care who consumes)" },
+  { q: "What is the Development Pipeline vs Execution Pipeline?", a: "Development Pipeline: Creates code/logic to process data for a new pipeline (Innovation: Requirement → Development → Testing → Deployment).\nExecution Pipeline: Runs the pipeline in production (Operations: Ingestion → Transformation → Analysis → Visualization).\nIn most IT shops, managed by DIFFERENT teams — creating inefficiencies." },
+  { q: "What are Micro-Pipelines?", a: "Breaking complex pipelines into smaller, independently modifiable units to ensure changes can be made to each step without disrupting the entire flow. Steps: 1. Requirement (Agile/Kanban), 2. Development (can be data model changes, not just code), 3. Testing/Tuning, 4. Production/Deployment." },
+  { q: "What is Schema-on-Write vs Schema-on-Read?", a: "Schema-on-Write (Data Warehouse): Schema must be defined BEFORE data is loaded. Data conforms to schema on entry. High quality, rigid.\nSchema-on-Read (Data Lake): Data stored in raw/native format. Schema applied WHEN data is queried. Flexible — load first, decide structure later." },
+  { q: "What is the key problem with Traditional Data Stack?", a: "Summary (direct from lecture): 'Relies on rigid, on-premises infrastructure that can struggle with scalability, flexibility, and real-time processing.' Three problems: (1) Long turnaround time & high CapEx, (2) Expensive manual journey to insights, (3) Slow response — new data update takes weeks." },
+  { q: "What is Apache Kafka?", a: "Distributed streaming platform that handles millions of events per second. Key innovation: treats the message queue as a DURABLE, REPLAYABLE LOG — messages retained for configurable period, not deleted after consumption. De facto standard for streaming data pipelines. Used by 80%+ of Fortune 100 companies." },
+  { q: "What does dbt (data build tool) do?", a: "SQL-first transformation tool for cloud data warehouses. Enables data analysts/engineers to transform data inside the warehouse using SELECT statements. Supports version control (Git), testing, and documentation of transformation logic. Core of the modern ELT pattern." },
+  { q: "What is the Lake House architecture and what enables it?", a: "Combines data lake economics (cheap object storage) with data warehouse governance (ACID transactions, SQL performance). Enabled by: Delta Lake (Databricks — transaction log, time travel), Apache Iceberg (petabyte-scale table format), Apache Hudi (streaming/CDC-optimized). Popular stack: AWS S3 + Delta Lake + Databricks." },
+  { q: "Name the 3 modes of data flow", a: "1. Through Databases: One process writes, another reads; database as shared intermediary (Hospital Management System example)\n2. Through Services: Client-server, SOA, REST/SOAP APIs, RPC\n3. Through Message Passing: Async message brokers (Kafka, RabbitMQ); messages stored temporarily by broker" },
+  { q: "What is DataOps?", a: "Agile practice combining DevOps with data engineering. Builds SMART data pipelines that abstract away the 'how' to focus on what/who/where. Key capabilities: (1) Design and deploy in HOURS not weeks, (2) Built-in resiliency to handle data drift, (3) Platform portability — point to new platform in minutes. Tools: Airflow, Prefect, Dagster." },
+  { q: "What is the Data Gravity problem?", a: "Getting data onto a cloud platform is cheap/free, but getting data OUT is expensive (egress fees). Once data lands in a cloud, the cost to extract and migrate is very high. Design your MDS to avoid lock-in: use open formats (Parquet, Avro), avoid proprietary data formats." },
+  { q: "What is FinOps?", a: "Collaborative financial management between engineering, finance, and business in cloud environments. Cloud spending is dynamic (OpEx) — FinOps ensures data projects deliver maximum value. Monitor spending continuously, adopt hard limits with graceful failure modes. Protects against 'cost attacks' (e.g., excessive S3 downloads)." },
+  { q: "SOA vs Microservices — key difference?", a: "Both are distributed, decoupled architectures.\nSOA: Heavier infrastructure, enterprise-wide service exposure, often shared databases, uses Enterprise Service Bus.\nMicroservices: Evolved from SOA, application-level architecture, each service has its own database, lightweight REST/gRPC APIs, more flexible and independently deployable." },
+  { q: "What are the 7 components of a data pipeline?", a: "1. Origin — entry point of data\n2. Destination — final target\n3. Dataflow — movement + intermediate stores\n4. Storage — data preserved at stages (DW, Data Mart, Data Lake)\n5. Processing — ETL/ELT activities\n6. Workflow — sequence of tasks + dependencies (DAG)\n7. Monitoring — checking pipeline health" },
+  { q: "What is the IMD example's main lesson?", a: "IMD's 10,000+ sensor network (806 AWS, 1,382 ARG, 5,896 DRMS, 39 DWRs, 2 satellites, 83 lightning sensors) demonstrates that manual data feeding multiple times per day is IMPOSSIBLE at this scale. This is why automated data pipelines — handling all 5 V's — are essential. The network enables real-time weather warnings." },
+  { q: "Lambda vs Kappa Architecture", a: "Lambda: Separate batch layer + speed (streaming) layer + serving layer. Problem: TWO code paths to maintain.\nKappa: Unified streaming layer only — eliminates separate batch layer. Simpler but still needs different tools for stats vs aggregation.\nDataflow Model (Apache Beam): Solves both — batch IS bounded streaming, one unified code path." },
+  { q: "What are the 3 problems with pipeline development currently?", a: "1. Always Under Construction: Handcrafted, non-repeatable, minimal reuse; by the time it's live, requirements have changed\n2. Out of Order / Data Drift: Small changes cascade through entire pipeline; hidden breakages take months to find\n3. Build It and They Will Come: Built for specific platforms — changing infrastructure requires weeks of rebuilding" },
+  { q: "What is the 'data outlives code' principle?", a: "When you deploy a new application version, the old code is replaced in minutes. But database contents stay — data written by old code remains for years. A value written 5 years ago by V1.0 may be read today by V5.0. Implication: BOTH backward and forward schema compatibility must be designed for in long-lived systems." }
+];
+
+// ══════════════════════════════
+// STATE
+// ══════════════════════════════
+let currentPage = 0;
+let visitedPages = new Set([0]);
+let currentMode = 'study';
+let qIdx = 0, qScore = 0, qAnswered = false;
+let qHistory = [];
+let fcIdx = 0, fcFlipped = false;
+let fcRatings = [];
+
+// ══════════════════════════════
+// NAVIGATION
+// ══════════════════════════════
+function showPage(n) {
+  if (currentMode !== 'study') return;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + n).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach((el, i) => {
+    el.classList.toggle('active', i === n);
+  });
+  currentPage = n;
+  visitedPages.add(n);
+  updateProgress();
+  document.getElementById('main').scrollTop = 0;
+  window.scrollTo(0,0);
+}
+
+function updateProgress() {
+  const total = 8;
+  const visited = visitedPages.size;
+  document.getElementById('prog-text').textContent = visited + ' / ' + total + ' topics';
+  document.getElementById('progress-bar-inner').style.width = (visited / total * 100) + '%';
+  document.querySelectorAll('.nav-item').forEach((el, i) => {
+    if (visitedPages.has(i)) el.classList.add('visited');
+  });
+}
+
+function switchMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-tab').forEach((t, i) => {
+    t.classList.toggle('active', ['study','quiz','fc'][i] === mode);
+  });
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  if (mode === 'study') {
+    document.getElementById('page-' + currentPage).classList.add('active');
+    document.getElementById('nav-list').style.display = '';
+  } else if (mode === 'quiz') {
+    document.getElementById('page-quiz').classList.add('active');
+    document.getElementById('nav-list').style.display = 'none';
+    startQuiz();
+  } else if (mode === 'fc') {
+    document.getElementById('page-fc').classList.add('active');
+    document.getElementById('nav-list').style.display = 'none';
+    initFlashcards();
+  }
+}
+
+// ══════════════════════════════
+// EXPANDABLE CARDS
+// ══════════════════════════════
+function toggleCard(header) {
+  const card = header.parentElement;
+  card.classList.toggle('open');
+}
+
+// ══════════════════════════════
+// TABS
+// ══════════════════════════════
+function openTab(btn, id) {
+  const group = btn.closest('.tab-group');
+  group.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  group.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(id).classList.add('active');
+}
+
+// ══════════════════════════════
+// QUIZ
+// ══════════════════════════════
+function startQuiz() {
+  qIdx = 0; qScore = 0; qHistory = [];
+  document.getElementById('quiz-active').style.display = 'block';
+  document.getElementById('q-score-screen').style.display = 'none';
+  buildDots();
+  loadQuestion();
+}
+
+function buildDots() {
+  const d = document.getElementById('q-dots');
+  d.innerHTML = QUIZ.map((_, i) => `<div class="q-dot" id="dot-${i}"></div>`).join('');
+}
+
+function loadQuestion() {
+  const q = QUIZ[qIdx];
+  qAnswered = false;
+  document.getElementById('q-counter').textContent = `Question ${qIdx+1} of ${QUIZ.length}`;
+  document.getElementById('q-score').textContent = `Score: ${qScore}`;
+  document.getElementById('q-text').textContent = q.q;
+  document.getElementById('q-explain').classList.remove('show');
+  document.getElementById('q-next').style.display = 'none';
+  const opts = document.getElementById('q-options');
+  opts.innerHTML = q.opts.map((o, i) => `<div class="q-option" onclick="selectAnswer(${i})">${String.fromCharCode(65+i)}. ${o}</div>`).join('');
+}
+
+function selectAnswer(i) {
+  if (qAnswered) return;
+  qAnswered = true;
+  const q = QUIZ[qIdx];
+  const opts = document.querySelectorAll('.q-option');
+  opts.forEach(o => o.classList.add('disabled'));
+  if (i === q.ans) {
+    opts[i].classList.add('correct');
+    qScore++;
+    qHistory.push('correct');
+    document.getElementById('dot-' + qIdx).classList.add('correct');
+  } else {
+    opts[i].classList.add('wrong');
+    opts[q.ans].classList.add('correct');
+    qHistory.push('wrong');
+    document.getElementById('dot-' + qIdx).classList.add('wrong');
+  }
+  const ex = document.getElementById('q-explain');
+  ex.textContent = q.exp;
+  ex.classList.add('show');
+  document.getElementById('q-next').style.display = 'block';
+  document.getElementById('q-score').textContent = `Score: ${qScore}`;
+}
+
+function nextQuestion() {
+  qIdx++;
+  if (qIdx >= QUIZ.length) {
+    showScoreScreen();
+  } else {
+    loadQuestion();
+  }
+}
+
+function showScoreScreen() {
+  document.getElementById('quiz-active').style.display = 'none';
+  const s = document.getElementById('q-score-screen');
+  s.style.display = 'block';
+  const pct = Math.round(qScore / QUIZ.length * 100);
+  document.getElementById('q-final-score').textContent = `${qScore} / ${QUIZ.length} (${pct}%)`;
+  let msg = pct >= 85 ? '🎉 Excellent! You have mastered this topic.' 
+           : pct >= 70 ? '👍 Good work! Review the topics you missed.' 
+           : pct >= 50 ? '📚 Decent start — review the study notes and retry.' 
+           : '🔄 Keep studying — revisit the core concepts and try again.';
+  document.getElementById('q-final-msg').textContent = msg;
+}
+
+// ══════════════════════════════
+// FLASHCARDS
+// ══════════════════════════════
+function initFlashcards() {
+  fcIdx = 0; fcFlipped = false;
+  fcRatings = new Array(FLASHCARDS.length).fill(null);
+  document.getElementById('fc-hard-count').textContent = 0;
+  document.getElementById('fc-good-count').textContent = 0;
+  document.getElementById('fc-easy-count').textContent = 0;
+  buildFcProgress();
+  loadCard();
+}
+
+function buildFcProgress() {
+  const row = document.getElementById('fc-progress-row');
+  row.innerHTML = FLASHCARDS.map((_, i) => `<div class="fc-dot" id="fcdot-${i}"></div>`).join('');
+}
+
+function loadCard() {
+  const card = FLASHCARDS[fcIdx];
+  fcFlipped = false;
+  document.getElementById('fc-scene').classList.remove('flipped');
+  document.getElementById('fc-front-text').textContent = card.q;
+  document.getElementById('fc-back-text').textContent = card.a;
+  document.getElementById('fc-counter').textContent = `Card ${fcIdx+1} of ${FLASHCARDS.length}`;
+  document.getElementById('fc-actions').style.display = 'none';
+}
+
+function flipCard() {
+  fcFlipped = !fcFlipped;
+  document.getElementById('fc-scene').classList.toggle('flipped', fcFlipped);
+  document.getElementById('fc-actions').style.display = fcFlipped ? 'flex' : 'none';
+}
+
+function rateCard(rating) {
+  fcRatings[fcIdx] = rating;
+  const dot = document.getElementById('fcdot-' + fcIdx);
+  dot.className = 'fc-dot ' + rating;
+  const counts = {hard:0, good:0, easy:0};
+  fcRatings.forEach(r => { if(r) counts[r]++; });
+  document.getElementById('fc-hard-count').textContent = counts.hard;
+  document.getElementById('fc-good-count').textContent = counts.good;
+  document.getElementById('fc-easy-count').textContent = counts.easy;
+  nextCard();
+}
+
+function nextCard() {
+  if (fcIdx < FLASHCARDS.length - 1) {
+    fcIdx++;
+    loadCard();
+  }
+}
+
+function prevCard() {
+  if (fcIdx > 0) {
+    fcIdx--;
+    loadCard();
+  }
+}
+
+// ══════════════════════════════
+// GLOSSARY SEARCH
+// ══════════════════════════════
+function filterGloss(val) {
+  const rows = document.querySelectorAll('#gloss-table tbody tr');
+  rows.forEach(r => {
+    r.style.display = r.textContent.toLowerCase().includes(val.toLowerCase()) ? '' : 'none';
+  });
+}
+
+// ══════════════════════════════
+// CHECKLIST
+// ══════════════════════════════
+function initChecklist() {
+  const items = document.querySelectorAll('.check-item');
+  document.getElementById('check-total').textContent = items.length;
+  const saved = JSON.parse(localStorage.getItem('dmml_checks') || '{}');
+  items.forEach((item, i) => {
+    if (saved[i]) {
+      item.querySelector('input').checked = true;
+      item.classList.add('checked');
+    }
+  });
+  updateCheckCount();
+}
+
+function toggleCheck(item) {
+  const cb = item.querySelector('input');
+  cb.checked = !cb.checked;
+  item.classList.toggle('checked', cb.checked);
+  saveChecks();
+  updateCheckCount();
+}
+
+function saveChecks() {
+  const items = document.querySelectorAll('.check-item');
+  const state = {};
+  items.forEach((item, i) => { state[i] = item.querySelector('input').checked; });
+  localStorage.setItem('dmml_checks', JSON.stringify(state));
+}
+
+function updateCheckCount() {
+  const checked = document.querySelectorAll('.check-item input:checked').length;
+  document.getElementById('check-count').textContent = checked;
+}
+
+function resetChecks() {
+  document.querySelectorAll('.check-item').forEach(item => {
+    item.querySelector('input').checked = false;
+    item.classList.remove('checked');
+  });
+  localStorage.removeItem('dmml_checks');
+  updateCheckCount();
+}
+
+// ══════════════════════════════
+// INIT
+// ══════════════════════════════
+window.addEventListener('load', () => {
+  updateProgress();
+  initChecklist();
+  loadQuestion();
+  initFlashcards();
+});
+</script>
+</body>
+</html>

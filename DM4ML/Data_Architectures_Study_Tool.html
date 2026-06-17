@@ -1,0 +1,2987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Architectures for ML — BITS Pilani Study Tool</title>
+<style>
+:root {
+  --bg: #0d0f18;
+  --surface: #131623;
+  --surface2: #1a1d2e;
+  --surface3: #1f2235;
+  --border: #2a2d42;
+  --text: #e8eaf6;
+  --text-muted: #8b90b5;
+  --purple: #8b5cf6;
+  --purple-light: #a78bfa;
+  --purple-dim: #2d1f5e;
+  --teal: #14b8a6;
+  --teal-light: #5eead4;
+  --teal-dim: #0d2e2a;
+  --amber: #f59e0b;
+  --amber-light: #fcd34d;
+  --amber-dim: #2d1f05;
+  --coral: #f43f5e;
+  --coral-light: #fb7185;
+  --coral-dim: #2d0d15;
+  --sky: #0ea5e9;
+  --sky-light: #7dd3fc;
+  --sky-dim: #0c1e2d;
+  --green: #22c55e;
+  --green-dim: #0d2518;
+  --orange: #f97316;
+  --orange-dim: #2d1505;
+  --sidebar-width: 260px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* === SIDEBAR === */
+#sidebar {
+  position: fixed;
+  top: 0; left: 0;
+  width: var(--sidebar-width);
+  height: 100vh;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  padding: 20px 16px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-logo {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--purple-light);
+  margin-bottom: 4px;
+}
+
+.sidebar-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.progress-section {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.progress-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.progress-bar-wrap {
+  background: var(--border);
+  border-radius: 99px;
+  height: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--purple), var(--teal));
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+/* Mode tabs */
+.mode-tabs {
+  display: flex;
+  margin: 10px 12px;
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.mode-tab {
+  flex: 1;
+  padding: 6px 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  transition: all 0.2s;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mode-tab.active {
+  background: var(--surface2);
+  color: var(--text);
+}
+
+.mode-tab:hover:not(.active) { color: var(--text); }
+
+/* Nav items */
+.nav-section-label {
+  padding: 10px 16px 4px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-muted);
+  transition: all 0.15s;
+  border-left: 2px solid transparent;
+  text-decoration: none;
+}
+
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: var(--purple-dim); color: var(--purple-light); border-left-color: var(--purple); }
+.nav-item.visited .nav-dot { background: var(--teal); }
+
+.nav-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--border);
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.nav-icon { font-size: 14px; flex-shrink: 0; }
+
+/* === MAIN CONTENT === */
+#main {
+  margin-left: var(--sidebar-width);
+  min-height: 100vh;
+  padding: 0;
+}
+
+.page {
+  display: none;
+  padding: 32px 40px;
+  max-width: 900px;
+}
+
+.page.active { display: block; }
+
+/* Page header */
+.page-header {
+  margin-bottom: 32px;
+}
+
+.page-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--purple);
+  margin-bottom: 8px;
+}
+
+.page-title {
+  font-size: 28px;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--text) 0%, var(--purple-light) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+  margin-bottom: 10px;
+}
+
+.page-subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* Callout boxes */
+.callout {
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin: 16px 0;
+  border-left: 3px solid;
+}
+
+.callout-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.callout-content {
+  font-size: 13.5px;
+  line-height: 1.7;
+}
+
+.callout-content strong { font-weight: 600; }
+.callout-content ul { padding-left: 18px; margin-top: 4px; }
+.callout-content li { margin-bottom: 3px; }
+.callout-content code {
+  background: rgba(0,0,0,0.3);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 12px;
+}
+
+/* Definition — purple */
+.callout-def { background: var(--purple-dim); border-color: var(--purple); }
+.callout-def .callout-label { color: var(--purple-light); }
+.callout-def .callout-content { color: #d8d3f8; }
+
+/* Insight — teal */
+.callout-insight { background: var(--teal-dim); border-color: var(--teal); }
+.callout-insight .callout-label { color: var(--teal-light); }
+.callout-insight .callout-content { color: #c0f0ec; }
+
+/* Exam tip — amber */
+.callout-exam { background: var(--amber-dim); border-color: var(--amber); }
+.callout-exam .callout-label { color: var(--amber-light); }
+.callout-exam .callout-content { color: #f9e4c0; }
+
+/* Research — sky */
+.callout-research { background: var(--sky-dim); border-color: var(--sky); }
+.callout-research .callout-label { color: var(--sky-light); }
+.callout-research .callout-content { color: #c0e4f8; }
+
+/* Warning — orange */
+.callout-warn { background: var(--orange-dim); border-color: var(--orange); }
+.callout-warn .callout-label { color: #fca46e; }
+.callout-warn .callout-content { color: #f8dac0; }
+
+/* Expandable cards */
+.expand-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin: 10px 0;
+  overflow: hidden;
+  background: var(--surface2);
+}
+
+.expand-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.expand-header:hover { background: var(--surface3); }
+
+.expand-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.expand-icon {
+  font-size: 12px;
+  color: var(--text-muted);
+  transition: transform 0.25s;
+}
+
+.expand-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.expand-body-inner {
+  padding: 0 18px 16px;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+.expand-card.open .expand-icon { transform: rotate(180deg); }
+.expand-card.open .expand-body { max-height: 2000px; }
+
+/* Tabs */
+.tab-group { margin: 16px 0; }
+
+.tab-headers {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0;
+}
+
+.tab-btn {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.15s;
+  border-radius: 6px 6px 0 0;
+}
+
+.tab-btn.active {
+  color: var(--purple-light);
+  border-bottom-color: var(--purple);
+  background: var(--purple-dim);
+}
+
+.tab-btn:hover:not(.active) { color: var(--text); background: var(--surface2); }
+
+.tab-pane { display: none; padding: 16px 0; }
+.tab-pane.active { display: block; }
+
+/* Comparison table */
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 13px;
+}
+
+.compare-table th {
+  background: var(--surface3);
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.compare-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  line-height: 1.5;
+  vertical-align: top;
+}
+
+.compare-table tr:last-child td { border-bottom: none; }
+.compare-table tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+.compare-table tr:hover td { background: var(--surface3); }
+
+/* Flow diagram */
+.flow-wrap { overflow-x: auto; margin: 16px 0; }
+
+.flow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 16px;
+  background: var(--surface2);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  min-width: max-content;
+}
+
+.flow-box {
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  min-width: 90px;
+}
+
+.flow-arrow {
+  font-size: 18px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.fb-purple { background: var(--purple-dim); color: var(--purple-light); border: 1px solid var(--purple); }
+.fb-teal { background: var(--teal-dim); color: var(--teal-light); border: 1px solid var(--teal); }
+.fb-amber { background: var(--amber-dim); color: var(--amber-light); border: 1px solid var(--amber); }
+.fb-coral { background: var(--coral-dim); color: var(--coral-light); border: 1px solid var(--coral); }
+.fb-sky { background: var(--sky-dim); color: var(--sky-light); border: 1px solid var(--sky); }
+.fb-green { background: var(--green-dim); color: #86efac; border: 1px solid var(--green); }
+
+/* Section headings */
+h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 28px 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+h2::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 20px 0 8px;
+}
+
+p { font-size: 14px; line-height: 1.7; color: var(--text-muted); margin-bottom: 10px; }
+p strong { color: var(--text); }
+
+/* Tags */
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin: 2px;
+}
+
+.tag-purple { background: var(--purple-dim); color: var(--purple-light); }
+.tag-teal { background: var(--teal-dim); color: var(--teal-light); }
+.tag-amber { background: var(--amber-dim); color: var(--amber-light); }
+.tag-coral { background: var(--coral-dim); color: var(--coral-light); }
+
+/* ==============================
+   QUIZ MODE
+============================== */
+#quiz-page {
+  padding: 32px 40px;
+  max-width: 800px;
+}
+
+.quiz-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.quiz-question-num {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.quiz-score-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--teal);
+  background: var(--teal-dim);
+  padding: 4px 12px;
+  border-radius: 99px;
+}
+
+.quiz-q-text {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.quiz-option {
+  padding: 14px 18px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--surface2);
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text);
+  transition: all 0.15s;
+  text-align: left;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.quiz-option:hover:not(:disabled) { border-color: var(--purple); background: var(--purple-dim); }
+.quiz-option:disabled { cursor: default; }
+.quiz-option.correct { border-color: var(--green); background: var(--green-dim); color: #86efac; }
+.quiz-option.wrong { border-color: var(--coral); background: var(--coral-dim); color: var(--coral-light); }
+
+.option-letter {
+  font-size: 11px;
+  font-weight: 700;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.quiz-explanation {
+  padding: 14px 18px;
+  border-radius: 10px;
+  background: var(--surface3);
+  border-left: 3px solid var(--teal);
+  font-size: 13px;
+  color: #c0f0ec;
+  line-height: 1.7;
+  margin-bottom: 16px;
+  display: none;
+}
+
+.quiz-explanation.show { display: block; }
+
+.quiz-btn {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-primary {
+  background: var(--purple);
+  color: white;
+}
+.btn-primary:hover { background: var(--purple-light); }
+.btn-secondary {
+  background: var(--surface3);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { background: var(--surface2); border-color: var(--purple); }
+
+/* Dot tracker */
+.dot-tracker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 20px;
+}
+
+.tracker-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--border);
+}
+.tracker-dot.correct { background: var(--green); }
+.tracker-dot.wrong { background: var(--coral); }
+.tracker-dot.current { background: var(--purple); box-shadow: 0 0 6px var(--purple); }
+
+/* Score screen */
+.score-screen {
+  text-align: center;
+  padding: 60px 40px;
+}
+
+.score-circle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid var(--purple);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--purple-light);
+  background: var(--purple-dim);
+}
+
+/* ==============================
+   FLASHCARDS
+============================== */
+#flashcard-page {
+  padding: 32px 40px;
+  max-width: 700px;
+}
+
+.fc-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.fc-counter {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.fc-ratings {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.fc-scene {
+  perspective: 1000px;
+  height: 280px;
+  margin-bottom: 20px;
+  cursor: pointer;
+}
+
+.fc-card {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+
+.fc-card.flipped { transform: rotateY(180deg); }
+
+.fc-front, .fc-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 14px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--border);
+}
+
+.fc-front {
+  background: linear-gradient(135deg, var(--surface2), var(--surface3));
+  text-align: center;
+}
+
+.fc-back {
+  background: linear-gradient(135deg, var(--purple-dim), var(--surface3));
+  transform: rotateY(180deg);
+  border-color: var(--purple);
+  overflow-y: auto;
+}
+
+.fc-front-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.fc-question {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.fc-back-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--purple-light);
+  margin-bottom: 12px;
+  align-self: flex-start;
+}
+
+.fc-answer {
+  font-size: 13.5px;
+  color: #d8d3f8;
+  line-height: 1.7;
+  align-self: flex-start;
+  width: 100%;
+}
+
+.fc-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 16px;
+  opacity: 0.7;
+}
+
+.fc-controls {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.fc-btn-hard {
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  background: var(--coral-dim);
+  color: var(--coral-light);
+  border: 1px solid var(--coral);
+  transition: all 0.15s;
+}
+.fc-btn-hard:hover { background: var(--coral); color: white; }
+
+.fc-btn-good {
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  border: 1px solid var(--purple);
+  cursor: pointer;
+  background: var(--purple-dim);
+  color: var(--purple-light);
+  transition: all 0.15s;
+}
+.fc-btn-good:hover { background: var(--purple); color: white; }
+
+.fc-btn-easy {
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  border: 1px solid var(--teal);
+  cursor: pointer;
+  background: var(--teal-dim);
+  color: var(--teal-light);
+  transition: all 0.15s;
+}
+.fc-btn-easy:hover { background: var(--teal); color: white; }
+
+.fc-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.fc-nav-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  background: var(--surface2);
+  color: var(--text);
+  transition: all 0.15s;
+}
+.fc-nav-btn:hover { background: var(--surface3); border-color: var(--purple); }
+
+.fc-progress {
+  flex: 1;
+  height: 4px;
+  background: var(--border);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.fc-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--purple), var(--teal));
+  transition: width 0.3s;
+}
+
+/* ==============================
+   GLOSSARY
+============================== */
+#glossary-page {
+  padding: 32px 40px;
+  max-width: 900px;
+}
+
+.glossary-search {
+  display: flex;
+  align-items: center;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 16px;
+  gap: 10px;
+  margin-bottom: 20px;
+  transition: border-color 0.15s;
+}
+
+.glossary-search:focus-within { border-color: var(--purple); }
+
+.glossary-search input {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: var(--text);
+  flex: 1;
+}
+
+.glossary-search input::placeholder { color: var(--text-muted); }
+
+/* ==============================
+   CHECKLIST
+============================== */
+#checklist-page {
+  padding: 32px 40px;
+  max-width: 800px;
+}
+
+.checklist-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.checklist-progress {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--teal);
+}
+
+.checklist-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+  user-select: none;
+}
+
+.checklist-item:hover { background: var(--surface2); }
+.checklist-item.done { opacity: 0.6; }
+
+.checklist-checkbox {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+  transition: all 0.15s;
+}
+
+.checklist-item.done .checklist-checkbox {
+  background: var(--teal);
+  border-color: var(--teal);
+}
+
+.checklist-text {
+  font-size: 13.5px;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.checklist-item.done .checklist-text { text-decoration: line-through; color: var(--text-muted); }
+
+.checklist-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin: 20px 0 8px;
+  padding: 0 16px;
+}
+
+/* ==============================
+   MISC
+============================== */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.info-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.info-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.info-card-body {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* Architecture diagram boxes */
+.arch-diagram {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 16px 0;
+}
+
+.arch-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  flex-wrap: wrap;
+}
+
+.arch-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  width: 80px;
+  flex-shrink: 0;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* Mobile */
+@media (max-width: 768px) {
+  #sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s;
+  }
+  #sidebar.open { transform: translateX(0); }
+  #main { margin-left: 0; }
+  .page, #quiz-page, #flashcard-page, #glossary-page, #checklist-page {
+    padding: 20px 16px;
+  }
+  .two-col { grid-template-columns: 1fr; }
+  .page-title { font-size: 22px; }
+  .mobile-menu-btn {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 200;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--text);
+  }
+}
+</style>
+</head>
+<body>
+
+<button class="mobile-menu-btn" onclick="toggleSidebar()" style="display:none" id="mobile-btn">☰</button>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">BITS Pilani · DVS · CS3</div>
+    <div class="sidebar-title">Data Architectures for ML</div>
+  </div>
+
+  <div class="progress-section">
+    <div class="progress-label">
+      <span>Study Progress</span>
+      <span id="progress-text">0%</span>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="mode-tabs">
+    <button class="mode-tab active" onclick="setMode('study')">📚 Study</button>
+    <button class="mode-tab" onclick="setMode('quiz')">🧠 Quiz</button>
+    <button class="mode-tab" onclick="setMode('flash')">⚡ Flash</button>
+  </div>
+
+  <!-- Study nav -->
+  <div id="study-nav">
+    <div class="nav-section-label">Introduction</div>
+    <a class="nav-item active" onclick="showPage('p-intro')" data-page="p-intro">
+      <span class="nav-dot"></span><span class="nav-icon">🏛️</span>Definitions & Why
+    </a>
+    <a class="nav-item" onclick="showPage('p-aspects')" data-page="p-aspects">
+      <span class="nav-dot"></span><span class="nav-icon">⚙️</span>Aspects & Framework
+    </a>
+
+    <div class="nav-section-label">Categorization</div>
+    <a class="nav-item" onclick="showPage('p-central')" data-page="p-central">
+      <span class="nav-dot"></span><span class="nav-icon">🏢</span>By Centralization
+    </a>
+    <a class="nav-item" onclick="showPage('p-storage')" data-page="p-storage">
+      <span class="nav-dot"></span><span class="nav-icon">🗄️</span>By Storage
+    </a>
+    <a class="nav-item" onclick="showPage('p-schema')" data-page="p-schema">
+      <span class="nav-dot"></span><span class="nav-icon">⭐</span>DW Schemas
+    </a>
+    <a class="nav-item" onclick="showPage('p-governance')" data-page="p-governance">
+      <span class="nav-dot"></span><span class="nav-icon">🕸️</span>By Governance
+    </a>
+
+    <div class="nav-section-label">Big Data</div>
+    <a class="nav-item" onclick="showPage('p-bigdata')" data-page="p-bigdata">
+      <span class="nav-dot"></span><span class="nav-icon">📊</span>Big Data & 5 Vs
+    </a>
+    <a class="nav-item" onclick="showPage('p-components')" data-page="p-components">
+      <span class="nav-dot"></span><span class="nav-icon">🔧</span>BD Architecture
+    </a>
+
+    <div class="nav-section-label">Processing Architectures</div>
+    <a class="nav-item" onclick="showPage('p-lambda')" data-page="p-lambda">
+      <span class="nav-dot"></span><span class="nav-icon">λ</span>Lambda Architecture
+    </a>
+    <a class="nav-item" onclick="showPage('p-kappa')" data-page="p-kappa">
+      <span class="nav-dot"></span><span class="nav-icon">κ</span>Kappa Architecture
+    </a>
+    <a class="nav-item" onclick="showPage('p-compare')" data-page="p-compare">
+      <span class="nav-dot"></span><span class="nav-icon">⚖️</span>Lambda vs Kappa
+    </a>
+
+    <div class="nav-section-label">Reference</div>
+    <a class="nav-item" onclick="showPage('p-glossary')" data-page="p-glossary">
+      <span class="nav-dot"></span><span class="nav-icon">📖</span>Glossary
+    </a>
+    <a class="nav-item" onclick="showPage('p-checklist')" data-page="p-checklist">
+      <span class="nav-dot"></span><span class="nav-icon">✅</span>Revision Checklist
+    </a>
+  </div>
+
+  <!-- Quiz nav -->
+  <div id="quiz-nav" style="display:none; padding:12px 16px;">
+    <p style="font-size:12px;color:var(--text-muted);line-height:1.6;">25+ scenario-based questions covering all topics. Mix of conceptual, application, and trap questions.</p>
+    <button class="quiz-btn btn-primary" style="margin-top:12px;width:100%" onclick="startQuiz()">Start Quiz</button>
+    <button class="quiz-btn btn-secondary" style="margin-top:8px;width:100%" onclick="resetQuiz()">Reset</button>
+  </div>
+
+  <!-- Flash nav -->
+  <div id="flash-nav" style="display:none; padding:12px 16px;">
+    <p style="font-size:12px;color:var(--text-muted);line-height:1.6;">30+ flashcards. Click card to flip. Rate each card to track mastery.</p>
+    <button class="quiz-btn btn-primary" style="margin-top:12px;width:100%" onclick="startFlash()">Start Flashcards</button>
+    <button class="quiz-btn btn-secondary" style="margin-top:8px;width:100%" onclick="resetFlash()">Reset Ratings</button>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main id="main">
+
+<!-- ===== PAGE: INTRO ===== -->
+<div class="page active" id="p-intro">
+  <div class="page-header">
+    <div class="page-eyebrow">Module 3 · Session 1</div>
+    <h1 class="page-title">Data Architecture — Definitions & Why</h1>
+    <p class="page-subtitle">Understanding what data architecture means, why it matters, and the foundational frameworks that define it.</p>
+  </div>
+
+  <div class="callout callout-def">
+    <div class="callout-label">📘 Definition · TOGAF</div>
+    <div class="callout-content">
+      <strong>TOGAF (The Open Group Architectural Framework):</strong> A description of the structure and interaction of the enterprise's major types and sources of data, <em>logical data assets</em>, <em>physical data assets</em>, and <em>data management resources</em>.
+      <br><br>Think of TOGAF as the architectural blueprint — it answers <em>what data exists</em> and <em>how it connects</em>.
+    </div>
+  </div>
+
+  <div class="callout callout-def">
+    <div class="callout-label">📘 Definition · DAMA-DMBOK</div>
+    <div class="callout-content">
+      <strong>DAMA–DMBOK (Data Management Association, DM Body of Knowledge):</strong> Identifying the data needs of the enterprise (regardless of structure) and designing/maintaining master blueprints to meet those needs. Using these blueprints to guide data integration, control data assets, and align data investments with business strategy.
+    </div>
+  </div>
+
+  <div class="callout callout-def">
+    <div class="callout-label">📘 Core Definitions</div>
+    <div class="callout-content">
+      <strong>Data Architecture</strong> — The design of systems to support the evolving data needs of an enterprise, achieved by <em>flexible and reversible decisions</em> reached through a careful evaluation of trade-offs.<br><br>
+      <strong>Data Engineering Architecture</strong> — The systems and frameworks that make up the key sections of the data engineering lifecycle.
+    </div>
+  </div>
+
+  <div class="callout callout-exam">
+    <div class="callout-label">🎯 Exam Tip</div>
+    <div class="callout-content">
+      The phrase <strong>"flexible and reversible decisions"</strong> is key in the Data Architecture definition. Exam questions may test whether you understand that good architecture allows course-correction — it's not set-in-stone. TOGAF = structure/sources. DAMA = needs/blueprints/business alignment.
+    </div>
+  </div>
+
+  <h2>Why Data Architecture Matters</h2>
+
+  <div class="two-col">
+    <div class="info-card">
+      <div class="info-card-title">⚡ Rapid Change</div>
+      <div class="info-card-body">Data requirements change rapidly. New tools and practices arrive on a near-daily basis, creating the need for understanding good architecture to keep pace.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-title">🗺️ Blueprint for Data</div>
+      <div class="info-card-body">Translates business requirements into design — new ways to capture and serve data, knowing trade-offs with patterns, technologies, and tools.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-title">🏗️ Foundation for Engineering</div>
+      <div class="info-card-body">Successful data engineering is built upon rock-solid data architecture. Without it, systems become fragile, expensive, and hard to maintain.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-title">📐 Aligns Strategy</div>
+      <div class="info-card-body">Reflects current and future state of data systems, supporting the organization's long-term data needs and business strategy.</div>
+    </div>
+  </div>
+
+  <div class="callout callout-research">
+    <div class="callout-label">🔬 Research Addition · McKinsey (2024)</div>
+    <div class="callout-content">
+      McKinsey's research shows companies with well-defined data architectures achieve up to <strong>40% faster time-to-insight</strong> compared to ad-hoc data management. Modern "data products" thinking (2023–2024) extends data architecture to treat data assets as first-class products with their own lifecycle — <em>architecture as the foundation of data product development</em>.
+      <br><br><em>Source: McKinsey Digital, "Revisiting Data Architecture for Next-Gen Data Products," 2024</em>
+    </div>
+  </div>
+
+  <div class="callout callout-insight">
+    <div class="callout-label">💡 Instructor Insight (Lecture)</div>
+    <div class="callout-content">
+      Prof. DVS mentioned the aviation example: a single Boeing 737 generates <strong>20 terabytes of engine data per hour</strong>. Multiply across the US fleet — the scale is staggering. His point: <em>"Everywhere, data is underestimated; later, they struggle."</em> Good architecture prevents this. Also note: 300,000 sensor parameters per aircraft!
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: ASPECTS ===== -->
+<div class="page" id="p-aspects">
+  <div class="page-header">
+    <div class="page-eyebrow">Module 3 · Foundations</div>
+    <h1 class="page-title">Aspects of Data Architecture</h1>
+    <p class="page-subtitle">Data architecture has two complementary aspects: Operational (what) and Technical (how).</p>
+  </div>
+
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>Aspect</th>
+        <th>🟧 Operational (WHAT)</th>
+        <th>🟦 Technical (HOW)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Focus</td><td>Functional requirements around people, processes, technology</td><td>How data is ingested, stored, transformed, served</td></tr>
+      <tr><td>Key Question</td><td>"What business processes does data serve?"</td><td>"How will you move 10 TB/hr from source to data lake?"</td></tr>
+      <tr><td>Quality concern</td><td>"How does the org manage data quality?"</td><td>Defines the actual pipelines, tools, and flows</td></tr>
+      <tr><td>Output</td><td>Describes <em>what needs to be done</em></td><td>Describes <em>how it will happen</em></td></tr>
+      <tr><td>Audience</td><td>Business stakeholders, data governance</td><td>Data engineers, architects, platform teams</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-exam">
+    <div class="callout-label">🎯 Exam Tip — Scenario Questions</div>
+    <div class="callout-content">
+      Scenario: <em>"A company wants to ensure departments know which datasets are available and who owns them."</em> → This is <strong>Operational</strong> (governance, ownership, process).<br><br>
+      Scenario: <em>"Engineers need to decide whether to use Apache Kafka or AWS Kinesis for ingestion."</em> → This is <strong>Technical</strong> (tooling, implementation).
+    </div>
+  </div>
+
+  <h2>The Data Engineering Lifecycle</h2>
+
+  <div class="flow-wrap">
+    <div class="flow">
+      <div class="flow-box fb-purple">Source Systems</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-teal">Ingestion</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-amber">Storage</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-coral">Transformation</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-sky">Serving</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-green">Analytics / ML</div>
+    </div>
+  </div>
+
+  <div class="callout callout-research">
+    <div class="callout-label">🔬 Research · 2024 Industry Context</div>
+    <div class="callout-content">
+      According to Databricks' 2024 State of Data + AI Report, <strong>67% of data teams</strong> report that poor architecture decisions are their #1 cause of pipeline failures and technical debt. The modern trend is "architecture-first" thinking before tool selection — aligning with DAMA's blueprint approach.<br><br>
+      <em>Source: Databricks State of Data + AI Report, 2024</em>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: CENTRALIZATION ===== -->
+<div class="page" id="p-central">
+  <div class="page-header">
+    <div class="page-eyebrow">Categorization · By Centralization</div>
+    <h1 class="page-title">Centralized, Decentralized & Hybrid</h1>
+    <p class="page-subtitle">Data architectures differ in how much control is concentrated in one place versus distributed across business units.</p>
+  </div>
+
+  <div class="tab-group">
+    <div class="tab-headers">
+      <button class="tab-btn active" onclick="switchTab(this, 'tab-cent')">🏢 Centralized</button>
+      <button class="tab-btn" onclick="switchTab(this, 'tab-decent')">🔗 Decentralized</button>
+      <button class="tab-btn" onclick="switchTab(this, 'tab-hybrid')">🔀 Hybrid</button>
+    </div>
+
+    <div class="tab-pane active" id="tab-cent">
+      <div class="callout callout-def">
+        <div class="callout-label">📘 Centralized Architecture</div>
+        <div class="callout-content">
+          Provides a <strong>single point of control</strong> for data governance, auditing, and reporting. Uses authoritative sources, a single intelligent landing area, and a data aggregation layer across all business units.
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="info-card">
+          <div class="info-card-title">✅ Advantages</div>
+          <div class="info-card-body">Consistent governance, single source of truth, easier compliance, simplified enterprise reporting, reduced duplication.</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-title">⚠️ Limitations</div>
+          <div class="info-card-body">Single point of failure, bottlenecks for domain-specific needs, slower to adapt to new use cases, can stifle agility.</div>
+        </div>
+      </div>
+      <div class="callout callout-insight">
+        <div class="callout-label">💡 Real-World Example</div>
+        <div class="callout-content">
+          <strong>Banking and healthcare</strong> organizations operating in highly regulated environments (RBI, HIPAA). A central data warehouse holds all transaction/patient records, with strict access controls — perfect for audit trails.
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="tab-decent">
+      <div class="callout callout-def">
+        <div class="callout-label">📘 Decentralized Architecture</div>
+        <div class="callout-content">
+          Data is organized and optimized <strong>front-to-back within business unit silos</strong>, each with its own sources, aggregation, and reporting. Platforms aggregate across units for enterprise-level reporting only.
+        </div>
+      </div>
+      <div class="callout callout-insight">
+        <div class="callout-label">💡 Real-World Example</div>
+        <div class="callout-content">
+          <strong>Insurance companies</strong> where MDM (Master Data Management) and business domain data are decentralized to accommodate different customer bases, core systems, and data products across lines of business (auto, health, life).
+        </div>
+      </div>
+      <div class="callout callout-warn">
+        <div class="callout-label">⚠️ Common Pitfall</div>
+        <div class="callout-content">
+          Can lead to <strong>data silos</strong> — duplicated data, inconsistent definitions, and difficulty getting a unified enterprise view. Without governance policies, decentralized architectures become ungovernable.
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="tab-hybrid">
+      <div class="callout callout-def">
+        <div class="callout-label">📘 Hybrid Architecture</div>
+        <div class="callout-content">
+          Data and platforms are organized by <strong>data domain</strong> with single golden sources and <strong>no duplication across data domains</strong>. Combines centralized MDM with federated storage for individual domains.
+        </div>
+      </div>
+      <div class="callout callout-insight">
+        <div class="callout-label">💡 Real-World Example</div>
+        <div class="callout-content">
+          <strong>Telecommunications companies</strong> like Reliance Jio: centralized master data for subscribers and billing, but federated storage for network performance data (differs by region/tower).
+        </div>
+      </div>
+      <div class="callout callout-research">
+        <div class="callout-label">🔬 Research · Gartner 2024</div>
+        <div class="callout-content">
+          Gartner reports that <strong>72% of large enterprises</strong> now operate hybrid data architectures, combining centralized governance with domain-specific storage — making it the most common pattern in production today.<br><em>Source: Gartner, "Data Architecture Trends," 2024</em>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <table class="compare-table">
+    <thead>
+      <tr><th>Dimension</th><th>Centralized</th><th>Decentralized</th><th>Hybrid</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Governance</td><td>Single central team</td><td>Per business unit</td><td>Central policy + federated execution</td></tr>
+      <tr><td>Scalability</td><td>Limited — single bottleneck</td><td>High per domain</td><td>Scales per domain with unified control</td></tr>
+      <tr><td>Data Duplication</td><td>Low</td><td>High risk</td><td>Low (no cross-domain duplication)</td></tr>
+      <tr><td>Best For</td><td>Regulated industries (banking, healthcare)</td><td>Large diverse enterprises (insurance)</td><td>Telecom, large tech companies</td></tr>
+      <tr><td>Risk</td><td>Single point of failure</td><td>Data silos, inconsistency</td><td>Complexity of coordination</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ===== PAGE: STORAGE ===== -->
+<div class="page" id="p-storage">
+  <div class="page-header">
+    <div class="page-eyebrow">Categorization · By Storage</div>
+    <h1 class="page-title">Data Warehouse, Data Lake & Lakehouse</h1>
+    <p class="page-subtitle">The three major storage paradigms — each optimized for different data types, velocities, and use cases.</p>
+  </div>
+
+  <div class="tab-group">
+    <div class="tab-headers">
+      <button class="tab-btn active" onclick="switchTab(this, 'tab-dw')">🏦 Data Warehouse</button>
+      <button class="tab-btn" onclick="switchTab(this, 'tab-dl')">🌊 Data Lake</button>
+      <button class="tab-btn" onclick="switchTab(this, 'tab-lh')">🏠 Lakehouse</button>
+      <button class="tab-btn" onclick="switchTab(this, 'tab-dm')">🗂️ Data Mart</button>
+    </div>
+
+    <div class="tab-pane active" id="tab-dw">
+      <div class="callout callout-def">
+        <div class="callout-label">📘 Data Warehouse</div>
+        <div class="callout-content">
+          A <strong>structured, subject-oriented, integrated, time-variant, non-volatile</strong> collection of data supporting management's decision-making. Uses <strong>ETL</strong> (Extract-Transform-Load) processes — data is transformed BEFORE loading.
+        </div>
+      </div>
+      <div class="flow-wrap">
+        <div class="flow">
+          <div class="flow-box fb-purple">Structured Data</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box fb-amber">ETL (Transform first)</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box fb-teal">Data Warehouse</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box fb-sky">Power BI / Reports</div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="info-card">
+          <div class="info-card-title">✅ Best For</div>
+          <div class="info-card-body">Structured data, business analytics, fast querying on known schema, compliance reporting, BI dashboards.</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-title">⚠️ Limitations</div>
+          <div class="info-card-body">Can't handle unstructured data. Schema must be defined upfront. Expensive to scale. Rigid ETL pipelines.</div>
+        </div>
+      </div>
+      <div class="callout callout-research">
+        <div class="callout-label">🔬 Research · Industry Tools (2024)</div>
+        <div class="callout-content">
+          Leading platforms: <strong>Snowflake, Google BigQuery, Amazon Redshift, Azure Synapse</strong>. Snowflake's "Data Cloud" has dominated since 2020, offering cloud-native DW with separation of compute and storage. BigQuery offers <strong>serverless</strong> DW with ML integration via BigQuery ML.<br><em>Source: Gartner Magic Quadrant for Cloud Database Management Systems, 2024</em>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="tab-dl">
+      <div class="callout callout-def">
+        <div class="callout-label">📘 Data Lake</div>
+        <div class="callout-content">
+          A centralized repository that stores <strong>all structured, semi-structured, and unstructured data at any scale</strong>. Uses <strong>ELT</strong> (Extract-Load-Transform) — data loaded raw, transformed later. Schema-on-read approach.
+        </div>
+      </div>
+      <div class="callout callout-warn">
+        <div class="callout-label">⚠️ Data Lake Failure Modes</div>
+        <div class="callout-content">
+          <strong>Data Swamp</strong> — Disorganized, unstructured storage no one can navigate.<br>
+          <strong>Dark Data</strong> — Data collected but never used for any purpose.<br>
+          <strong>WORN</strong> — Write Once, Read Never. Prof. DVS: "Facebook and Netflix still have lots of WORN data."<br>
+          <strong>Grows unmanageable</strong> — Without governance, lakes become costly black holes.
+        </div>
+      </div>
+      <div class="callout callout-research">
+        <div class="callout-label">🔬 Research · Real Usage (2024)</div>
+        <div class="callout-content">
+          AWS S3 + Apache Spark is the dominant Data Lake stack. <strong>Meta (Facebook)</strong> uses a lake with 500+ petabytes. <strong>Netflix</strong> uses Iceberg (table format) on S3 for their lake. According to IDC 2024, organizations waste <strong>~$3.1M annually</strong> on unused dark data storage.<br><em>Source: IDC Data Sphere Report, 2024</em>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="tab-lh">
+      <div class="callout callout-def">
+        <div class="callout-label">📘 Data Lakehouse</div>
+        <div class="callout-content">
+          A convergence of Data Warehouse and Data Lake. Introduced by <strong>Databricks</strong>. Incorporates DW-style governance, controls, and ACID transactions while storing data in <strong>object storage</strong> (like a lake) and supporting variety of query and transformation engines.
+          <br><br>
+          <strong>ACID</strong> = Atomicity, Consistency, Isolation, Durability.
+        </div>
+      </div>
+      <div class="callout callout-insight">
+        <div class="callout-label">💡 Key Insight</div>
+        <div class="callout-content">
+          The Lakehouse solves the classic dilemma: lakes are cheap and flexible but ungoverned; warehouses are governed but rigid and expensive. The Lakehouse adds a <strong>metadata and governance layer</strong> on top of the lake (e.g., Delta Lake format adds ACID transactions to S3/ADLS).
+        </div>
+      </div>
+      <div class="callout callout-research">
+        <div class="callout-label">🔬 Research · Table Formats (2024)</div>
+        <div class="callout-content">
+          Three competing open table formats power lakehouses today: <strong>Delta Lake</strong> (Databricks), <strong>Apache Iceberg</strong> (Netflix, now dominant in cloud), and <strong>Apache Hudi</strong> (Uber). As of 2024, Iceberg is winning cloud adoption — AWS, Google, and Azure all offer native Iceberg support.<br><em>Source: Databricks, Netflix Engineering Blog, 2024</em>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="tab-dm">
+      <div class="callout callout-def">
+        <div class="callout-label">📘 Data Mart</div>
+        <div class="callout-content">
+          A <strong>more refined subset of a warehouse</strong> designed to serve analytics and reporting for a <strong>single sub-organization, department, or line of business</strong>. Every department gets its own data mart, specific to its needs.
+        </div>
+      </div>
+      <div class="callout callout-insight">
+        <div class="callout-label">💡 Lecture Example</div>
+        <div class="callout-content">
+          <strong>HR Mart</strong> — tracks recruitment performance metrics.<br>
+          <strong>IT Mart</strong> — dashboards on ticket frequency by type.<br><br>
+          Running analytics on the full DW hurts performance. Data marts pre-aggregate the relevant subset → <strong>significantly faster queries</strong>.
+        </div>
+      </div>
+      <div class="callout callout-exam">
+        <div class="callout-label">🎯 Exam Tip</div>
+        <div class="callout-content">
+          Data Mart = special case of Data Warehouse. Key differentiator: <em>scope</em> (department vs. enterprise). Data Marts provide an <strong>additional stage of transformation</strong> beyond initial ETL/ELT pipelines — they pre-join and aggregate for performance.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <table class="compare-table">
+    <thead>
+      <tr><th>Feature</th><th>Data Warehouse</th><th>Data Lake</th><th>Lakehouse</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Data Type</td><td>Structured only</td><td>All types (structured, semi, unstructured)</td><td>All types</td></tr>
+      <tr><td>Schema</td><td>Schema-on-write</td><td>Schema-on-read</td><td>Both supported</td></tr>
+      <tr><td>Process</td><td>ETL</td><td>ELT</td><td>ELT + governance</td></tr>
+      <tr><td>ACID</td><td>✅ Yes</td><td>❌ No</td><td>✅ Yes (Delta/Iceberg)</td></tr>
+      <tr><td>Cost</td><td>High</td><td>Low</td><td>Medium</td></tr>
+      <tr><td>ML Support</td><td>Limited</td><td>Strong (raw data for training)</td><td>Strong (native ML engines)</td></tr>
+      <tr><td>Examples</td><td>Snowflake, Redshift, BigQuery</td><td>AWS S3+Spark, Azure Data Lake</td><td>Databricks, Delta Lake, Iceberg</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ===== PAGE: SCHEMA ===== -->
+<div class="page" id="p-schema">
+  <div class="page-header">
+    <div class="page-eyebrow">Data Warehouse · Schema Design</div>
+    <h1 class="page-title">Star Schema vs Snowflake Schema</h1>
+    <p class="page-subtitle">Data warehouse schemas define how facts and dimensions are organized for optimal analytical query performance.</p>
+  </div>
+
+  <div class="callout callout-def">
+    <div class="callout-label">📘 Data Warehouse Schema</div>
+    <div class="callout-content">
+      A <strong>logical structure or blueprint</strong> that organizes how data is stored, related, and queried within a data warehouse. Defines tables, keys, and relationships among <em>facts</em> (quantitative/measurable data) and <em>dimensions</em> (context data like product, time, location).
+    </div>
+  </div>
+
+  <div class="tab-group">
+    <div class="tab-headers">
+      <button class="tab-btn active" onclick="switchTab(this, 'tab-star')">⭐ Star Schema</button>
+      <button class="tab-btn" onclick="switchTab(this, 'tab-snow')">❄️ Snowflake Schema</button>
+    </div>
+
+    <div class="tab-pane active" id="tab-star">
+      <div class="callout callout-def">
+        <div class="callout-label">📘 Star Schema</div>
+        <div class="callout-content">
+          At the center sits a <strong>fact table</strong> (measurable data like sales, revenue). Surrounding it are <strong>dimension tables</strong> (product names, customer info, dates) that connect directly to the fact table — forming a star shape.
+        </div>
+      </div>
+
+      <div class="arch-diagram">
+        <div style="text-align:center;margin-bottom:12px;font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em">Star Schema Structure</div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+          <div class="flow-box fb-amber" style="font-size:11px">DIM: Date</div>
+          <div style="display:flex;align-items:center;gap:16px">
+            <div class="flow-box fb-teal" style="font-size:11px">DIM: Customer</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+              <div style="font-size:11px;color:var(--text-muted)">↕ connects</div>
+              <div class="flow-box fb-purple" style="padding:14px 20px">FACT: Sales</div>
+              <div style="font-size:11px;color:var(--text-muted)">↕ connects</div>
+            </div>
+            <div class="flow-box fb-coral" style="font-size:11px">DIM: Product</div>
+          </div>
+          <div class="flow-box fb-sky" style="font-size:11px">DIM: Store</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="info-card">
+          <div class="info-card-title">✅ Advantages</div>
+          <div class="info-card-body">
+            <strong>Faster queries</strong> — Fewer joins needed. <strong>Denormalized</strong> design stores related data together. <strong>Easy to understand</strong> — even for non-technical business users. Common in BI tools (Tableau, Power BI).
+          </div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-title">⚠️ Drawbacks</div>
+          <div class="info-card-body">
+            <strong>Data redundancy</strong> — Due to denormalization, dimension tables repeat information → increases storage. E.g., "Electronics > Laptops" stored separately for every laptop product row.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="tab-snow">
+      <div class="callout callout-def">
+        <div class="callout-label">📘 Snowflake Schema</div>
+        <div class="callout-content">
+          An extension of the star schema where <strong>dimension tables are split into smaller sub-dimensions</strong> — normalized to remove redundancy. Like snowflakes branching from a central fact table.
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="info-card">
+          <div class="info-card-title">✅ Advantages</div>
+          <div class="info-card-body">
+            <strong>Less data redundancy</strong> — normalization prevents storing the same data multiple times. <strong>Efficient storage</strong> for large datasets. Better for <strong>complex hierarchical data</strong> (e.g., City → State → Country).
+          </div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-title">⚠️ Drawbacks</div>
+          <div class="info-card-body">
+            <strong>Slower queries</strong> — more joins between sub-dimension tables. <strong>More complex</strong> to design and maintain. Harder for business users to understand without training.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <table class="compare-table">
+    <thead>
+      <tr><th>Dimension</th><th>⭐ Star Schema</th><th>❄️ Snowflake Schema</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Normalization</td><td>Denormalized</td><td>Normalized</td></tr>
+      <tr><td>Query Speed</td><td>Faster (fewer joins)</td><td>Slower (more joins)</td></tr>
+      <tr><td>Storage</td><td>Higher (redundancy)</td><td>Lower (no duplication)</td></tr>
+      <tr><td>Complexity</td><td>Simple to understand</td><td>Complex hierarchy</td></tr>
+      <tr><td>Best For</td><td>BI dashboards, business users</td><td>Large complex DW with hierarchies</td></tr>
+      <tr><td>Kimball Method</td><td>✅ Primary recommendation</td><td>Used when storage is critical</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-exam">
+    <div class="callout-label">🎯 Key Distinction for Exams</div>
+    <div class="callout-content">
+      <strong>Star</strong> = Fast queries, redundant storage, simple. <strong>Snowflake</strong> = Slower queries, efficient storage, complex.<br>
+      The trade-off: <em>query speed vs. storage efficiency</em>. Ralph Kimball (Data Warehouse Toolkit) strongly advocates for Star Schema for most BI use cases.
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: GOVERNANCE ===== -->
+<div class="page" id="p-governance">
+  <div class="page-header">
+    <div class="page-eyebrow">Categorization · By Governance</div>
+    <h1 class="page-title">Data Mesh & Data Fabric</h1>
+    <p class="page-subtitle">Modern governance architectures that address the limitations of monolithic, centralized data platforms.</p>
+  </div>
+
+  <div class="tab-group">
+    <div class="tab-headers">
+      <button class="tab-btn active" onclick="switchTab(this, 'tab-mesh')">🕸️ Data Mesh</button>
+      <button class="tab-btn" onclick="switchTab(this, 'tab-fabric')">🧵 Data Fabric</button>
+    </div>
+
+    <div class="tab-pane active" id="tab-mesh">
+      <div class="callout callout-def">
+        <div class="callout-label">📘 Data Mesh — Zhamak Dehghani</div>
+        <div class="callout-content">
+          A <strong>sociotechnical approach</strong> that decentralizes data ownership. Instead of flowing data from domains into a centrally owned lake or platform, each domain <strong>hosts and serves its own domain datasets</strong> in an easily consumable way.
+        </div>
+      </div>
+
+      <h3>Four Key Principles</h3>
+      <div class="two-col">
+        <div class="info-card">
+          <div class="info-card-title">1️⃣ Domain-Oriented Ownership</div>
+          <div class="info-card-body">Data ownership belongs to the business domain that generates it — not a central team. The sales team owns sales data; the logistics team owns shipping data.</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-title">2️⃣ Data as a Product</div>
+          <div class="info-card-body">Data is treated like a product with discoverability, documentation, SLAs, versioning, and quality standards — not just a byproduct of operational systems.</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-title">3️⃣ Self-Serve Infrastructure</div>
+          <div class="info-card-body">A platform team provides centralized infrastructure tools (data catalogs, monitoring) so domain teams can build pipelines without deep data engineering expertise.</div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-title">4️⃣ Federated Governance</div>
+          <div class="info-card-body">Cross-domain policies (compliance, security, interoperability) are set centrally but enforced locally — balancing autonomy with enterprise standards.</div>
+        </div>
+      </div>
+
+      <div class="callout callout-insight">
+        <div class="callout-label">💡 Real-World Example</div>
+        <div class="callout-content">
+          An e-commerce company: the Order domain exposes an <code>order_events</code> data product with schema, SLAs, and usage guidelines. The Customer domain exposes a <code>customer_360</code> product. Each is owned, maintained, and documented by its respective team — no central data team bottleneck.
+        </div>
+      </div>
+
+      <div class="callout callout-research">
+        <div class="callout-label">🔬 Research · Adoption (2024)</div>
+        <div class="callout-content">
+          Companies like <strong>JPMorgan Chase, Zalando, and HelloFresh</strong> have publicly documented Data Mesh implementations. As of 2024, <strong>~35% of Fortune 500</strong> companies are either piloting or running Data Mesh architectures. However, Gartner warns it is complex to implement without strong data culture.<br><em>Source: Gartner Hype Cycle for Data Management, 2024</em>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="tab-fabric">
+      <div class="callout callout-def">
+        <div class="callout-label">📘 Data Fabric</div>
+        <div class="callout-content">
+          Creates a <strong>unified data layer</strong> that integrates information from lakes, warehouses, databases, and SaaS tools through APIs, change data capture (CDC), and <strong>virtualization technologies</strong>. Data stays where it lives — the fabric provides unified access.
+        </div>
+      </div>
+
+      <h3>Key Characteristics</h3>
+      <div class="two-col">
+        <div class="info-card"><div class="info-card-title">🔗 Unified Data Access</div><div class="info-card-body">Single logical access layer over multiple physical stores — users don't need to know where data lives.</div></div>
+        <div class="info-card"><div class="info-card-title">⚡ Seamless Integration</div><div class="info-card-body">Orchestrates data pipelines across heterogeneous sources — on-premise, multi-cloud, SaaS.</div></div>
+        <div class="info-card"><div class="info-card-title">🔒 Security & Compliance</div><div class="info-card-body">Governance and compliance policies enforced uniformly across all connected sources.</div></div>
+        <div class="info-card"><div class="info-card-title">📊 Real-Time Insights</div><div class="info-card-body">Supports streaming and batch, enabling real-time analytics without moving all data to one place.</div></div>
+      </div>
+
+      <div class="callout callout-insight">
+        <div class="callout-label">💡 Classic Example</div>
+        <div class="callout-content">
+          <strong>360° Customer View</strong>: Combines sales data from Salesforce CRM + transaction logs from a data lake + social media sentiment via APIs — all through the Data Fabric without physically moving or duplicating data.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <table class="compare-table">
+    <thead>
+      <tr><th>Aspect</th><th>🕸️ Data Mesh</th><th>🧵 Data Fabric</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Philosophy</td><td>Organizational/social — domain ownership</td><td>Technical — unified virtual access layer</td></tr>
+      <tr><td>Primary Goal</td><td>Decentralize data ownership and accountability</td><td>Unify access across disparate data stores</td></tr>
+      <tr><td>Data Movement</td><td>Data stays in domains, served as products</td><td>Data virtualized/accessed in-place</td></tr>
+      <tr><td>Governance</td><td>Federated (local ownership, central policy)</td><td>Centralized enforcement via the fabric</td></tr>
+      <tr><td>Main Challenge</td><td>Organizational change management</td><td>Technical integration complexity</td></tr>
+      <tr><td>Best For</td><td>Large orgs with many diverse domains</td><td>Orgs with multiple legacy/cloud systems</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ===== PAGE: BIG DATA ===== -->
+<div class="page" id="p-bigdata">
+  <div class="page-header">
+    <div class="page-eyebrow">Big Data Systems</div>
+    <h1 class="page-title">Big Data — The 5 Vs</h1>
+    <p class="page-subtitle">Big data is characterized by its five dimensions, each creating unique challenges for architecture and processing.</p>
+  </div>
+
+  <div class="callout callout-def">
+    <div class="callout-label">📘 Big Data Definition</div>
+    <div class="callout-content">
+      Big data refers to <strong>massive, complex data sets that traditional data management systems cannot handle</strong>. When properly collected, managed, and analyzed, it helps organizations discover new insights and make better business decisions.
+    </div>
+  </div>
+
+  <div class="callout callout-insight">
+    <div class="callout-label">💡 Lecture Example (Boeing 737)</div>
+    <div class="callout-content">
+      Sensors on one aircraft cover more than <strong>300,000 parameters</strong>. A Boeing 737 creates <strong>20 terabytes of engine data per hour</strong>. A 6-hour NYC-to-LA flight = <strong>240 TB per engine</strong>. Multiply by the US fleet — this is why data architecture is not optional.
+    </div>
+  </div>
+
+  <h2>The 5 Vs of Big Data</h2>
+
+  <div class="expand-card">
+    <div class="expand-header" onclick="toggleExpand(this)">
+      <div class="expand-title"><span class="tag tag-purple">V1</span> Volume — Scale of Data</div>
+      <span class="expand-icon">▼</span>
+    </div>
+    <div class="expand-body">
+      <div class="expand-body-inner">
+        The <strong>massive amount of data</strong> generated today — from web apps, IoT devices, transaction records, and more. Traditional storage and processing systems often struggle to handle it at scale. Scale: terabytes → petabytes → exabytes.
+        <div class="callout callout-research" style="margin-top:12px">
+          <div class="callout-label">🔬 Scale Context (2024)</div>
+          <div class="callout-content">Google processes <strong>8.5 billion searches/day</strong>. Meta generates <strong>~100 petabytes of data daily</strong>. The global datasphere is projected to reach <strong>175 zettabytes by 2025</strong> (IDC, 2024).</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="expand-card">
+    <div class="expand-header" onclick="toggleExpand(this)">
+      <div class="expand-title"><span class="tag tag-teal">V2</span> Velocity — Speed of Data</div>
+      <span class="expand-icon">▼</span>
+    </div>
+    <div class="expand-body">
+      <div class="expand-body-inner">
+        The <strong>speed at which data flows into a system</strong>. Data arrives faster than ever — from real-time social media updates to high-frequency stock trading (microseconds). Requires stream processing architectures.
+        <div class="callout callout-insight" style="margin-top:12px">
+          <div class="callout-label">💡 Example</div>
+          <div class="callout-content">Twitter/X processes <strong>6,000 tweets per second</strong>. Stock exchanges handle <strong>1 million transactions per second</strong>. IoT sensors in smart factories emit data at <strong>millisecond intervals</strong>.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="expand-card">
+    <div class="expand-header" onclick="toggleExpand(this)">
+      <div class="expand-title"><span class="tag tag-amber">V3</span> Variety — Types of Data</div>
+      <span class="expand-icon">▼</span>
+    </div>
+    <div class="expand-body">
+      <div class="expand-body-inner">
+        The <strong>many different formats</strong> big data takes — structured (tables), semi-structured (JSON, XML), and unstructured (images, video, text, audio). Traditional relational databases handle structured data only.
+        <div style="margin-top:10px">
+          <span class="tag tag-teal">Structured</span> CSV, SQL tables, Excel<br>
+          <span class="tag tag-amber">Semi-structured</span> JSON, XML, Parquet, Avro<br>
+          <span class="tag tag-coral">Unstructured</span> Images, video, PDFs, social media text
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="expand-card">
+    <div class="expand-header" onclick="toggleExpand(this)">
+      <div class="expand-title"><span class="tag tag-coral">V4</span> Veracity — Quality of Data</div>
+      <span class="expand-icon">▼</span>
+    </div>
+    <div class="expand-body">
+      <div class="expand-body-inner">
+        The <strong>accuracy and reliability</strong> of data. Big data comes in great quantities from varied sources — it can contain noise, errors, inconsistencies, and missing values. Poor veracity leads to poor decision-making (GIGO: Garbage In, Garbage Out).
+        <div class="callout callout-exam" style="margin-top:12px">
+          <div class="callout-label">🎯 Exam Connection</div>
+          <div class="callout-content">Veracity is why the lecture mentioned <strong>Data Quality Checks</strong> and <strong>Data Preprocessing</strong> as hands-on practicals (Google Colab Exercise 1).</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="expand-card">
+    <div class="expand-header" onclick="toggleExpand(this)">
+      <div class="expand-title"><span class="tag tag-purple">V5</span> Value — Business Impact</div>
+      <span class="expand-icon">▼</span>
+    </div>
+    <div class="expand-body">
+      <div class="expand-body-inner">
+        The <strong>real-world benefits</strong> organizations derive from big data — from optimizing operations to identifying marketing opportunities. Data without value is just cost. Architecture must enable value extraction.
+        <div class="callout callout-research" style="margin-top:12px">
+          <div class="callout-label">🔬 Business Value (2024)</div>
+          <div class="callout-content">McKinsey reports companies that effectively use big data analytics outperform peers by <strong>5-6% in productivity and profitability</strong>. Netflix estimates data-driven recommendations save <strong>$1 billion annually</strong> in customer retention.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Traditional Data vs Big Data</h2>
+
+  <table class="compare-table">
+    <thead>
+      <tr><th>Dimension</th><th>Traditional Data</th><th>Big Data</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Structure</td><td>Structured (relational tables)</td><td>Structured + Semi + Unstructured</td></tr>
+      <tr><td>Scale</td><td>GBs to small TBs</td><td>TBs to Exabytes</td></tr>
+      <tr><td>Processing</td><td>Single server, SQL</td><td>Distributed (Hadoop, Spark)</td></tr>
+      <tr><td>Analytics</td><td>Statistical methods, BI reports</td><td>ML, data mining, visualization</td></tr>
+      <tr><td>Tools</td><td>SQL Server, Oracle, MySQL</td><td>Spark, Kafka, Flink, Hadoop</td></tr>
+      <tr><td>Latency</td><td>Batch (hours/daily)</td><td>Real-time to batch</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ===== PAGE: COMPONENTS ===== -->
+<div class="page" id="p-components">
+  <div class="page-header">
+    <div class="page-eyebrow">Big Data Systems</div>
+    <h1 class="page-title">Big Data Architecture Components</h1>
+    <p class="page-subtitle">The generalized architecture for big data systems, its components, benefits, and challenges.</p>
+  </div>
+
+  <h2>7 Core Components</h2>
+
+  <div class="flow-wrap">
+    <div class="flow" style="flex-wrap:wrap;min-width:auto">
+      <div class="flow-box fb-purple" style="min-width:110px">Data Sources<br><small style="font-weight:400;font-size:10px">DBs, Files, IoT</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-teal" style="min-width:110px">Data Storage<br><small>Distributed File Store</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-amber" style="min-width:110px">Batch Processing<br><small>MapReduce, Spark</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-coral" style="min-width:110px">Analytical Store<br><small>DW, NoSQL</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-sky" style="min-width:110px">Analytics &amp; Reporting</div>
+    </div>
+  </div>
+
+  <div class="arch-diagram" style="margin-top:16px">
+    <div class="arch-row">
+      <div class="arch-label">Sources</div>
+      <div class="flow-box fb-purple" style="font-size:11px">Databases</div>
+      <div class="flow-box fb-purple" style="font-size:11px">Files / APIs</div>
+      <div class="flow-box fb-purple" style="font-size:11px">IoT Sensors</div>
+      <div class="flow-box fb-purple" style="font-size:11px">Social Media</div>
+    </div>
+    <div class="arch-row" style="margin:12px 0">
+      <div class="arch-label"></div>
+      <div style="font-size:18px;color:var(--text-muted);margin-left:8px">↓ Storage path &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ↓ Stream path</div>
+    </div>
+    <div class="arch-row">
+      <div class="arch-label">Process</div>
+      <div class="flow-box fb-teal" style="font-size:11px">Data Storage (HDFS/S3)</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-amber" style="font-size:11px">Batch Processing</div>
+      <div class="flow-box fb-coral" style="font-size:11px;margin-left:24px">RT Ingestion (Kafka)</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-sky" style="font-size:11px">Stream Processing</div>
+    </div>
+    <div class="arch-row" style="margin-top:12px">
+      <div class="arch-label">Serve</div>
+      <div class="flow-box fb-purple" style="font-size:11px">Analytical Data Store</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-green" style="font-size:11px">Analytics &amp; Reports</div>
+      <div class="flow-box fb-amber" style="font-size:11px;margin-left:16px">ML / AI Models</div>
+    </div>
+    <div class="arch-row" style="margin-top:16px;border-top:1px dashed var(--border);padding-top:12px">
+      <div class="arch-label">Orchestration</div>
+      <div class="flow-box fb-teal" style="font-size:11px">Apache Airflow / Oozie</div>
+      <div class="flow-box fb-teal" style="font-size:11px">Azure Data Factory</div>
+    </div>
+  </div>
+
+  <div class="callout callout-exam">
+    <div class="callout-label">🎯 Machine Learning Integration</div>
+    <div class="callout-content">
+      Note the <strong>Machine Learning</strong> box in the diagram — it feeds <em>both</em> batch processing and stream processing. This is key for the course: the first 7 weeks focus on data architecture, then ML is introduced. ML is powered BY the architecture below it.
+    </div>
+  </div>
+
+  <h2>Benefits</h2>
+  <div class="two-col">
+    <div class="info-card">
+      <div class="info-card-title">⚡ Parallelism</div>
+      <div class="info-card-body">Big data solutions exploit parallelism — high-performance processing that scales to large volumes by distributing work across clusters.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-title">📈 Elastic Scale</div>
+      <div class="info-card-body">All components support scale-out provisioning. Pay only for what you use — scale clusters up for heavy processing, down for storage.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-title">🔧 Technology Variety</div>
+      <div class="info-card-body">Open-source (Spark, Kafka, Flink) and commercial (Azure HDInsight, AWS EMR) options — pick best tool per component.</div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-title">🔗 Interoperability</div>
+      <div class="info-card-body">Same components used for IoT, enterprise BI, and ML — enabling integrated solutions across diverse data workloads.</div>
+    </div>
+  </div>
+
+  <h2>Challenges</h2>
+  <div class="callout callout-warn">
+    <div class="callout-label">⚠️ Three Core Challenges</div>
+    <div class="callout-content">
+      <strong>Complexity</strong> — Numerous components for ingestion from multiple sources. Challenging to build, test, and troubleshoot.<br><br>
+      <strong>Skillset</strong> — Big data technologies are highly specialized (Spark, Scala, Flink). Not typical general application frameworks. High demand for talent.<br><br>
+      <strong>Technology Maturity</strong> — Tools are rapidly evolving. Core Hadoop (Hive, Pig) stabilized, but Spark introduces major changes each release. Risk of technical debt.
+    </div>
+  </div>
+
+  <div class="callout callout-research">
+    <div class="callout-label">🔬 Modern Stack (2024)</div>
+    <div class="callout-content">
+      The dominant big data stack in 2024: <strong>Apache Kafka</strong> (stream ingestion) → <strong>Apache Spark</strong> (batch + stream processing) → <strong>Delta Lake / Iceberg</strong> (storage format) → <strong>Apache Superset / Grafana</strong> (visualization) → <strong>Apache Airflow</strong> (orchestration). This "Modern Data Stack" replaces older Hadoop-based pipelines.<br><em>Source: State of Data Engineering, Databricks 2024</em>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: LAMBDA ===== -->
+<div class="page" id="p-lambda">
+  <div class="page-header">
+    <div class="page-eyebrow">Processing Architectures · Lambda</div>
+    <h1 class="page-title">Lambda Architecture</h1>
+    <p class="page-subtitle">The classic dual-path architecture combining batch and stream processing for scalable, fault-tolerant big data pipelines.</p>
+  </div>
+
+  <div class="callout callout-insight">
+    <div class="callout-label">💡 Motivating Scenario (Lecture)</div>
+    <div class="callout-content">
+      A banking institute builds a fraud analysis and alert system. They need:<br>
+      (1) <strong>Batch analytics</strong> — identify fraud patterns, generate reports (can tolerate some delay)<br>
+      (2) <strong>Real-time alerts</strong> — alert staff immediately when a suspicious transaction occurs<br>
+      → Same data must flow through <em>both</em> batch and stream processing. <strong>Lambda Architecture is the solution.</strong>
+    </div>
+  </div>
+
+  <div class="callout callout-def">
+    <div class="callout-label">📘 Lambda Architecture</div>
+    <div class="callout-content">
+      An architecture pattern that processes data through <strong>two independent paths</strong> — a batch layer (cold path) for high-accuracy historical processing and a speed layer (hot path) for low-latency real-time processing. Results from both are merged at the serving layer.
+    </div>
+  </div>
+
+  <div class="arch-diagram">
+    <div style="font-size:11px;color:var(--text-muted);text-align:center;margin-bottom:16px;text-transform:uppercase;letter-spacing:0.08em">Lambda Architecture — Unified Serving Layer (Option 1)</div>
+    <div style="display:flex;align-items:stretch;gap:12px;flex-wrap:wrap">
+      <div class="flow-box fb-purple" style="padding:20px 16px;display:flex;align-items:center">Data Source</div>
+      <div style="display:flex;flex-direction:column;gap:8px;flex:1;min-width:200px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="flow-arrow" style="margin:0">↗</div>
+          <div class="flow-box fb-sky" style="flex:1;font-size:11px">Speed Layer<br><small>Real-time views (NoSQL)</small></div>
+          <div class="flow-arrow" style="margin:0">→</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="flow-arrow" style="margin:0">↘</div>
+          <div class="flow-box fb-amber" style="flex:1;font-size:11px">Batch Layer<br><small>Primary data (DW)</small></div>
+          <div class="flow-arrow" style="margin:0">→</div>
+        </div>
+      </div>
+      <div class="flow-box fb-teal" style="padding:20px 16px;display:flex;align-items:center">Serving<br>Layer</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-green" style="padding:20px 16px;display:flex;align-items:center">Analytics<br>Client</div>
+    </div>
+  </div>
+
+  <div class="tab-group" style="margin-top:20px">
+    <div class="tab-headers">
+      <button class="tab-btn active" onclick="switchTab(this, 'tab-batch-layer')">❄️ Batch Layer (Cold Path)</button>
+      <button class="tab-btn" onclick="switchTab(this, 'tab-speed-layer')">🔥 Speed Layer (Hot Path)</button>
+      <button class="tab-btn" onclick="switchTab(this, 'tab-serving-layer')">🔗 Serving Layer</button>
+      <button class="tab-btn" onclick="switchTab(this, 'tab-lambda-ml')">🤖 ML Integration</button>
+    </div>
+
+    <div class="tab-pane active" id="tab-batch-layer">
+      <div class="callout callout-def">
+        <div class="callout-label">📘 Batch Layer (Cold Path)</div>
+        <div class="callout-content">
+          Stores all incoming data in its <strong>raw, immutable form</strong> and performs batch processing. Results stored as batch views. High accuracy but higher latency.
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="info-card"><div class="info-card-title">✅ Properties</div><div class="info-card-body">Immutable raw data. High accuracy. Processes full historical dataset. Creates precomputed aggregated views.</div></div>
+        <div class="info-card"><div class="info-card-title">⚡ Trade-off</div><div class="info-card-body">Not subject to low-latency requirements. Can take hours to process. Results may be hours old when queried.</div></div>
+      </div>
+      <div class="callout callout-research">
+        <div class="callout-label">🔬 Tools Used (2024)</div>
+        <div class="callout-content">Apache Spark (dominant), Apache Hadoop/MapReduce (legacy), AWS Batch, Google Cloud Dataflow. Batch jobs typically run on schedules (nightly, hourly).</div>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="tab-speed-layer">
+      <div class="callout callout-def">
+        <div class="callout-label">📘 Speed Layer (Hot Path)</div>
+        <div class="callout-content">
+          Analyzes data <strong>in real time</strong> with lowest possible latency. Usually stored in NoSQL databases. Designed for speed at the expense of some accuracy. Updates serving layer with incremental updates.
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="info-card"><div class="info-card-title">✅ Properties</div><div class="info-card-body">Ultra-low latency. Incrementally updates views. Changes stored as time-stamped events. Feeds real-time dashboards and alerts.</div></div>
+        <div class="info-card"><div class="info-card-title">⚡ Trade-off</div><div class="info-card-body">May introduce inaccuracy. Limited to recent data window. Higher operational complexity. NoSQL may have limited query capability.</div></div>
+      </div>
+      <div class="callout callout-research">
+        <div class="callout-label">🔬 Tools (2024)</div>
+        <div class="callout-content">Apache Kafka + Flink/Spark Streaming for ingestion/processing. Apache Cassandra, Redis, or DynamoDB as NoSQL speed layer store. Latency typically sub-second.</div>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="tab-serving-layer">
+      <div class="callout callout-def">
+        <div class="callout-label">📘 Serving Layer</div>
+        <div class="callout-content">
+          Provides a <strong>combined view</strong> by merging batch views (accurate, historical) with speed views (recent, timely). Can be implemented as a unified layer (Option 1) or separate layers (Option 2).
+        </div>
+      </div>
+      <div class="callout callout-exam">
+        <div class="callout-label">🎯 Two Options — Know the Difference!</div>
+        <div class="callout-content">
+          <strong>Option 1: Unified Serving Layer</strong> — One layer merges batch + speed views on query. Query time merge.<br><br>
+          <strong>Option 2: Separate Serving Layers</strong> — Speed View (for real-time queries), Batch View (for historical), Mixed Query (combines both at application level).<br><br>
+          Exam questions may give a scenario and ask which option is in use.
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="tab-lambda-ml">
+      <div class="callout callout-insight">
+        <div class="callout-label">🤖 Lambda for ML Workflows</div>
+        <div class="callout-content">
+          <strong>Batch layer</strong> → Train models on comprehensive historical datasets (full data, high quality). Uses Fabric Data Science / Spark MLlib.<br><br>
+          <strong>Speed layer</strong> → Real-time model inference and scoring on incoming data streams.<br><br>
+          This dual approach = models trained on complete data + immediate predictions on new data. Perfect for fraud detection, recommendation engines, and predictive maintenance.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout callout-warn">
+    <div class="callout-label">⚠️ Lambda's Key Challenge</div>
+    <div class="callout-content">
+      Managing <strong>two separate codebases</strong> for the same logic (batch in Spark, stream in Flink/Kafka Streams) is the fundamental challenge. The same business logic written twice → <strong>inconsistency, bugs, and maintenance nightmare</strong>. This is exactly why Kappa Architecture was proposed.
+    </div>
+  </div>
+
+  <div class="callout callout-exam">
+    <div class="callout-label">🎯 Exam Scenario</div>
+    <div class="callout-content">
+      <em>"A company needs both historical pattern analysis AND real-time fraud alerts from the same transaction data."</em> → <strong>Lambda Architecture</strong>.<br><br>
+      <em>"A live cricket match needs to be broadcast with highlights later."</em> → Prof. DVS example: Real match = stream processing (hot path), Highlights reel = batch processing (cold path) = <strong>Lambda</strong>.
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: KAPPA ===== -->
+<div class="page" id="p-kappa">
+  <div class="page-header">
+    <div class="page-eyebrow">Processing Architectures · Kappa</div>
+    <h1 class="page-title">Kappa Architecture</h1>
+    <p class="page-subtitle">A stream-only alternative to Lambda, simplifying big data pipelines by processing everything through a single unified stream processing system.</p>
+  </div>
+
+  <div class="callout callout-def">
+    <div class="callout-label">📘 Kappa Architecture — Jay Kreps (LinkedIn)</div>
+    <div class="callout-content">
+      Proposed by Jay Kreps (co-creator of Apache Kafka) as a response to Lambda's complexity. The core idea: <strong>use a single stream processing platform as the backbone for ALL data handling</strong> — ingestion, storage, and serving.
+    </div>
+  </div>
+
+  <div class="arch-diagram">
+    <div style="font-size:11px;color:var(--text-muted);text-align:center;margin-bottom:16px;text-transform:uppercase;letter-spacing:0.08em">Kappa Architecture — Single Stream Pipeline</div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <div class="flow-box fb-purple">Data Source</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-teal">Unified Log<br><small style="font-weight:400;font-size:10px">Kafka (immutable)</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-amber">Speed Layer<br><small style="font-weight:400;font-size:10px">Stream Processing</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box fb-coral">Real-Time Views<br><small style="font-weight:400;font-size:10px">Analytics Client</small></div>
+    </div>
+    <div style="margin-top:12px;display:flex;align-items:center;gap:10px;padding-left:180px;flex-wrap:wrap">
+      <div class="flow-arrow" style="transform:rotate(90deg)">→</div>
+      <div class="flow-box fb-sky" style="font-size:11px">Long-term Store<br><small>Primary Data (if recompute needed)</small></div>
+      <div style="font-size:11px;color:var(--text-muted)">← Replay for batch recompute</div>
+    </div>
+  </div>
+
+  <div class="callout callout-def">
+    <div class="callout-label">📘 Key Properties</div>
+    <div class="callout-content">
+      <ul>
+        <li>Event data is <strong>immutable</strong> and all of it is collected (not a subset)</li>
+        <li>Data ingested as a stream into a <strong>distributed, fault-tolerant unified log</strong> (Apache Kafka)</li>
+        <li>Events are ordered; state changes only when a <strong>new event is appended</strong></li>
+        <li>All event processing performed on the input stream, persisted as a <strong>real-time view</strong></li>
+        <li>For batch recompute: <strong>replay the stream</strong> (no separate batch layer needed)</li>
+        <li>Replay uses <strong>parallelism</strong> to complete computation quickly</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="tab-group">
+    <div class="tab-headers">
+      <button class="tab-btn active" onclick="switchTab(this, 'tab-kappa-props')">⚡ How It Works</button>
+      <button class="tab-btn" onclick="switchTab(this, 'tab-kappa-challenges')">⚠️ Challenges</button>
+      <button class="tab-btn" onclick="switchTab(this, 'tab-kappa-ml')">🤖 ML Use</button>
+    </div>
+
+    <div class="tab-pane active" id="tab-kappa-props">
+      <div class="callout callout-insight">
+        <div class="callout-label">💡 Stream Replay = Batch Processing</div>
+        <div class="callout-content">
+          In Kappa, when you need to reprocess historical data (equivalent to Lambda's batch layer), you simply <strong>replay stored events from the log</strong> from the beginning. Kafka retains events indefinitely (configurable). This eliminates the need for a separate batch system — the same code processes both real-time and historical data.
+        </div>
+      </div>
+      <div class="callout callout-research">
+        <div class="callout-label">🔬 The Unified Log Pattern (2024)</div>
+        <div class="callout-content">
+          Apache Kafka has become the de facto "unified log" for Kappa architectures. <strong>Confluent Platform</strong> (enterprise Kafka) is used by 70%+ of Fortune 500 companies. Modern tools like <strong>Apache Flink</strong> and <strong>Apache Spark Structured Streaming</strong> enable unified batch+stream processing on Kafka data.<br><em>Source: Confluent State of Data Streaming, 2024</em>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="tab-kappa-challenges">
+      <div class="callout callout-warn">
+        <div class="callout-label">⚠️ Three Real Challenges</div>
+        <div class="callout-content">
+          <strong>1. Streaming complexity</strong> — "Easy to talk, harder to execute." Stateful stream processing, watermarks, late-arriving data, and exactly-once semantics are genuinely hard engineering problems.<br><br>
+          <strong>2. Cost at scale</strong> — Turns out to be complicated and expensive in practice. Keeping large event logs in Kafka is storage-intensive. Stream processing clusters run 24/7 → higher operational cost than batch.<br><br>
+          <strong>3. Historical data efficiency</strong> — Batch storage and processing remain <strong>much more efficient and cost-effective</strong> for enormous historical datasets. Replaying 5 years of events is very slow.
+        </div>
+      </div>
+      <div class="callout callout-exam">
+        <div class="callout-label">🎯 Exam Insight</div>
+        <div class="callout-content">
+          Know that Kappa was proposed to <strong>solve Lambda's dual-codebase problem</strong> — but it introduced its own challenges. Neither is universally "better" — the choice depends on: data volume, latency requirements, team capabilities, and cost constraints.
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="tab-kappa-ml">
+      <div class="callout callout-insight">
+        <div class="callout-label">🤖 Kappa for ML</div>
+        <div class="callout-content">
+          Kappa enables <strong>unified ML workflows</strong> — same pipeline for training (stream replay) and inference (live stream). This simplifies model deployment since the same processing logic applies to both historical and real-time data.<br><br>
+          Supports <strong>online learning algorithms</strong> that update models incrementally as new data arrives — continuous learning without full retraining cycles.
+        </div>
+      </div>
+      <div class="callout callout-research">
+        <div class="callout-label">🔬 Real-World Use (2024)</div>
+        <div class="callout-content">
+          <strong>Uber</strong> uses Kappa-inspired architecture for surge pricing ML models (real-time demand signals). <strong>LinkedIn</strong> uses it for feed ranking (Jay Kreps' original use case). <strong>TikTok</strong> uses streaming for real-time recommendation updates (sub-100ms).<br><em>Source: Engineering blogs, Uber, LinkedIn, 2024</em>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: COMPARE ===== -->
+<div class="page" id="p-compare">
+  <div class="page-header">
+    <div class="page-eyebrow">Processing Architectures</div>
+    <h1 class="page-title">Lambda vs Kappa — Deep Comparison</h1>
+    <p class="page-subtitle">Side-by-side comparison to help you choose the right architecture and ace exam scenario questions.</p>
+  </div>
+
+  <table class="compare-table">
+    <thead>
+      <tr><th>Dimension</th><th>λ Lambda</th><th>κ Kappa</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Processing Paths</td><td>Two: Batch (cold) + Stream (hot)</td><td>One: Stream only</td></tr>
+      <tr><td>Data Flow</td><td>Source → Batch layer AND Speed layer → Serving</td><td>Source → Unified log → Stream → View</td></tr>
+      <tr><td>Historical Recompute</td><td>Batch layer reprocesses raw data</td><td>Replay stream from beginning</td></tr>
+      <tr><td>Code Complexity</td><td>High (two codebases for same logic)</td><td>Lower (single codebase)</td></tr>
+      <tr><td>Latency</td><td>Dual: near real-time (hot) + delayed (cold)</td><td>Near real-time for all</td></tr>
+      <tr><td>Accuracy</td><td>High (batch is exact); hot path may approximate</td><td>Depends on stream processing design</td></tr>
+      <tr><td>Cost</td><td>Higher (maintain two systems)</td><td>Can be lower (one system) or high (24/7 streaming)</td></tr>
+      <tr><td>Storage</td><td>Raw immutable data in batch + speed views</td><td>Distributed fault-tolerant log (Kafka)</td></tr>
+      <tr><td>Main Tool</td><td>Spark (batch) + Flink/Kafka Streams (stream)</td><td>Kafka + Flink/Spark Structured Streaming</td></tr>
+      <tr><td>Complexity</td><td>High — two systems, two ops teams</td><td>Medium — one system, but streaming is hard</td></tr>
+      <tr><td>Best For</td><td>Fraud detection, analytics requiring both historical and real-time</td><td>Event-driven apps, IoT, real-time recommendations</td></tr>
+      <tr><td>Failure Modes</td><td>Reconciliation issues between batch and speed views</td><td>Late-arriving data, exactly-once semantics</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-exam">
+    <div class="callout-label">🎯 Scenario Decision Guide</div>
+    <div class="callout-content">
+      <strong>Use Lambda when:</strong> You need both high-accuracy historical analysis AND real-time results. Can afford operational overhead of two systems. Example: Banking fraud (batch for pattern mining + streaming for instant alerts).<br><br>
+      <strong>Use Kappa when:</strong> All use cases are stream-first. Want simpler, unified codebase. Example: Live sports broadcasting, real-time recommendations, IoT sensor monitoring.<br><br>
+      <strong>Exam trick:</strong> A cricket match live broadcast → <strong>Kappa</strong> (stream-first). The highlights compilation later → could be Lambda (batch highlights + live stream). Prof. DVS asked this directly in the lecture!
+    </div>
+  </div>
+
+  <div class="callout callout-research">
+    <div class="callout-label">🔬 Industry Trend (2024)</div>
+    <div class="callout-content">
+      The 2024 trend is toward <strong>"streaming-first" architectures</strong>, with tools like Apache Flink maturing enough to handle batch workloads natively (unified batch+stream API). Apache Beam and Flink are blurring the Lambda/Kappa distinction — a new "unified processing" paradigm is emerging. Google's Dataflow (Apache Beam) is a leading example.<br><em>Source: Kai Waehner, "Kappa Architecture Mainstream Replacing Batch Lambda," 2024</em>
+    </div>
+  </div>
+
+  <h2>Full Architecture Taxonomy Summary</h2>
+
+  <table class="compare-table">
+    <thead>
+      <tr><th>Category</th><th>Options</th><th>Key Differentiator</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>By Centralization</td><td>Centralized, Decentralized, Hybrid</td><td>Who controls the data?</td></tr>
+      <tr><td>By Storage</td><td>DW, Data Lake, Lakehouse, Data Mart</td><td>What format and governance?</td></tr>
+      <tr><td>DW Schema</td><td>Star, Snowflake</td><td>Normalized or denormalized?</td></tr>
+      <tr><td>By Governance</td><td>Data Mesh, Data Fabric</td><td>Domain ownership vs. unified layer</td></tr>
+      <tr><td>By Processing</td><td>Lambda, Kappa</td><td>Dual paths vs. single stream</td></tr>
+    </tbody>
+  </table>
+</div>
+
+
+<!-- ===== GLOSSARY PAGE ===== -->
+<div class="page" id="p-glossary">
+  <div class="page-header">
+    <div class="page-eyebrow">Reference</div>
+    <h1 class="page-title">Glossary of Terms</h1>
+    <p class="page-subtitle">All abbreviations, terms, and definitions from the course.</p>
+  </div>
+
+  <div class="glossary-search">
+    <span style="color:var(--text-muted)">🔍</span>
+    <input type="text" id="glossary-input" placeholder="Search terms, abbreviations, or definitions..." oninput="filterGlossary()">
+  </div>
+
+  <table class="compare-table" id="glossary-table">
+    <thead>
+      <tr><th>Term / Abbrev.</th><th>Full Form</th><th>Definition & Usage</th></tr>
+    </thead>
+    <tbody id="glossary-body">
+      <tr><td><strong>TOGAF</strong></td><td>The Open Group Architectural Framework</td><td>Framework defining data architecture as structure/interaction of enterprise data types and management resources.</td></tr>
+      <tr><td><strong>DAMA-DMBOK</strong></td><td>Data Management Association — DM Body of Knowledge</td><td>Standard for data management identifying enterprise data needs and maintaining master blueprints.</td></tr>
+      <tr><td><strong>ETL</strong></td><td>Extract, Transform, Load</td><td>Data pipeline approach where transformation happens BEFORE loading. Used in Data Warehouses.</td></tr>
+      <tr><td><strong>ELT</strong></td><td>Extract, Load, Transform</td><td>Data pipeline approach where raw data is loaded FIRST, then transformed. Used in Data Lakes.</td></tr>
+      <tr><td><strong>DW</strong></td><td>Data Warehouse</td><td>Structured, subject-oriented repository for analytics and reporting. Uses ETL and schema-on-write.</td></tr>
+      <tr><td><strong>DL</strong></td><td>Data Lake</td><td>Repository storing all data types at any scale. Uses ELT and schema-on-read.</td></tr>
+      <tr><td><strong>WORN</strong></td><td>Write Once Read Never</td><td>Failure mode of Data Lakes where data is stored but never used. Prof. DVS mentioned Facebook/Netflix have WORN data.</td></tr>
+      <tr><td><strong>ACID</strong></td><td>Atomicity, Consistency, Isolation, Durability</td><td>Properties ensuring reliable database transactions. Data Lakehouses (Delta Lake) add ACID to object storage.</td></tr>
+      <tr><td><strong>MDM</strong></td><td>Master Data Management</td><td>Processes for ensuring enterprise-wide consistency of key data entities (customers, products). Central in hybrid architectures.</td></tr>
+      <tr><td><strong>CDC</strong></td><td>Change Data Capture</td><td>Technique for identifying and capturing data changes at the source for streaming to downstream systems. Used in Data Fabric.</td></tr>
+      <tr><td><strong>BI</strong></td><td>Business Intelligence</td><td>Technologies and practices for analysis of business data. Data Warehouses are primary BI storage.</td></tr>
+      <tr><td><strong>IoT</strong></td><td>Internet of Things</td><td>Network of physical devices generating sensor data. A key big data source (velocity + volume).</td></tr>
+      <tr><td><strong>NoSQL</strong></td><td>Not Only SQL</td><td>Non-relational database used in Lambda's speed layer for low-latency writes/reads (Cassandra, Redis, DynamoDB).</td></tr>
+      <tr><td><strong>HDFS</strong></td><td>Hadoop Distributed File System</td><td>Distributed storage system for big data. Core component of Hadoop ecosystem, stores data across clusters.</td></tr>
+      <tr><td><strong>SLA</strong></td><td>Service Level Agreement</td><td>Defined contract for data quality, freshness, and availability. Required for data products in Data Mesh.</td></tr>
+      <tr><td><strong>MapReduce</strong></td><td>—</td><td>Distributed processing algorithm that splits (Map) and aggregates (Reduce) data in parallel across clusters. Core Hadoop programming model.</td></tr>
+      <tr><td><strong>Lambda (arch)</strong></td><td>Lambda Architecture</td><td>Dual-path big data pattern with batch layer (cold) + speed layer (hot) + serving layer. Named after λ (two paths).</td></tr>
+      <tr><td><strong>Kappa (arch)</strong></td><td>Kappa Architecture</td><td>Single-stream architecture using a unified log (Kafka) as backbone. Eliminates separate batch layer.</td></tr>
+      <tr><td><strong>Kafka</strong></td><td>Apache Kafka</td><td>Distributed streaming platform used as "unified log" in Kappa architecture. Created at LinkedIn by Jay Kreps.</td></tr>
+      <tr><td><strong>Spark</strong></td><td>Apache Spark</td><td>Unified analytics engine for large-scale data processing. Supports batch (RDD, DataFrames) and streaming (Structured Streaming).</td></tr>
+      <tr><td><strong>Flink</strong></td><td>Apache Flink</td><td>Stream processing framework with strong exactly-once guarantees and low latency. Increasingly popular over Spark for streaming.</td></tr>
+      <tr><td><strong>Data Mesh</strong></td><td>—</td><td>Governance architecture by Zhamak Dehghani. Decentralizes data ownership to domains, treats data as products.</td></tr>
+      <tr><td><strong>Data Fabric</strong></td><td>—</td><td>Technical architecture creating a unified virtual data access layer across multiple physical stores via APIs and virtualization.</td></tr>
+      <tr><td><strong>Data Mart</strong></td><td>—</td><td>Department-specific subset of a Data Warehouse. Focused analytics store for a single business unit (HR, IT, Sales).</td></tr>
+      <tr><td><strong>Lakehouse</strong></td><td>Data Lakehouse</td><td>Convergence of DW + Data Lake. Databricks innovation adding ACID transactions and governance to object storage (Delta Lake).</td></tr>
+      <tr><td><strong>Star Schema</strong></td><td>—</td><td>Denormalized DW schema with central fact table surrounded by dimension tables. Faster queries, more storage.</td></tr>
+      <tr><td><strong>Snowflake Schema</strong></td><td>—</td><td>Normalized DW schema where dimension tables are split into sub-dimensions. Less storage, slower queries.</td></tr>
+      <tr><td><strong>Fact Table</strong></td><td>—</td><td>Central table in DW schema containing measurable data (sales amounts, transaction values). Has foreign keys to dimension tables.</td></tr>
+      <tr><td><strong>Dimension Table</strong></td><td>—</td><td>Context table in DW schema (Product, Customer, Date, Location). Describes "who, what, when, where" of facts.</td></tr>
+      <tr><td><strong>Data Swamp</strong></td><td>—</td><td>Failed Data Lake — disorganized, unstructured, and unusable. Caused by lack of governance and metadata.</td></tr>
+      <tr><td><strong>Dark Data</strong></td><td>—</td><td>Data collected and stored during operations but never used for insights or decisions. Represents pure cost.</td></tr>
+      <tr><td><strong>5 Vs</strong></td><td>Five Vs of Big Data</td><td>Volume, Velocity, Variety, Veracity, Value — the five dimensions characterizing big data challenges.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ===== CHECKLIST PAGE ===== -->
+<div class="page" id="p-checklist">
+  <div class="page-header">
+    <div class="page-eyebrow">Reference</div>
+    <h1 class="page-title">Revision Checklist</h1>
+    <p class="page-subtitle">Track your mastery of every examinable concept. Progress saved automatically.</p>
+  </div>
+
+  <div class="checklist-meta">
+    <div class="checklist-progress">✅ <span id="check-done">0</span> / <span id="check-total">0</span> completed</div>
+    <button class="quiz-btn btn-secondary" onclick="resetChecklist()" style="font-size:12px;padding:8px 14px">Reset All</button>
+  </div>
+
+  <div id="checklist-container">
+    <div class="checklist-section-title">Definitions & Framework</div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c1"><div class="checklist-checkbox">✓</div><div class="checklist-text">Define Data Architecture (flexible, reversible decisions via trade-off evaluation)</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c2"><div class="checklist-checkbox">✓</div><div class="checklist-text">Distinguish TOGAF vs DAMA-DMBOK definitions</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c3"><div class="checklist-checkbox">✓</div><div class="checklist-text">Explain Operational (what) vs Technical (how) aspects</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c4"><div class="checklist-checkbox">✓</div><div class="checklist-text">List 5 reasons why data architecture matters to an organization</div></div>
+
+    <div class="checklist-section-title">Categorization — By Centralization</div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c5"><div class="checklist-checkbox">✓</div><div class="checklist-text">Describe centralized architecture and give a real-world industry example</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c6"><div class="checklist-checkbox">✓</div><div class="checklist-text">Describe decentralized architecture — what are data silos?</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c7"><div class="checklist-checkbox">✓</div><div class="checklist-text">Explain hybrid architecture — MDM + federated storage</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c8"><div class="checklist-checkbox">✓</div><div class="checklist-text">Compare all three (pros, cons, industry use cases)</div></div>
+
+    <div class="checklist-section-title">Categorization — By Storage</div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c9"><div class="checklist-checkbox">✓</div><div class="checklist-text">Explain Data Warehouse — ETL, schema-on-write, structured only</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c10"><div class="checklist-checkbox">✓</div><div class="checklist-text">Explain Data Lake — ELT, schema-on-read, all data types</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c11"><div class="checklist-checkbox">✓</div><div class="checklist-text">Name and explain 4 Data Lake failure modes (WORN, Dark Data, Data Swamp, unmanageable)</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c12"><div class="checklist-checkbox">✓</div><div class="checklist-text">Explain Data Lakehouse — ACID, Databricks, convergence of DW + Lake</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c13"><div class="checklist-checkbox">✓</div><div class="checklist-text">Explain Data Mart — department-specific, subset of DW, performance improvement</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c14"><div class="checklist-checkbox">✓</div><div class="checklist-text">Compare DW vs Data Lake vs Lakehouse across 5+ dimensions</div></div>
+
+    <div class="checklist-section-title">Data Warehouse Schemas</div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c15"><div class="checklist-checkbox">✓</div><div class="checklist-text">Define fact table vs dimension table — give examples</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c16"><div class="checklist-checkbox">✓</div><div class="checklist-text">Explain Star Schema — denormalized, faster queries, more storage</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c17"><div class="checklist-checkbox">✓</div><div class="checklist-text">Explain Snowflake Schema — normalized, less storage, slower queries</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c18"><div class="checklist-checkbox">✓</div><div class="checklist-text">Choose correct schema given a scenario (trade-off reasoning)</div></div>
+
+    <div class="checklist-section-title">By Governance</div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c19"><div class="checklist-checkbox">✓</div><div class="checklist-text">Explain Data Mesh — 4 principles (domain ownership, data as product, self-serve, federated governance)</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c20"><div class="checklist-checkbox">✓</div><div class="checklist-text">Explain Data Fabric — unified virtual layer, CDC, virtualization</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c21"><div class="checklist-checkbox">✓</div><div class="checklist-text">Compare Data Mesh vs Data Fabric — organizational vs technical focus</div></div>
+
+    <div class="checklist-section-title">Big Data</div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c22"><div class="checklist-checkbox">✓</div><div class="checklist-text">Define Big Data and explain when to use big data architecture</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c23"><div class="checklist-checkbox">✓</div><div class="checklist-text">Define and explain each of the 5 Vs with examples</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c24"><div class="checklist-checkbox">✓</div><div class="checklist-text">Differentiate Traditional Data vs Big Data (structure, tools, scale)</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c25"><div class="checklist-checkbox">✓</div><div class="checklist-text">List and explain all 7 components of Big Data Architecture</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c26"><div class="checklist-checkbox">✓</div><div class="checklist-text">Explain 4 benefits and 3 challenges of Big Data Architecture</div></div>
+
+    <div class="checklist-section-title">Lambda Architecture</div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c27"><div class="checklist-checkbox">✓</div><div class="checklist-text">Explain the motivating problem Lambda solves (batch + streaming from same data)</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c28"><div class="checklist-checkbox">✓</div><div class="checklist-text">Describe the three layers: Batch (cold), Speed (hot), Serving</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c29"><div class="checklist-checkbox">✓</div><div class="checklist-text">Compare Option 1 (unified serving) vs Option 2 (separate serving layers)</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c30"><div class="checklist-checkbox">✓</div><div class="checklist-text">Identify the key challenge of Lambda (dual codebases, reconciliation)</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c31"><div class="checklist-checkbox">✓</div><div class="checklist-text">Explain how Lambda supports ML workflows (batch training + stream inference)</div></div>
+
+    <div class="checklist-section-title">Kappa Architecture</div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c32"><div class="checklist-checkbox">✓</div><div class="checklist-text">Explain who proposed Kappa and why (Jay Kreps, response to Lambda complexity)</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c33"><div class="checklist-checkbox">✓</div><div class="checklist-text">Describe Kappa's single-stream approach using unified log (Kafka)</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c34"><div class="checklist-checkbox">✓</div><div class="checklist-text">Explain stream replay as equivalent to batch processing in Kappa</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c35"><div class="checklist-checkbox">✓</div><div class="checklist-text">Name 3 challenges of Kappa (streaming complexity, cost, historical data inefficiency)</div></div>
+
+    <div class="checklist-section-title">Comparison & Scenarios</div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c36"><div class="checklist-checkbox">✓</div><div class="checklist-text">Given a scenario, choose between Lambda vs Kappa and justify</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c37"><div class="checklist-checkbox">✓</div><div class="checklist-text">Cricket match example: live broadcast = Kappa; highlights compilation = Lambda element</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c38"><div class="checklist-checkbox">✓</div><div class="checklist-text">Banking fraud scenario: explain full Lambda architecture design</div></div>
+    <div class="checklist-item" onclick="toggleCheck(this)" data-key="c39"><div class="checklist-checkbox">✓</div><div class="checklist-text">Explain the full categorization tree (centralization/storage/governance/processing)</div></div>
+  </div>
+</div>
+
+<!-- QUIZ PAGE -->
+<div id="quiz-page" style="display:none">
+  <div class="page-header" style="padding: 32px 0 0 0;">
+    <div class="page-eyebrow">Quiz Mode</div>
+    <h1 class="page-title" style="font-size:22px">Data Architectures — Assessment</h1>
+  </div>
+  <div id="quiz-start-screen">
+    <p style="color:var(--text-muted);font-size:14px;margin-bottom:20px;line-height:1.7">25+ questions mixing conceptual definitions, application scenarios, and exam traps. Each answer includes a detailed explanation.</p>
+    <button class="quiz-btn btn-primary" onclick="startQuiz()">Begin Quiz →</button>
+  </div>
+  <div id="quiz-main" style="display:none">
+    <div class="quiz-meta">
+      <div class="quiz-question-num">Question <span id="q-num">1</span> of <span id="q-total">25</span></div>
+      <div class="quiz-score-badge">Score: <span id="q-score">0</span></div>
+    </div>
+    <div class="dot-tracker" id="dot-tracker"></div>
+    <div class="quiz-q-text" id="q-text"></div>
+    <div class="quiz-options" id="q-options"></div>
+    <div class="quiz-explanation" id="q-explanation"></div>
+    <button class="quiz-btn btn-primary" id="q-next-btn" onclick="nextQuestion()" style="display:none">Next Question →</button>
+  </div>
+  <div id="quiz-score-screen" style="display:none" class="score-screen">
+    <div class="score-circle" id="final-score-circle">0%</div>
+    <h2 style="font-size:22px;margin-bottom:8px;background:none;-webkit-text-fill-color:var(--text)">Quiz Complete!</h2>
+    <p id="final-score-msg" style="color:var(--text-muted);margin-bottom:24px"></p>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="quiz-btn btn-primary" onclick="startQuiz()">Retake Quiz</button>
+      <button class="quiz-btn btn-secondary" onclick="setMode('study')">Back to Study</button>
+    </div>
+  </div>
+</div>
+
+<!-- FLASHCARD PAGE -->
+<div id="flashcard-page" style="display:none;padding:32px 40px;max-width:700px">
+  <div class="page-header" style="padding:0;margin-bottom:20px">
+    <div class="page-eyebrow">Flashcard Mode</div>
+    <h1 class="page-title" style="font-size:22px">Data Architectures Flashcards</h1>
+  </div>
+  <div class="fc-meta">
+    <div class="fc-counter">Card <span id="fc-num">1</span> of <span id="fc-total">32</span></div>
+    <div class="fc-ratings">
+      <span>😰 Hard: <span id="fc-hard">0</span></span>
+      <span>👍 Good: <span id="fc-good">0</span></span>
+      <span>✅ Easy: <span id="fc-easy">0</span></span>
+    </div>
+  </div>
+  <div class="fc-scene" onclick="flipCard()">
+    <div class="fc-card" id="fc-card">
+      <div class="fc-front">
+        <div class="fc-front-label">Question — Click to flip</div>
+        <div class="fc-question" id="fc-question">Loading...</div>
+        <div class="fc-hint">Click card to reveal answer</div>
+      </div>
+      <div class="fc-back">
+        <div class="fc-back-label">Answer</div>
+        <div class="fc-answer" id="fc-answer">Loading...</div>
+      </div>
+    </div>
+  </div>
+  <div class="fc-controls" id="fc-controls" style="display:none">
+    <button class="fc-btn-hard" onclick="rateCard('hard')">😰 Hard</button>
+    <button class="fc-btn-good" onclick="rateCard('good')">👍 Good</button>
+    <button class="fc-btn-easy" onclick="rateCard('easy')">✅ Easy</button>
+  </div>
+  <div class="fc-nav">
+    <button class="fc-nav-btn" onclick="prevCard()">← Prev</button>
+    <div class="fc-progress">
+      <div class="fc-progress-fill" id="fc-progress-fill" style="width:3%"></div>
+    </div>
+    <button class="fc-nav-btn" onclick="nextCard()">Next →</button>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ===========================
+// NAVIGATION & MODE CONTROL
+// ===========================
+const studyPages = ['p-intro','p-aspects','p-central','p-storage','p-schema','p-governance','p-bigdata','p-components','p-lambda','p-kappa','p-compare','p-glossary','p-checklist'];
+let visitedPages = JSON.parse(localStorage.getItem('da_visited') || '[]');
+
+function showPage(id) {
+  // Hide all study pages
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('quiz-page').style.display = 'none';
+  document.getElementById('flashcard-page').style.display = 'none';
+
+  // Show target page
+  const page = document.getElementById(id);
+  if (page) {
+    page.classList.add('active');
+    page.style.display = '';
+  }
+
+  // Update nav
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navItem = document.querySelector(`[data-page="${id}"]`);
+  if (navItem) {
+    navItem.classList.add('active');
+    if (!visitedPages.includes(id)) {
+      visitedPages.push(id);
+      localStorage.setItem('da_visited', JSON.stringify(visitedPages));
+    }
+    navItem.classList.add('visited');
+    navItem.querySelector('.nav-dot').style.background = 'var(--teal)';
+  }
+
+  updateProgress();
+
+  // Close mobile sidebar
+  if (window.innerWidth <= 768) {
+    document.getElementById('sidebar').classList.remove('open');
+  }
+}
+
+function updateProgress() {
+  const total = studyPages.length;
+  const done = visitedPages.filter(p => studyPages.includes(p)).length;
+  const pct = Math.round((done / total) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = pct + '%';
+}
+
+// Restore visited states
+visitedPages.forEach(id => {
+  const navItem = document.querySelector(`[data-page="${id}"]`);
+  if (navItem) {
+    navItem.classList.add('visited');
+    navItem.querySelector('.nav-dot').style.background = 'var(--teal)';
+  }
+});
+updateProgress();
+
+function setMode(mode) {
+  // Update mode tabs
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+  const idx = ['study','quiz','flash'].indexOf(mode);
+  document.querySelectorAll('.mode-tab')[idx].classList.add('active');
+
+  // Show/hide nav sections
+  document.getElementById('study-nav').style.display = mode === 'study' ? '' : 'none';
+  document.getElementById('quiz-nav').style.display = mode === 'quiz' ? '' : 'none';
+  document.getElementById('flash-nav').style.display = mode === 'flash' ? '' : 'none';
+
+  // Show appropriate content
+  document.querySelectorAll('.page').forEach(p => { p.classList.remove('active'); });
+  document.getElementById('quiz-page').style.display = 'none';
+  document.getElementById('flashcard-page').style.display = 'none';
+
+  if (mode === 'study') {
+    showPage('p-intro');
+  } else if (mode === 'quiz') {
+    document.getElementById('quiz-page').style.display = 'block';
+    document.getElementById('quiz-start-screen').style.display = 'block';
+    document.getElementById('quiz-main').style.display = 'none';
+    document.getElementById('quiz-score-screen').style.display = 'none';
+  } else if (mode === 'flash') {
+    document.getElementById('flashcard-page').style.display = 'block';
+    renderCard();
+  }
+}
+
+// ===========================
+// EXPANDABLE CARDS
+// ===========================
+function toggleExpand(header) {
+  const card = header.parentElement;
+  card.classList.toggle('open');
+}
+
+// ===========================
+// TABS
+// ===========================
+function switchTab(btn, paneId) {
+  const group = btn.closest('.tab-group');
+  group.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  group.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(paneId).classList.add('active');
+}
+
+// ===========================
+// MOBILE
+// ===========================
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+function checkMobile() {
+  const btn = document.getElementById('mobile-btn');
+  if (window.innerWidth <= 768) {
+    btn.style.display = 'block';
+  } else {
+    btn.style.display = 'none';
+    document.getElementById('sidebar').classList.remove('open');
+  }
+}
+window.addEventListener('resize', checkMobile);
+checkMobile();
+
+// ===========================
+// GLOSSARY SEARCH
+// ===========================
+function filterGlossary() {
+  const q = document.getElementById('glossary-input').value.toLowerCase();
+  document.querySelectorAll('#glossary-body tr').forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+// ===========================
+// CHECKLIST
+// ===========================
+function loadChecklist() {
+  const saved = JSON.parse(localStorage.getItem('da_checklist') || '{}');
+  const items = document.querySelectorAll('.checklist-item');
+  let done = 0;
+  items.forEach(item => {
+    const key = item.dataset.key;
+    if (saved[key]) {
+      item.classList.add('done');
+      done++;
+    }
+  });
+  document.getElementById('check-done').textContent = done;
+  document.getElementById('check-total').textContent = items.length;
+}
+
+function toggleCheck(item) {
+  const key = item.dataset.key;
+  const saved = JSON.parse(localStorage.getItem('da_checklist') || '{}');
+  item.classList.toggle('done');
+  saved[key] = item.classList.contains('done');
+  localStorage.setItem('da_checklist', JSON.stringify(saved));
+
+  const items = document.querySelectorAll('.checklist-item');
+  const done = document.querySelectorAll('.checklist-item.done').length;
+  document.getElementById('check-done').textContent = done;
+  document.getElementById('check-total').textContent = items.length;
+}
+
+function resetChecklist() {
+  localStorage.removeItem('da_checklist');
+  document.querySelectorAll('.checklist-item').forEach(i => i.classList.remove('done'));
+  document.getElementById('check-done').textContent = '0';
+}
+
+loadChecklist();
+
+// ===========================
+// QUIZ DATA
+// ===========================
+const quizData = [
+  {
+    q: "A banking institute needs both batch fraud pattern analysis AND real-time transaction alerts from the same data stream. Which architecture is best?",
+    opts: ["Data Mesh", "Kappa Architecture", "Lambda Architecture", "Data Fabric"],
+    ans: 2,
+    exp: "Lambda Architecture is designed exactly for this scenario — batch layer (cold path) handles historical fraud pattern analysis while the speed layer (hot path) sends real-time alerts. This was Prof. DVS's exact example in the lecture."
+  },
+  {
+    q: "Which type of Data Architecture refers to 'flexible and reversible decisions reached through a careful evaluation of trade-offs'?",
+    opts: ["TOGAF Framework", "Data Architecture (general definition)", "DAMA-DMBOK", "Data Engineering Architecture"],
+    ans: 1,
+    exp: "The general definition of Data Architecture from the slides: 'The design of systems to support the evolving data needs of an enterprise, achieved by flexible and reversible decisions reached through careful evaluation of trade-offs.' The key phrase is 'flexible and reversible decisions.'"
+  },
+  {
+    q: "What is the PRIMARY technical difference between ETL and ELT?",
+    opts: ["ETL uses NoSQL; ELT uses SQL", "ETL transforms data before loading; ELT loads raw data first then transforms", "ETL is for real-time; ELT is for batch", "ETL is used in Data Lakes; ELT is used in Data Warehouses"],
+    ans: 1,
+    exp: "ETL (Extract-Transform-Load) transforms data BEFORE loading — used in Data Warehouses where schema must be defined upfront. ELT (Extract-Load-Transform) loads raw data first, then transforms when needed — used in Data Lakes with schema-on-read approach."
+  },
+  {
+    q: "You need to broadcast a live cricket match online. Which processing architecture does Prof. DVS recommend?",
+    opts: ["Lambda Architecture — dual path", "Kappa Architecture — stream only", "Data Warehouse ETL", "Centralized batch processing"],
+    ans: 1,
+    exp: "Prof. DVS explicitly used this example in the lecture: live cricket streaming uses Kappa Architecture (stream processing as the backbone). The live match IS the stream. Highlights (batch view later) would use Lambda, but the live broadcast itself = Kappa."
+  },
+  {
+    q: "Which storage system would you use for an ELT process handling high-velocity, unstructured incoming data at massive scale?",
+    opts: ["Data Warehouse", "Data Mart", "Relational Database", "Data Lake"],
+    ans: 3,
+    exp: "Data Lake is designed for ELT processes with high-velocity, unstructured data. It stores all data types at any scale with limitless and cheap storage costs, applying transformations after loading (schema-on-read). Data Warehouses use ETL and require structured data."
+  },
+  {
+    q: "What is the 'WORN' problem in Data Lakes?",
+    opts: ["Web-Oriented Read Navigation — poor data discovery", "Write Once Read Never — data stored but never accessed", "Warehouse Outage Recovery Needed — high downtime", "Wide Open Resource Network — security vulnerability"],
+    ans: 1,
+    exp: "WORN = Write Once Read Never. It's a Data Lake failure mode where data is stored but never used for insights or decisions. Prof. DVS mentioned Facebook and Netflix still have significant amounts of WORN data despite being data-forward companies."
+  },
+  {
+    q: "A Star Schema has a fact table at the center. The dimension tables in Star Schema follow which design principle?",
+    opts: ["Normalized — data split into sub-tables", "Denormalized — related data stored together in one table", "Distributed — data spread across multiple schemas", "Encrypted — all data hashed for security"],
+    ans: 1,
+    exp: "Star Schema uses a DENORMALIZED design. Related data is stored together in a single dimension table (e.g., product_id, product_name, and category all in one Product table). This means some data repetition but FASTER query performance. Snowflake Schema uses normalization instead."
+  },
+  {
+    q: "Data Mesh was proposed by Zhamak Dehghani. Which of the following is NOT one of its four key principles?",
+    opts: ["Domain-oriented decentralized data ownership", "Data as a product", "Centralized computational governance", "Self-serve data infrastructure as a platform"],
+    ans: 2,
+    exp: "The four Data Mesh principles are: (1) Domain-oriented decentralized ownership, (2) Data as a product, (3) Self-serve data infrastructure as a platform, (4) FEDERATED (not centralized) computational governance. Centralized governance is the opposite of what Data Mesh advocates."
+  },
+  {
+    q: "Kappa Architecture was proposed as a response to Lambda's key challenge. What is that challenge?",
+    opts: ["Lambda requires too much storage", "Lambda has no real-time capability", "Lambda requires maintaining two separate codebases with duplicate logic (batch and stream)", "Lambda cannot handle unstructured data"],
+    ans: 2,
+    exp: "Lambda's core challenge: the same business logic must be written TWICE — once for batch processing (Spark) and once for stream processing (Flink/Kafka Streams). This creates duplicate computation logic, error-prone systems, and complex architecture management. Kappa solves this with a single stream processing codebase."
+  },
+  {
+    q: "Which 'V' of Big Data addresses the accuracy and reliability of data?",
+    opts: ["Volume", "Velocity", "Variety", "Veracity"],
+    ans: 3,
+    exp: "Veracity refers to the accuracy and reliability of data. Big data comes from various sources and can contain noise, errors, and inconsistencies. This is directly connected to the course's hands-on practicals on Data Quality Checks and Data Preprocessing (Google Colab Exercise 1)."
+  },
+  {
+    q: "Data Fabric's primary characteristic distinguishes it from Data Mesh. What is it?",
+    opts: ["Domain ownership and data products", "Unified virtual access layer using virtualization/CDC without moving data", "Centralized storage in a single data lake", "Decentralized governance across business units"],
+    ans: 1,
+    exp: "Data Fabric creates a unified data ACCESS layer that integrates information from multiple sources (lakes, warehouses, SaaS) through APIs, change data capture (CDC), and virtualization — WITHOUT physically moving data. Data Mesh is about organizational ownership; Data Fabric is about technical integration."
+  },
+  {
+    q: "A company needs department-specific analytics performance for HR, IT, and Finance without impacting the main Data Warehouse. What storage solution is best?",
+    opts: ["Data Lake (separate zones per department)", "Data Marts (one per department)", "Decentralized Data Architecture", "Data Fabric with virtual layers"],
+    ans: 1,
+    exp: "Data Marts are department-specific subsets of the Data Warehouse designed for analytics focused on a single sub-organization. They pre-join and aggregate data for performance, significantly improving query speed without impacting the main DW. Each department (HR, IT, Finance) gets its own mart."
+  },
+  {
+    q: "In Lambda Architecture, which layer processes data with 'high accuracy but at the expense of latency'?",
+    opts: ["Speed Layer (hot path)", "Batch Layer (cold path)", "Serving Layer", "Stream Processing Layer"],
+    ans: 1,
+    exp: "The Batch Layer (cold path) provides HIGH ACCURACY computation by processing the complete historical dataset, but introduces latency (hours). The Speed Layer (hot path) has LOW LATENCY but may sacrifice accuracy. Raw data in the batch layer is immutable."
+  },
+  {
+    q: "Which organization would MOST LIKELY use a Centralized Data Architecture?",
+    opts: ["A startup with 10 employees", "A bank or hospital in a heavily regulated environment", "An insurance company with 50 different product lines", "A global telecom with federated regional operations"],
+    ans: 1,
+    exp: "Centralized architecture provides single-point control for governance, auditing, and compliance — exactly what banking and healthcare need. Insurance (decentralized for multiple lines), Telecom (hybrid with MDM + federated), and startups (too small to need formal architecture)."
+  },
+  {
+    q: "What is TOGAF's definition of Data Architecture focused on?",
+    opts: ["Business processes and data quality management", "Structure and interaction of enterprise data types, logical/physical data assets, and management resources", "Designing systems through flexible and reversible trade-off decisions", "Domain-specific data ownership and federated governance"],
+    ans: 1,
+    exp: "TOGAF (The Open Group Architectural Framework) defines Data Architecture as: 'A description of the structure and interaction of the enterprise's major types and sources of data, logical data assets, physical data assets, and data management resources.' It focuses on STRUCTURE and INTERACTION."
+  },
+  {
+    q: "The Snowflake Schema addresses which specific drawback of the Star Schema?",
+    opts: ["Slow query performance due to too many joins", "Data redundancy caused by denormalization", "Inability to handle time-variant data", "Lack of support for multiple fact tables"],
+    ans: 1,
+    exp: "The Snowflake Schema solves Star Schema's DATA REDUNDANCY problem by normalizing dimension tables into sub-dimensions. This eliminates duplicate data (e.g., product category stored once, not repeated per product). Trade-off: Snowflake requires more joins → slower queries."
+  },
+  {
+    q: "In the context of the 5 Vs, a Boeing 737 generating 20 TB/hour of engine data is an example of which V?",
+    opts: ["Veracity — data accuracy from sensors", "Value — business benefit of aviation data", "Volume AND Velocity — massive amounts at high speed", "Variety — multiple types of sensor data"],
+    ans: 2,
+    exp: "This is primarily VOLUME (20 TB/hour per engine is massive) AND VELOCITY (continuous real-time sensor data stream). Prof. DVS used this example specifically to illustrate why data architecture matters — 300,000 parameters per aircraft, and multiply by the entire US fleet."
+  },
+  {
+    q: "Which storage format supports ACID transactions in a Data Lakehouse?",
+    opts: ["Apache Parquet", "CSV on HDFS", "Delta Lake / Apache Iceberg", "JSON files on S3"],
+    ans: 2,
+    exp: "Delta Lake (Databricks) and Apache Iceberg are open table formats that add ACID (Atomicity, Consistency, Isolation, Durability) transaction support to object storage like S3. This is what makes a Lakehouse different from a plain Data Lake — it inherits governance from the Data Warehouse world."
+  },
+  {
+    q: "What distinguishes 'Operational' aspects from 'Technical' aspects of data architecture?",
+    opts: ["Operational = hardware; Technical = software", "Operational = WHAT (requirements, business processes, quality); Technical = HOW (ingestion, storage, tools, pipelines)", "Operational = batch; Technical = real-time", "Operational = governance; Technical = security"],
+    ans: 1,
+    exp: "Operational aspect answers WHAT: functional requirements, business processes served, how quality is managed. Technical aspect answers HOW: how data is ingested, stored, transformed, and served along the engineering lifecycle. Operational is business-facing; Technical is implementation-facing."
+  },
+  {
+    q: "In Kappa Architecture, how is historical recomputation equivalent to batch processing achieved?",
+    opts: ["A separate batch layer is added when needed", "MapReduce jobs are run on stored HDFS data", "The event stream is replayed from the beginning using parallelism", "SQL queries are run on the analytical data store"],
+    ans: 2,
+    exp: "In Kappa Architecture, there is NO separate batch layer. When you need to recompute historical data (e.g., fix a bug in processing logic), you REPLAY the entire stream from the beginning in a new processing job. Kafka retains all events. Parallelism makes this efficient. This is Kappa's elegant solution to Lambda's complexity."
+  },
+  {
+    q: "Which of the following is classified as a Big Data Architecture governance challenge? (Not a processing challenge)",
+    opts: ["Data Swamp formation in Data Lakes", "Maintaining two codebases in Lambda Architecture", "Managing data assets as products with SLAs across domains", "High latency in batch processing layers"],
+    ans: 2,
+    exp: "Managing data assets as products with SLAs across domains is a GOVERNANCE challenge — addressed by Data Mesh and Data Fabric. Data Swamps are a storage design failure, dual codebases are a Lambda processing challenge, and batch latency is a processing performance issue."
+  },
+  {
+    q: "A startup wants to store IoT sensor data from millions of devices for future ML model training. The data format is varied. What storage architecture should they use?",
+    opts: ["Data Warehouse with Star Schema", "Data Mart with snowflake schema", "Data Lake with ELT", "Centralized relational database"],
+    ans: 2,
+    exp: "Data Lake is perfect for: IoT data (high velocity, massive volume), varied formats (sensor readings = semi-structured JSON, logs = unstructured), and ML training (raw data needed). ELT processes data when needed. Data Warehouse requires structured data with predefined schema — too rigid for IoT + ML."
+  },
+  {
+    q: "Prof. DVS stated: 'Successful data engineering is built upon rock-solid ___.'",
+    opts: ["Machine learning algorithms", "Data architecture", "Cloud infrastructure", "Real-time streaming pipelines"],
+    ans: 1,
+    exp: "Direct quote from the slides and lecture: 'Successful data engineering is built upon rock-solid data architecture!' The architecture is the FOUNDATION — tools and ML come later, but without solid architecture, all downstream engineering becomes fragile."
+  },
+  {
+    q: "The 'Serving Layer' in Lambda Architecture provides which capability?",
+    opts: ["Real-time stream processing with sub-second latency", "Combined view merging results from both batch and speed layers", "Machine learning model training and validation", "Data quality checking and cleansing"],
+    ans: 1,
+    exp: "The Serving Layer merges views from BOTH the Batch Layer (accurate, historical) and Speed Layer (recent, timely) to answer queries. It can be implemented as Option 1 (unified serving layer combining both) or Option 2 (separate speed view + batch view with mixed queries)."
+  },
+  {
+    q: "Which statement BEST describes why Data Architecture requires 'reversible decisions'?",
+    opts: ["To allow database rollbacks after failed transactions", "Because data requirements change rapidly and tools evolve constantly", "To comply with data privacy regulations requiring data deletion", "Because ML model training needs to be retried multiple times"],
+    ans: 1,
+    exp: "Data requirements change rapidly and new tools arrive on a near-daily basis. Architecture decisions must be REVERSIBLE and FLEXIBLE to accommodate this evolution. If architectural decisions are locked in, organizations can't adapt to new requirements, tools, or business needs. This is the core argument for good architecture."
+  },
+  {
+    q: "What is the key differentiator between a Data Lakehouse and a Data Lake?",
+    opts: ["Lakehouse stores only structured data; Data Lake stores all types", "Lakehouse adds ACID transactions, governance, and data management controls on top of object storage", "Lakehouse uses ETL; Data Lake uses ELT", "Lakehouse is only for ML; Data Lake is for analytics"],
+    ans: 1,
+    exp: "The Data Lakehouse (introduced by Databricks) is a CONVERGENCE of Data Warehouse and Data Lake. It stores data in object storage like a lake, but adds: ACID transactions (Delta Lake/Iceberg), governance, data management controls, and supports variety of query/transformation engines. The KEY addition over a plain Lake is governance + ACID."
+  }
+];
+
+// ===========================
+// QUIZ ENGINE
+// ===========================
+let currentQ = 0;
+let score = 0;
+let answered = [];
+
+function startQuiz() {
+  currentQ = 0;
+  score = 0;
+  answered = new Array(quizData.length).fill(null);
+  document.getElementById('quiz-start-screen').style.display = 'none';
+  document.getElementById('quiz-score-screen').style.display = 'none';
+  document.getElementById('quiz-main').style.display = 'block';
+  document.getElementById('q-total').textContent = quizData.length;
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = quizData[currentQ];
+  document.getElementById('q-num').textContent = currentQ + 1;
+  document.getElementById('q-score').textContent = score;
+  document.getElementById('q-text').textContent = q.q;
+  document.getElementById('q-explanation').className = 'quiz-explanation';
+  document.getElementById('q-next-btn').style.display = 'none';
+
+  // Render dot tracker
+  const tracker = document.getElementById('dot-tracker');
+  tracker.innerHTML = '';
+  quizData.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'tracker-dot' + (i === currentQ ? ' current' : (answered[i] === true ? ' correct' : (answered[i] === false ? ' wrong' : '')));
+    tracker.appendChild(dot);
+  });
+
+  // Render options
+  const optsEl = document.getElementById('q-options');
+  optsEl.innerHTML = '';
+  const letters = ['A','B','C','D'];
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-option';
+    btn.innerHTML = `<span class="option-letter">${letters[i]}</span> ${opt}`;
+    btn.onclick = () => selectAnswer(i);
+    optsEl.appendChild(btn);
+  });
+}
+
+function selectAnswer(idx) {
+  const q = quizData[currentQ];
+  const opts = document.querySelectorAll('.quiz-option');
+  opts.forEach(o => o.disabled = true);
+
+  const correct = idx === q.ans;
+  opts[idx].classList.add(correct ? 'correct' : 'wrong');
+  if (!correct) opts[q.ans].classList.add('correct');
+
+  if (correct && answered[currentQ] === null) score++;
+  answered[currentQ] = correct;
+
+  document.getElementById('q-score').textContent = score;
+
+  const expEl = document.getElementById('q-explanation');
+  expEl.innerHTML = `<strong>${correct ? '✅ Correct!' : '❌ Incorrect.'}</strong><br><br>${q.exp}`;
+  expEl.className = 'quiz-explanation show';
+
+  document.getElementById('q-next-btn').style.display = 'inline-block';
+  document.getElementById('q-next-btn').textContent = currentQ < quizData.length - 1 ? 'Next Question →' : 'See Results';
+}
+
+function nextQuestion() {
+  if (currentQ < quizData.length - 1) {
+    currentQ++;
+    renderQuestion();
+  } else {
+    showResults();
+  }
+}
+
+function showResults() {
+  document.getElementById('quiz-main').style.display = 'none';
+  const screen = document.getElementById('quiz-score-screen');
+  screen.style.display = 'block';
+  const pct = Math.round((score / quizData.length) * 100);
+  document.getElementById('final-score-circle').textContent = pct + '%';
+  let msg = '';
+  if (pct >= 90) msg = '🏆 Excellent! You have mastered data architectures. Ready for the exam!';
+  else if (pct >= 75) msg = '✅ Great job! Review the topics you missed and you\'ll be fully prepared.';
+  else if (pct >= 60) msg = '📚 Good effort. Focus on reviewing the Lambda/Kappa comparison and storage types.';
+  else msg = '💡 Keep studying. Work through the Study mode for each topic, then retake.';
+  document.getElementById('final-score-msg').textContent = `${score} / ${quizData.length} correct. ${msg}`;
+}
+
+function resetQuiz() {
+  document.getElementById('quiz-start-screen').style.display = 'block';
+  document.getElementById('quiz-main').style.display = 'none';
+  document.getElementById('quiz-score-screen').style.display = 'none';
+}
+
+// ===========================
+// FLASHCARD DATA
+// ===========================
+const flashcards = [
+  { q: "What is the TOGAF definition of Data Architecture?", a: "A description of the structure and interaction of the enterprise's major types and sources of data, logical data assets, physical data assets, and data management resources. Focus: structure + interaction." },
+  { q: "What makes Data Architecture different from Data Engineering Architecture?", a: "Data Architecture = design of systems to support evolving data needs via flexible, reversible trade-off decisions (broader, strategic). Data Engineering Architecture = systems and frameworks making up the key sections of the data engineering lifecycle (implementation-focused)." },
+  { q: "Name the two aspects of Data Architecture and what they answer.", a: "Operational (WHAT) — functional requirements, business processes, quality management. Technical (HOW) — data ingestion, storage, transformation, serving, tools and pipelines. Both are needed for complete architecture." },
+  { q: "Define Data Architecture's Centralized approach and give an example.", a: "Single point of control for governance, auditing, and reporting. Uses authoritative sources, a single intelligent landing area, and aggregation across business units. Example: Banking or healthcare in regulated environments." },
+  { q: "What is the key risk of Decentralized Architecture?", a: "Data silos — each business unit manages its own data independently, risking data duplication, inconsistent definitions, and inability to get a unified enterprise view. MDM and domain data decentralized per business unit (e.g., insurance companies)." },
+  { q: "ETL vs ELT — what's the key difference and which storage uses each?", a: "ETL (Extract-Transform-Load): Transform BEFORE loading. Used in Data Warehouses — schema must be defined upfront, structured data only. ELT (Extract-Load-Transform): Load raw data FIRST, transform later. Used in Data Lakes — schema-on-read, flexible." },
+  { q: "What are the 4 failure modes of Data Lakes?", a: "1. Data Swamp — disorganized, unstructured, unusable storage. 2. Dark Data — collected but never used for insights. 3. WORN — Write Once Read Never. 4. Grows unmanageable — lack of governance makes the lake a costly black hole." },
+  { q: "What is the Data Lakehouse and who introduced it?", a: "Introduced by Databricks. A convergence of Data Warehouse + Data Lake. Stores data in object storage (like a lake) but adds DW-style controls: ACID transactions (via Delta Lake/Iceberg), governance, and management. Supports both SQL and ML workloads." },
+  { q: "What does ACID stand for and which storage supports it natively?", a: "Atomicity, Consistency, Isolation, Durability. Traditional Data Warehouses support ACID natively. Data Lakehouses add ACID via table formats (Delta Lake, Apache Iceberg). Plain Data Lakes do NOT have ACID by default." },
+  { q: "Star Schema vs Snowflake Schema — key trade-off?", a: "Star Schema: DENORMALIZED — related data in one table. Faster queries (fewer joins), more storage (redundancy). Snowflake Schema: NORMALIZED — dimension tables split into sub-dimensions. Less storage (no duplication), slower queries (more joins). Choose: query speed vs storage efficiency." },
+  { q: "What is a Data Mart and how does it differ from a Data Warehouse?", a: "Data Mart = department-specific subset of a DW, focused on a single business unit (HR, IT, Finance). DW serves the entire organization. Marts pre-aggregate and pre-join data for that department → significantly faster queries. Provides additional transformation stage beyond ETL/ELT." },
+  { q: "What are the 4 principles of Data Mesh?", a: "1. Domain-oriented decentralized data ownership and architecture. 2. Data as a product (with SLAs, documentation, discoverability). 3. Self-serve data infrastructure as a platform. 4. Federated computational governance (local autonomy + central policy)." },
+  { q: "Data Mesh vs Data Fabric — organizational or technical?", a: "Data Mesh = ORGANIZATIONAL/social approach — decentralizes data ownership to business domains, treats data as products. Data Fabric = TECHNICAL approach — creates a unified virtual access layer across disparate systems using CDC, APIs, and virtualization (no data movement)." },
+  { q: "What are the 5 Vs of Big Data?", a: "Volume (massive scale — TBs to exabytes), Velocity (high-speed incoming data — real-time streams), Variety (structured + semi-structured + unstructured formats), Veracity (accuracy and reliability — data quality), Value (real-world business benefits derived from data)." },
+  { q: "Name the 7 components of Big Data Architecture.", a: "1. Data Sources (DBs, files, IoT). 2. Data Storage (distributed file store). 3. Batch Processing (MapReduce, Spark). 4. Real-Time Message Ingestion (Kafka). 5. Stream Processing (Flink, Spark Streaming). 6. Analytical Data Store (DW, NoSQL). 7. Analytics & Reporting. Plus: Orchestration (Airflow, Oozie)." },
+  { q: "What problem does Lambda Architecture solve?", a: "Reconciling batch and streaming data in a single architecture. When you need BOTH: historical pattern analysis (batch, high accuracy, higher latency) AND real-time alerts (stream, low latency, possible approximation) from the SAME data source. Example: banking fraud detection." },
+  { q: "Describe the 3 layers of Lambda Architecture.", a: "1. Batch Layer (cold path) — stores all raw immutable data, performs batch processing, creates precomputed views. High accuracy, higher latency. 2. Speed Layer (hot path) — processes data in real-time, low latency, NoSQL store, may approximate. 3. Serving Layer — merges batch + speed views for queries." },
+  { q: "What is the key challenge of Lambda Architecture?", a: "Two separate codebases for the same logic: batch processing code (Spark) and stream processing code (Flink/Kafka Streams) must be maintained independently. Same business logic written twice → duplicate computation, inconsistency bugs, complex ops. This led to Kappa Architecture." },
+  { q: "Who proposed Kappa Architecture and why?", a: "Jay Kreps (co-creator of Apache Kafka, LinkedIn) proposed Kappa as a response to Lambda's dual-codebase complexity. Solution: use a single stream processing platform (Kafka) as backbone for ALL data handling — ingestion, storage, and serving. One codebase for everything." },
+  { q: "How does Kappa Architecture handle historical recomputation?", a: "By REPLAYING the stream from the beginning. Kafka retains all events indefinitely. When you need to recompute history (e.g., fix a bug in logic), you start a new stream consumer and replay all past events. Uses parallelism for efficiency. No separate batch layer needed." },
+  { q: "Lambda vs Kappa — when to choose each?", a: "Lambda: when you need BOTH high-accuracy batch analytics AND real-time results, can maintain two systems (e.g., banking fraud: batch for pattern mining + stream for alerts). Kappa: when all use cases are stream-first, want simpler unified codebase (e.g., live broadcasting, IoT monitoring, real-time recommendations)." },
+  { q: "Cricket match example — Lambda or Kappa?", a: "KAPPA for live broadcasting (stream processing as backbone — live is the primary use case). However, if the architecture also needs to produce highlight reels later (batch processing on historical game data), that element is Lambda-like. Prof. DVS: 'Live match = stream processor. Highlights = batch processing.'" },
+  { q: "What is the 'Veracity' V and why does it matter?", a: "Veracity = accuracy and reliability of data. Big data from multiple sources can contain noise, errors, missing values, and inconsistencies. Poor veracity leads to wrong insights → bad decisions (GIGO: Garbage In, Garbage Out). This is why Data Quality Checks and Preprocessing are the first practical exercises in the course." },
+  { q: "What is Dark Data?", a: "Data that organizations collect, process, and store during regular business activities but FAIL to use for any other purposes. It represents pure cost with no value extraction. A subset of the broader 'Data Lake failure modes.' Prof. DVS: companies like Facebook and Netflix still have significant dark data." },
+  { q: "Why does successful data engineering require 'rock-solid data architecture'?", a: "Architecture defines the blueprint for all downstream engineering decisions — what tools to use, how data flows, storage patterns, governance. Without solid architecture: systems become fragile, hard to maintain, expensive to change, and fail to deliver value. Prof. DVS quote from slide: 'Successful data engineering is built upon rock-solid data architecture!'" },
+  { q: "What distinguishes 'schema-on-read' (Data Lake) from 'schema-on-write' (Data Warehouse)?", a: "Schema-on-write (DW): Schema defined BEFORE data loads. Data must conform to structure at write time. Rigid but ensures quality. Schema-on-read (Data Lake): Raw data stored without schema enforcement. Schema applied when reading/querying. Flexible but can introduce data quality issues if not managed." },
+  { q: "Name the 4 typical big data workloads.", a: "1. Batch processing of big data sources at rest. 2. Real-time processing of big data in motion. 3. Interactive exploration of big data (ad-hoc queries). 4. Predictive analytics and machine learning." },
+  { q: "How does Lambda Architecture support ML workflows?", a: "Batch layer enables training on comprehensive historical datasets (complete, high-quality data for model training). Speed layer provides real-time inference and scoring on incoming data streams. Dual approach: train on full history, predict on live stream. Perfect for fraud detection, recommendation engines." },
+  { q: "What are the 3 challenges of Big Data Architecture?", a: "1. Complexity — numerous components for multi-source ingestion; hard to build, test, troubleshoot. 2. Skillset — specialized frameworks (Spark, Flink, Scala) not typical of general development. 3. Technology Maturity — rapidly evolving ecosystem (Spark major updates each release); risk of technical debt." },
+  { q: "What is a 'unified log' in Kappa Architecture and which tool implements it?", a: "A unified log is a distributed, fault-tolerant, immutable append-only event log that serves as the single source of truth for all data. Events are ordered; state changes only by appending new events. Apache Kafka is the standard implementation. Events can be replayed from any point for recomputation." },
+  { q: "DAMA-DMBOK defines data architecture as what?", a: "Identifying the data needs of the enterprise (regardless of structure) and designing/maintaining master blueprints to meet those needs. Using blueprints to guide data integration, control data assets, and align data investments with business strategy. Focus: NEEDS + BLUEPRINTS + STRATEGY ALIGNMENT." },
+  { q: "What are the 3 benefits of Big Data Architecture?", a: "1. Performance through parallelism — distributes work across clusters for high performance at scale. 2. Elastic scale — scale-out provisioning, pay only for what you use. 3. Technology choices — wide variety of open-source and commercial options. 4. Interoperability — same components work for IoT, BI, and ML workloads." }
+];
+
+// ===========================
+// FLASHCARD ENGINE
+// ===========================
+let fcIndex = 0;
+let fcFlipped = false;
+let fcRatings = JSON.parse(localStorage.getItem('da_fc_ratings') || '{}');
+
+function renderCard() {
+  const card = flashcards[fcIndex];
+  document.getElementById('fc-num').textContent = fcIndex + 1;
+  document.getElementById('fc-total').textContent = flashcards.length;
+  document.getElementById('fc-question').textContent = card.q;
+  document.getElementById('fc-answer').textContent = card.a;
+  document.getElementById('fc-card').classList.remove('flipped');
+  document.getElementById('fc-controls').style.display = 'none';
+  fcFlipped = false;
+
+  // Progress
+  const pct = ((fcIndex + 1) / flashcards.length) * 100;
+  document.getElementById('fc-progress-fill').style.width = pct + '%';
+
+  // Update rating counters
+  let h = 0, g = 0, e = 0;
+  Object.values(fcRatings).forEach(r => {
+    if (r === 'hard') h++;
+    else if (r === 'good') g++;
+    else if (r === 'easy') e++;
+  });
+  document.getElementById('fc-hard').textContent = h;
+  document.getElementById('fc-good').textContent = g;
+  document.getElementById('fc-easy').textContent = e;
+}
+
+function flipCard() {
+  fcFlipped = !fcFlipped;
+  document.getElementById('fc-card').classList.toggle('flipped', fcFlipped);
+  document.getElementById('fc-controls').style.display = fcFlipped ? 'flex' : 'none';
+}
+
+function rateCard(rating) {
+  fcRatings[fcIndex] = rating;
+  localStorage.setItem('da_fc_ratings', JSON.stringify(fcRatings));
+  nextCard();
+}
+
+function nextCard() {
+  if (fcIndex < flashcards.length - 1) {
+    fcIndex++;
+    renderCard();
+  }
+}
+
+function prevCard() {
+  if (fcIndex > 0) {
+    fcIndex--;
+    renderCard();
+  }
+}
+
+function startFlash() {
+  fcIndex = 0;
+  renderCard();
+}
+
+function resetFlash() {
+  fcRatings = {};
+  localStorage.removeItem('da_fc_ratings');
+  renderCard();
+}
+
+// Initialize
+renderCard();
+showPage('p-intro');
+</script>
+</body>
+</html>
