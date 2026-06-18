@@ -1,302 +1,1555 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>M.Tech AIML — Study Hub</title>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Newsreader:ital,wght@0,300;0,400;0,500;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <title>M.Tech AIML Study Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Fraunces:opsz,wght,SOFT@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; }
+
     :root {
-      --bg:#0c0c0f; --bg2:#111116; --bg3:#16161c; --bg4:#1c1c24;
-      --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.12);
-      --gold:#d4a853; --teal:#4ec9b0; --sky:#7dd3fc; --violet:#c084fc; --lime:#a3e635;
-      --text:#e8e6e3; --text2:#9d9ba8; --text3:#6b6878;
-      --font-head:'Syne',sans-serif; --font-body:'Newsreader',serif; --font-code:'JetBrains Mono',monospace;
-      --accent:var(--gold);
+      color-scheme: dark;
+      --font-display: "Fraunces", serif;
+      --font-ui: "Space Grotesk", sans-serif;
+      --font-mono: "IBM Plex Mono", monospace;
+      --radius-xl: 28px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
+      --shadow-soft: 0 18px 48px rgba(8, 15, 28, 0.14);
+      --shadow-lift: 0 24px 60px rgba(7, 16, 34, 0.24);
+      --page-bg:
+        radial-gradient(circle at top left, rgba(71, 164, 255, 0.18), transparent 28%),
+        radial-gradient(circle at 85% 12%, rgba(255, 181, 86, 0.16), transparent 22%),
+        linear-gradient(180deg, #07111f 0%, #0b1625 42%, #0e1b2d 100%);
+      --surface: rgba(11, 20, 34, 0.78);
+      --surface-strong: rgba(15, 26, 43, 0.96);
+      --surface-soft: rgba(255, 255, 255, 0.05);
+      --surface-muted: rgba(151, 170, 199, 0.12);
+      --card-bg: rgba(13, 24, 40, 0.88);
+      --border: rgba(160, 184, 218, 0.16);
+      --border-strong: rgba(186, 205, 232, 0.28);
+      --text: #edf4ff;
+      --text-muted: #afbed4;
+      --text-faint: #7e90ab;
+      --accent: #ffb556;
+      --accent-2: #60c0ff;
+      --accent-3: #8ce7c2;
+      --accent-4: #cb9cff;
+      --success-bg: rgba(140, 231, 194, 0.14);
+      --success-text: #b9f6dd;
+      --tab-idle: rgba(255, 255, 255, 0.05);
+      --input-bg: rgba(255, 255, 255, 0.05);
+      --chip-bg: rgba(255, 255, 255, 0.07);
+      --hero-outline: linear-gradient(135deg, rgba(255, 181, 86, 0.42), rgba(96, 192, 255, 0.25), rgba(203, 156, 255, 0.26));
+      --grid-line: rgba(255, 255, 255, 0.05);
     }
+
+    html[data-theme="light"] {
+      color-scheme: light;
+      --page-bg:
+        radial-gradient(circle at top left, rgba(122, 187, 255, 0.25), transparent 28%),
+        radial-gradient(circle at 88% 12%, rgba(255, 192, 100, 0.28), transparent 24%),
+        linear-gradient(180deg, #f5f8fc 0%, #ecf3fb 50%, #e7eef7 100%);
+      --surface: rgba(255, 255, 255, 0.78);
+      --surface-strong: rgba(255, 255, 255, 0.92);
+      --surface-soft: rgba(18, 42, 68, 0.05);
+      --surface-muted: rgba(38, 76, 124, 0.08);
+      --card-bg: rgba(255, 255, 255, 0.88);
+      --border: rgba(48, 82, 130, 0.14);
+      --border-strong: rgba(45, 80, 128, 0.24);
+      --text: #10233e;
+      --text-muted: #4f6686;
+      --text-faint: #7185a3;
+      --accent: #de8d22;
+      --accent-2: #2483db;
+      --accent-3: #128868;
+      --accent-4: #8750df;
+      --success-bg: rgba(18, 136, 104, 0.1);
+      --success-text: #0c7258;
+      --tab-idle: rgba(19, 43, 73, 0.05);
+      --input-bg: rgba(19, 43, 73, 0.05);
+      --chip-bg: rgba(19, 43, 73, 0.07);
+      --hero-outline: linear-gradient(135deg, rgba(222, 141, 34, 0.32), rgba(36, 131, 219, 0.22), rgba(135, 80, 223, 0.2));
+      --grid-line: rgba(27, 48, 79, 0.06);
+      --shadow-soft: 0 18px 42px rgba(31, 64, 105, 0.10);
+      --shadow-lift: 0 24px 54px rgba(31, 64, 105, 0.14);
+    }
+
     body {
-      background:var(--bg); color:var(--text); font-family:var(--font-body);
-      line-height:1.6; min-height:100vh; overflow-x:hidden;
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font-ui);
+      background: var(--page-bg);
+      color: var(--text);
+      line-height: 1.5;
+      position: relative;
+      overflow-x: hidden;
     }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -2;
+    }
+
     body::before {
-      content:''; position:fixed; inset:0; z-index:9999; pointer-events:none; opacity:0.04;
-      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-image:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.65), transparent 90%);
     }
-    header {
-      text-align:center; padding:4rem 1.5rem 1.5rem; position:relative;
-      background:linear-gradient(135deg, var(--bg) 0%, var(--bg2) 60%, var(--bg3) 100%);
-      border-bottom:1px solid var(--border);
+
+    body::after {
+      z-index: -1;
+      background:
+        radial-gradient(circle at 20% 18%, rgba(255, 255, 255, 0.12), transparent 0 18%),
+        radial-gradient(circle at 80% 0%, rgba(255, 255, 255, 0.08), transparent 0 20%);
+      filter: blur(32px);
+      opacity: 0.75;
     }
+
+    a { color: inherit; }
+
+    .page-shell {
+      width: min(1200px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 56px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface);
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .brand-badge {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #08111d;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .brand-copy strong,
+    .brand-copy span {
+      display: block;
+    }
+
+    .brand-copy strong {
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+
+    .brand-copy span {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      margin-top: 2px;
+    }
+
+    .utility-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .theme-toggle,
+    .quick-link {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      border-radius: 999px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font: inherit;
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+    }
+
+    .theme-toggle:hover,
+    .quick-link:hover,
+    .subject-tab:hover,
+    .resource-card:hover,
+    .filter-chip:hover,
+    .btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .theme-toggle svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+
+    .theme-text {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .quick-link {
+      text-decoration: none;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+    }
+
+    .hero {
+      position: relative;
+      padding: 28px;
+      border-radius: var(--radius-xl);
+      background:
+        linear-gradient(var(--surface-strong), var(--surface-strong)) padding-box,
+        var(--hero-outline) border-box;
+      border: 1px solid transparent;
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow-lift);
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: auto -10% -28% 34%;
+      height: 280px;
+      background: radial-gradient(circle, rgba(96, 192, 255, 0.22), transparent 62%);
+      pointer-events: none;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.55fr) minmax(320px, 0.95fr);
+      gap: 24px;
+      position: relative;
+      z-index: 1;
+    }
+
     .eyebrow {
-      font-family:var(--font-code); font-size:11px; letter-spacing:0.18em; text-transform:uppercase;
-      color:var(--accent); transition:color .3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 18px;
     }
-    header h1 {
-      font-family:var(--font-head); font-weight:800; font-size:clamp(2rem,5vw,3rem);
-      margin-top:0.6rem; line-height:1.1;
-    }
-    header h1 span { color:var(--accent); transition:color .3s; }
-    header p { color:var(--text2); margin-top:0.6rem; font-size:1.05rem; }
 
-    /* subject nav */
-    nav.subjects {
-      display:flex; gap:0.5rem; justify-content:center; flex-wrap:wrap;
-      padding:1.5rem 1rem 0; position:sticky; top:0; z-index:50;
-      background:rgba(12,12,15,0.85); backdrop-filter:blur(10px);
+    .eyebrow::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 18px currentColor;
     }
-    .subject-tab {
-      font-family:var(--font-code); font-size:12px; letter-spacing:0.06em;
-      padding:0.55rem 1.15rem; border-radius:999px; cursor:pointer; text-align:center;
-      background:var(--bg3); border:1px solid var(--border); color:var(--text2);
-      transition:all .15s;
-    }
-    .subject-tab small { display:block; font-size:9px; color:var(--text3); letter-spacing:0.04em; margin-top:1px; }
-    .subject-tab:hover { color:var(--text); border-color:var(--border2); }
-    .subject-tab.active { color:var(--bg); font-weight:600; }
-    .subject-tab[data-accent="gold"].active   { background:var(--gold); border-color:var(--gold); }
-    .subject-tab[data-accent="teal"].active    { background:var(--teal); border-color:var(--teal); }
-    .subject-tab[data-accent="sky"].active     { background:var(--sky); border-color:var(--sky); }
-    .subject-tab[data-accent="violet"].active  { background:var(--violet); border-color:var(--violet); }
-    .subject-tab.active small { color:rgba(0,0,0,0.55); }
 
-    main { max-width:880px; margin:0 auto; padding:2.5rem 1.5rem 4rem; }
-    .subject-panel { display:none; animation:fade .4s ease; }
-    .subject-panel.active { display:block; }
-    @keyframes fade { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
-
-    .group-label {
-      font-family:var(--font-code); font-size:11px; letter-spacing:0.12em; text-transform:uppercase;
-      color:var(--text3); margin:2rem 0 1rem; display:flex; align-items:center; gap:0.75rem;
+    .hero h1 {
+      margin: 0;
+      max-width: 11ch;
+      font-family: var(--font-display);
+      font-size: clamp(2.8rem, 5vw, 5rem);
+      line-height: 0.95;
+      letter-spacing: -0.04em;
     }
-    .group-label::after { content:''; flex:1; height:1px; background:var(--border); }
-    .group-label:first-child { margin-top:0.5rem; }
 
-    .grid { display:grid; gap:0.85rem; }
-    a.card {
-      display:block; text-decoration:none; color:var(--text);
-      background:var(--bg2); border:1px solid var(--border); border-left:3px solid var(--accent);
-      border-radius:10px; padding:1.15rem 1.4rem; transition:transform .15s, border-color .15s, background .15s;
+    .hero h1 .accent {
+      color: var(--accent);
     }
-    a.card:hover { transform:translateY(-3px); background:var(--bg3); border-color:var(--border2); }
-    a.card h2 { font-family:var(--font-head); font-size:1.1rem; font-weight:600; }
-    a.card .meta { font-family:var(--font-code); font-size:10px; color:var(--accent); letter-spacing:0.06em; text-transform:uppercase; margin-bottom:0.35rem; }
-    a.card p { color:var(--text2); font-size:0.92rem; margin-top:0.25rem; }
 
-    /* featured assignment block */
-    .assignment {
-      background:linear-gradient(135deg, rgba(212,168,83,0.08), rgba(212,168,83,0.02));
-      border:1px solid rgba(212,168,83,0.22); border-radius:12px; padding:1.5rem 1.6rem;
+    .hero-copy {
+      margin: 18px 0 0;
+      max-width: 56ch;
+      color: var(--text-muted);
+      font-size: 1.02rem;
     }
-    .assignment .meta { font-family:var(--font-code); font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color:var(--gold); }
-    .assignment h2 { font-family:var(--font-head); font-size:1.2rem; font-weight:700; margin-top:0.3rem; }
-    .assignment p { color:var(--text2); font-size:0.95rem; margin-top:0.4rem; }
-    .assignment .tags { display:flex; gap:0.4rem; flex-wrap:wrap; margin-top:0.9rem; }
-    .tag { font-family:var(--font-code); font-size:10px; padding:3px 9px; border-radius:4px; background:var(--bg4); border:1px solid var(--border); color:var(--text2); }
-    .actions { display:flex; gap:0.6rem; flex-wrap:wrap; margin-top:1.1rem; }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
     .btn {
-      font-family:var(--font-code); font-size:12px; letter-spacing:0.04em; text-decoration:none;
-      padding:0.6rem 1.1rem; border-radius:8px; transition:all .15s; display:inline-flex; align-items:center; gap:0.4rem;
+      appearance: none;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font: inherit;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, color 180ms ease;
     }
-    .btn-primary { background:var(--gold); color:var(--bg); font-weight:600; border:1px solid var(--gold); }
-    .btn-primary:hover { background:#e3bd72; }
-    .btn-ghost { background:transparent; color:var(--text2); border:1px solid var(--border2); }
-    .btn-ghost:hover { color:var(--gold); border-color:rgba(212,168,83,0.4); }
 
-    /* empty state for unfilled subjects */
-    .empty {
-      text-align:center; padding:3rem 1.5rem; border:1px dashed var(--border2); border-radius:12px;
-      background:var(--bg2); color:var(--text3);
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #ffd08b);
+      color: #0a1320;
+      font-weight: 700;
+      box-shadow: 0 14px 28px rgba(222, 141, 34, 0.24);
     }
-    .empty .big { font-family:var(--font-head); font-size:1.3rem; color:var(--text2); margin-bottom:0.5rem; }
-    .empty code { font-family:var(--font-code); font-size:12px; background:var(--bg4); padding:2px 7px; border-radius:4px; color:var(--teal); }
-    .empty .hint { font-size:0.9rem; margin-top:0.8rem; line-height:1.7; }
 
-    footer { text-align:center; color:var(--text3); font-family:var(--font-code); font-size:11px; padding:2.5rem 1rem; border-top:1px solid var(--border); letter-spacing:0.04em; }
+    .btn-secondary {
+      background: var(--surface-soft);
+      border-color: var(--border);
+      color: var(--text);
+    }
+
+    .hero-side {
+      display: grid;
+      gap: 16px;
+      align-content: start;
+    }
+
+    .summary-card,
+    .focus-card,
+    .toolbar,
+    .subject-panel,
+    .empty-state {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .summary-card {
+      padding: 18px;
+      border-radius: var(--radius-lg);
+    }
+
+    .summary-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .summary-title strong {
+      font-size: 1rem;
+    }
+
+    .summary-title span {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      padding: 14px;
+      border-radius: 18px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 1.45rem;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+    }
+
+    .focus-card {
+      padding: 18px;
+      border-radius: var(--radius-lg);
+    }
+
+    .focus-card strong {
+      display: block;
+      font-size: 1rem;
+      margin-bottom: 8px;
+    }
+
+    .focus-card p {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.94rem;
+    }
+
+    .focus-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .focus-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 11px;
+      border-radius: 999px;
+      background: var(--chip-bg);
+      border: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+    }
+
+    .focus-tag::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent-3);
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      padding: 16px;
+      border-radius: var(--radius-lg);
+      margin: 22px 0 18px;
+      position: sticky;
+      top: 16px;
+      z-index: 20;
+    }
+
+    .search-shell {
+      position: relative;
+    }
+
+    .search-shell svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      width: 18px;
+      height: 18px;
+      transform: translateY(-50%);
+      fill: var(--text-faint);
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--input-bg);
+      color: var(--text);
+      font: inherit;
+      padding: 13px 16px 13px 44px;
+      outline: none;
+      transition: border-color 180ms ease, background 180ms ease;
+    }
+
+    .search-input::placeholder {
+      color: var(--text-faint);
+    }
+
+    .search-input:focus {
+      border-color: var(--border-strong);
+      background: var(--surface-strong);
+    }
+
+    .toolbar-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .results-pill,
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 10px 12px;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 1px solid var(--border);
+    }
+
+    .results-pill {
+      background: var(--surface-soft);
+      color: var(--text-muted);
+    }
+
+    .status-pill {
+      background: var(--success-bg);
+      color: var(--success-text);
+    }
+
+    .subject-tabs {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .subject-tab {
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--border);
+      background: var(--tab-idle);
+      color: var(--text);
+      border-radius: 20px;
+      padding: 16px 18px;
+      cursor: pointer;
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+    }
+
+    .subject-tab.active {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.03));
+      border-color: var(--subject-accent, var(--border-strong));
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+    }
+
+    .subject-tab[data-accent="gold"] { --subject-accent: var(--accent); }
+    .subject-tab[data-accent="sky"] { --subject-accent: var(--accent-2); }
+    .subject-tab[data-accent="teal"] { --subject-accent: var(--accent-3); }
+    .subject-tab[data-accent="violet"] { --subject-accent: var(--accent-4); }
+
+    .subject-tab .tab-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .subject-tab .tab-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--subject-accent, var(--accent));
+      box-shadow: 0 0 22px var(--subject-accent, var(--accent));
+    }
+
+    .subject-tab .tab-label {
+      display: block;
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    .subject-tab .tab-code,
+    .subject-tab .tab-count {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+    }
+
+    .subject-panel {
+      border-radius: var(--radius-xl);
+      padding: 24px;
+      display: none;
+    }
+
+    .subject-panel.active {
+      display: block;
+      animation: rise-in 260ms ease;
+    }
+
+    @keyframes rise-in {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .panel-header h2 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 3vw, 2.5rem);
+      line-height: 0.98;
+      letter-spacing: -0.03em;
+    }
+
+    .panel-header p {
+      margin: 8px 0 0;
+      max-width: 58ch;
+      color: var(--text-muted);
+    }
+
+    .panel-chip {
+      flex-shrink: 0;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--chip-bg);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 24px 0 16px;
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+    }
+
+    .section-label::after {
+      content: "";
+      height: 1px;
+      flex: 1;
+      background: var(--border);
+    }
+
+    .resource-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .resource-card {
+      position: relative;
+      display: block;
+      padding: 20px;
+      border-radius: var(--radius-lg);
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      text-decoration: none;
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+      overflow: hidden;
+    }
+
+    .resource-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, color-mix(in srgb, var(--card-accent, var(--accent)) 18%, transparent), transparent 60%);
+      opacity: 0.9;
+      pointer-events: none;
+    }
+
+    .resource-card > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .resource-card:hover {
+      border-color: color-mix(in srgb, var(--card-accent, var(--accent)) 44%, var(--border));
+      background: color-mix(in srgb, var(--card-bg) 88%, white 12%);
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .meta-tag,
+    .meta-type {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .meta-tag {
+      background: color-mix(in srgb, var(--card-accent, var(--accent)) 12%, transparent);
+      color: var(--card-accent, var(--accent));
+      border: 1px solid color-mix(in srgb, var(--card-accent, var(--accent)) 28%, transparent);
+    }
+
+    .meta-type {
+      background: var(--chip-bg);
+      color: var(--text-faint);
+      border: 1px solid var(--border);
+    }
+
+    .resource-card h3 {
+      margin: 0;
+      font-size: 1.12rem;
+      line-height: 1.2;
+    }
+
+    .resource-card p {
+      margin: 10px 0 16px;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 0.86rem;
+      color: var(--text-faint);
+    }
+
+    .card-arrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--card-accent, var(--accent));
+      font-weight: 700;
+    }
+
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .filter-chip {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 9px 12px;
+      background: var(--chip-bg);
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, color 180ms ease;
+    }
+
+    .filter-chip.active {
+      background: var(--surface-strong);
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+
+    .empty-state {
+      display: none;
+      margin-top: 18px;
+      padding: 28px;
+      border-radius: var(--radius-lg);
+      text-align: center;
+    }
+
+    .empty-state.visible {
+      display: block;
+      animation: rise-in 240ms ease;
+    }
+
+    .empty-state strong {
+      display: block;
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+    }
+
+    .empty-state p {
+      margin: 0 auto;
+      max-width: 44ch;
+      color: var(--text-muted);
+    }
+
+    .empty-state span {
+      display: inline-block;
+      margin-top: 14px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--chip-bg);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+    }
+
+    footer {
+      margin-top: 28px;
+      padding: 12px 6px 0;
+      text-align: center;
+      color: var(--text-faint);
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    @media (max-width: 980px) {
+      .hero-grid,
+      .toolbar,
+      .panel-header {
+        grid-template-columns: 1fr;
+      }
+
+      .toolbar-meta {
+        justify-content: flex-start;
+      }
+
+      .subject-tabs,
+      .resource-grid,
+      .metrics {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .page-shell {
+        width: min(100% - 20px, 1200px);
+        padding-top: 14px;
+      }
+
+      .topbar,
+      .utility-actions,
+      .hero-actions,
+      .panel-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .subject-tabs,
+      .resource-grid,
+      .metrics {
+        grid-template-columns: 1fr;
+      }
+
+      .hero,
+      .subject-panel {
+        padding: 20px;
+      }
+
+      .toolbar {
+        top: 8px;
+      }
+
+      .brand,
+      .theme-toggle,
+      .quick-link,
+      .btn {
+        justify-content: center;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
+      }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <div class="eyebrow" id="eyebrow">BITS PILANI · WILP · AIML</div>
-    <h1>M.Tech <span id="hl">Study Hub</span></h1>
-    <p>Session guides, deep dives &amp; executed assignments — organised by subject</p>
-  </header>
+  <div class="page-shell">
+    <header class="topbar">
+      <div class="brand" aria-label="Study Hub brand">
+        <div class="brand-badge">AI</div>
+        <div class="brand-copy">
+          <strong>M.Tech AIML Study Hub</strong>
+          <span>BITS Pilani | WILP | Semester 2</span>
+        </div>
+      </div>
+      <div class="utility-actions">
+        <a class="quick-link" href="#subjects">Jump to subjects</a>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch color theme" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 0 1 11.21 3c0-.34.02-.68.06-1.01a1 1 0 0 0-1.38-1.03A10 10 0 1 0 23.04 14.1a1 1 0 0 0-1.03-1.38c-.33.04-.67.07-1.01.07Z"/>
+          </svg>
+          <span class="theme-text" id="themeToggleText">Night mode</span>
+        </button>
+      </div>
+    </header>
 
-  <nav class="subjects" id="subjectNav">
-    <div class="subject-tab active" data-subject="cv"   data-accent="gold"   onclick="showSubject('cv',this)">Computer Vision<small>AIMLCZG525</small></div>
-    <div class="subject-tab"        data-subject="dmml" data-accent="teal"   onclick="showSubject('dmml',this)">DMML<small>Data Mining &amp; ML</small></div>
-    <div class="subject-tab"        data-subject="drl"  data-accent="sky"    onclick="showSubject('drl',this)">DRL<small>Deep RL</small></div>
-    <div class="subject-tab"        data-subject="aci"  data-accent="violet" onclick="showSubject('aci',this)">ACI<small>Adv. Comp. Intelligence</small></div>
-  </nav>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-grid">
+        <div>
+          <div class="eyebrow">Curated learning workspace</div>
+          <h1 id="hero-title">Study sharper, <span class="accent">switch faster</span>.</h1>
+          <p class="hero-copy">
+            A refined semester dashboard for Computer Vision, DMML, Deep RL, and ACI. Browse guides, simulators, and deep dives through a cleaner interface built for quick scanning, lower friction, and better focus in both day and night mode.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#subjects">Explore subjects</a>
+            <button class="btn btn-secondary" id="jumpFeatured" type="button">Open DRL simulators</button>
+          </div>
+        </div>
 
-  <main>
-    <!-- ============ COMPUTER VISION ============ -->
-    <section class="subject-panel active" id="panel-cv" style="--accent:var(--gold);">
-      <div class="group-label">Session Guides &amp; Deep Dives</div>
-      <div class="grid">
-        <a class="card" href="cv_web_1.html">
-          <div class="meta">Webinar 1</div>
-          <h2>Image Processing Techniques</h2>
-          <p>Foundations of image processing — filters, histograms, transforms.</p>
-        </a>
-        <a class="card" href="CV2_DeepDive.html">
-          <div class="meta">Chapter 2</div>
-          <h2>Deep Dive Study Guide</h2>
-          <p>Detailed walkthrough of session 2 concepts.</p>
-        </a>
-        <a class="card" href="CV_Session3_WorldClass.html">
-          <div class="meta">Session 3</div>
-          <h2>Low-Level Vision</h2>
-          <p>Image representation, histograms, Gaussian/box filters, colour spaces.</p>
-        </a>
-        <a class="card" href="CV_Session4_WorldClass.html">
-          <div class="meta">Session 4</div>
-          <h2>Edge Detection &amp; Low-Level Vision</h2>
-          <p>Gradients, Sobel/Prewitt/Roberts, edge models, Hough intro, CNN block-1.</p>
-        </a>
-        <a class="card" href="CV_Session5_WorldClass.html">
-          <div class="meta">Session 5 · Mid-Level Vision</div>
-          <h2>Canny · Hough · Harris · HoG · Colour</h2>
-          <p>Full 4-step Canny, Hough transform, Harris corners, HoG+SVM, colour spaces — plus RANSAC/SIFT/Sharpening previews, 4 interactive demos &amp; a 12-question quiz.</p>
-        </a>
+        <aside class="hero-side">
+          <div class="summary-card">
+            <div class="summary-title">
+              <strong>Hub snapshot</strong>
+              <span>Live overview</span>
+            </div>
+            <div class="metrics">
+              <div class="metric">
+                <strong id="metricResources">0</strong>
+                <span>Resources</span>
+              </div>
+              <div class="metric">
+                <strong>4</strong>
+                <span>Subjects</span>
+              </div>
+              <div class="metric">
+                <strong id="metricSimulators">0</strong>
+                <span>Simulators</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="focus-card">
+            <strong>Current focus</strong>
+            <p>
+              Search across titles and descriptions, switch subjects without losing context, and surface the most interactive assets first when you want practice over reading.
+            </p>
+            <div class="focus-tags">
+              <span class="focus-tag">Search-first flow</span>
+              <span class="focus-tag">Theme memory</span>
+              <span class="focus-tag">Cleaner formatting</span>
+            </div>
+          </div>
+        </aside>
       </div>
     </section>
 
-    <!-- ============ DMML ============ -->
-    <section class="subject-panel" id="panel-dmml" style="--accent:var(--teal);">
-      <div class="group-label">Chapters</div>
-      <div class="grid" id="dmml-grid">
-        <a class="card" href="DM4ML/DMML_Session1_StudyTool.html">
-          <div class="meta">CS 1</div>
-          <h2>Data Representations</h2>
-          <p>Data formats, models &amp; query languages, encoding/serialization, and data processing fundamentals.</p>
-        </a>
-        <a class="card" href="DM4ML/DMML_CS2_StudyTool.html">
-          <div class="meta">CS 2</div>
-          <h2>Data Management Fundamentals</h2>
-          <p>Data management principles, components, roles, and phases of data.</p>
-        </a>
-        <a class="card" href="DM4ML/Data_Architectures_Study_Tool.html">
-          <div class="meta">CS 3</div>
-          <h2>Data Architectures</h2>
-          <p>Traditional vs modern architectures, Lakehouse vs Warehouse vs Data Lake, big data system design.</p>
-        </a>
-        <a class="card" href="DM4ML/data_pipelines_study.html">
-          <div class="meta">CS 4</div>
-          <h2>Data Pipelines</h2>
-          <p>Modes of data flow, modern data stack, ETL/ELT, unified data flow, tools &amp; platforms.</p>
-        </a>
-        <a class="card" href="DM4ML/DMML_CS5_StudyTool.html">
-          <div class="meta">CS 5</div>
-          <h2>Modern Data Infrastructure &amp; DataOps</h2>
-          <p>Data science infrastructure, ML data serving, CT/CD pipelines, DataOps &amp; observability.</p>
-        </a>
-        <a class="card" href="DM4ML/DMML_CS6_StudyTool.html">
-          <div class="meta">CS 6</div>
-          <h2>ML Lifecycle &amp; Workflow</h2>
-          <p>ML lifecycle, three levels of ML software, data/model/deployment pipelines, DataOps → MLOps.</p>
-        </a>
-        <a class="card" href="DM4ML/DMML_CS7_StudyTool.html">
-          <div class="meta">CS 7</div>
-          <h2>Data Collection &amp; Ingestion</h2>
-          <p>Data sources, generation in source systems, ingestion strategies, contracts, lineage &amp; governance.</p>
-        </a>
-        <a class="card" href="DM4ML/DMML_CS8_StudyTool.html">
-          <div class="meta">CS 8</div>
-          <h2>Data Profiling &amp; Validation</h2>
-          <p>Data quality dimensions, bias/fairness, skew/drift detection, profiling for ML, validation frameworks.</p>
-        </a>
+    <section class="toolbar" aria-label="Resource controls">
+      <label class="search-shell" for="searchInput">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M10 4a6 6 0 1 0 3.87 10.58l4.27 4.27 1.41-1.41-4.27-4.27A6 6 0 0 0 10 4Zm0 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z"/>
+        </svg>
+        <input class="search-input" id="searchInput" type="search" placeholder="Search chapters, simulators, and study guides..." autocomplete="off">
+      </label>
+      <div class="toolbar-meta">
+        <div class="results-pill" id="resultsPill">Showing all resources</div>
+        <div class="status-pill">Polished UI active</div>
       </div>
     </section>
 
-    <!-- ============ DRL ============ -->
-    <section class="subject-panel" id="panel-drl" style="--accent:var(--sky);">
-      <div class="group-label">Chapters</div>
-      <div class="grid" id="drl-grid">
-        <a class="card" href="DRL/DRL_cs1_study_guide.html">
-          <div class="meta">Session 1</div>
-          <h2>Introduction to RL</h2>
-          <p>RL definition, agent-environment loop, policy/value/model, Tic-Tac-Toe TD learning.</p>
-        </a>
-        <a class="card" href="DRL/DRL_cs2_study_guide.html">
-          <div class="meta">Session 2</div>
-          <h2>Multi-Armed Bandits</h2>
-          <p>Exploration vs exploitation, epsilon-greedy, UCB, gradient bandits, non-stationary methods.</p>
-        </a>
-        <a class="card" href="DRL/deep_rl_bandits_v2_enhanced.html">
-          <div class="meta">Session 2 · Notes</div>
-          <h2>Multi-Armed Bandits (Enhanced)</h2>
-          <p>Companion deep-dive on bandit algorithms and action-value methods.</p>
-        </a>
-        <a class="card" href="DRL/epsilon_greedy_simulator.html">
-          <div class="meta">Simulator</div>
-          <h2>Epsilon-Greedy Simulator</h2>
-          <p>Interactive simulator for epsilon-greedy exploration strategies on multi-armed bandits.</p>
-        </a>
-        <a class="card" href="DRL/cs3_study_guide.html">
-          <div class="meta">Session 3</div>
-          <h2>Finite Markov Decision Processes</h2>
-          <p>Markov property, state/action values, returns, Bellman equations, MDP formulation.</p>
-        </a>
-        <a class="card" href="DRL/cs4_study_guide.html">
-          <div class="meta">Session 4</div>
-          <h2>Dynamic Programming</h2>
-          <p>Policy evaluation, policy iteration, value iteration, generalized policy iteration.</p>
-        </a>
-        <a class="card" href="DRL/mdp_dp_simulator.html">
-          <div class="meta">Simulator</div>
-          <h2>MDP &amp; DP Simulator</h2>
-          <p>Interactive simulator for MDP environments and dynamic programming algorithms.</p>
-        </a>
-        <a class="card" href="DRL/mc_simulator.html">
-          <div class="meta">Simulator</div>
-          <h2>Monte Carlo Methods</h2>
-          <p>Interactive simulator for Monte Carlo prediction and control methods.</p>
-        </a>
-      </div>
-    </section>
+    <main id="subjects">
+      <nav class="subject-tabs" aria-label="Subjects">
+        <button class="subject-tab active" type="button" data-subject="cv" data-accent="gold">
+          <div class="tab-top">
+            <span class="tab-dot"></span>
+            <span class="tab-count">5 resources</span>
+          </div>
+          <span class="tab-label">Computer Vision</span>
+          <span class="tab-code">AIMLCZG525</span>
+        </button>
+        <button class="subject-tab" type="button" data-subject="dmml" data-accent="teal">
+          <div class="tab-top">
+            <span class="tab-dot"></span>
+            <span class="tab-count">8 resources</span>
+          </div>
+          <span class="tab-label">DMML</span>
+          <span class="tab-code">Data Mining and ML</span>
+        </button>
+        <button class="subject-tab" type="button" data-subject="drl" data-accent="sky">
+          <div class="tab-top">
+            <span class="tab-dot"></span>
+            <span class="tab-count">8 resources</span>
+          </div>
+          <span class="tab-label">Deep RL</span>
+          <span class="tab-code">Interactive and theory</span>
+        </button>
+        <button class="subject-tab" type="button" data-subject="aci" data-accent="violet">
+          <div class="tab-top">
+            <span class="tab-dot"></span>
+            <span class="tab-count">0 resources</span>
+          </div>
+          <span class="tab-label">ACI</span>
+          <span class="tab-code">Advanced Computational Intelligence</span>
+        </button>
+      </nav>
 
-    <!-- ============ ACI ============ -->
-    <section class="subject-panel" id="panel-aci" style="--accent:var(--violet);">
-      <div class="group-label">Chapters</div>
-      <div class="grid" id="aci-grid">
-        <!-- Add ACI chapter cards here. Template:
-        <a class="card" href="ACI_Session1.html">
-          <div class="meta">Session 1</div>
-          <h2>Chapter title</h2>
-          <p>Short description.</p>
-        </a>
-        -->
-      </div>
-      <div class="empty">
-        <div class="big">Advanced Computational Intelligence</div>
-        <div>No chapters added yet.</div>
-        <div class="hint">Drop your chapter cards inside <code>#aci-grid</code> using the commented template,<br>then delete this empty-state block.</div>
-      </div>
-    </section>
-  </main>
+      <section class="subject-panel active" id="panel-cv" data-subject="cv">
+        <div class="panel-header">
+          <div>
+            <h2>Computer Vision</h2>
+            <p>Foundational image processing through low-level and mid-level vision, organized for fast revision and concept-driven browsing.</p>
+          </div>
+          <div class="panel-chip">5 resources</div>
+        </div>
 
-  <footer>BITS PILANI · WILP · M.TECH AIML · SEM 2</footer>
+        <div class="filter-row" aria-label="Computer Vision filters">
+          <button class="filter-chip active" type="button" data-filter="all">All</button>
+          <button class="filter-chip" type="button" data-filter="guide">Guides</button>
+          <button class="filter-chip" type="button" data-filter="deep-dive">Deep dives</button>
+        </div>
+
+        <div class="section-label">Session guides and deep dives</div>
+        <div class="resource-grid">
+          <a class="resource-card" href="cv_web_1.html" data-kind="guide" style="--card-accent: var(--accent);">
+            <div class="card-meta">
+              <span class="meta-tag">Webinar 1</span>
+              <span class="meta-type">Guide</span>
+            </div>
+            <h3>Image Processing Techniques</h3>
+            <p>Core image processing concepts including filters, histograms, and transforms in a guided format.</p>
+            <div class="card-footer">
+              <span>Best for concept refresh</span>
+              <span class="card-arrow">Open -></span>
+            </div>
+          </a>
+
+          <a class="resource-card" href="CV2_DeepDive.html" data-kind="deep-dive" style="--card-accent: var(--accent);">
+            <div class="card-meta">
+              <span class="meta-tag">Chapter 2</span>
+              <span class="meta-type">Deep dive</span>
+            </div>
+            <h3>Deep Dive Study Guide</h3>
+            <p>A more detailed walkthrough of the second session with tighter conceptual breakdowns.</p>
+            <div class="card-footer">
+              <span>Long-form revision</span>
+              <span class="card-arrow">Open -></span>
+            </div>
+          </a>
+
+          <a class="resource-card" href="CV_Session3_WorldClass.html" data-kind="guide" style="--card-accent: var(--accent);">
+            <div class="card-meta">
+              <span class="meta-tag">Session 3</span>
+              <span class="meta-type">Guide</span>
+            </div>
+            <h3>Low-Level Vision</h3>
+            <p>Image representation, histograms, Gaussian and box filters, and color spaces.</p>
+            <div class="card-footer">
+              <span>Revision-friendly</span>
+              <span class="card-arrow">Open -></span>
+            </div>
+          </a>
+
+          <a class="resource-card" href="CV_Session4_WorldClass.html" data-kind="guide" style="--card-accent: var(--accent);">
+            <div class="card-meta">
+              <span class="meta-tag">Session 4</span>
+              <span class="meta-type">Guide</span>
+            </div>
+            <h3>Edge Detection and Low-Level Vision</h3>
+            <p>Gradients, Sobel, Prewitt, Roberts, edge models, Hough basics, and the first CNN block.</p>
+            <div class="card-footer">
+              <span>Exam prep ready</span>
+              <span class="card-arrow">Open -></span>
+            </div>
+          </a>
+
+          <a class="resource-card" href="CV_Session5_WorldClass.html" data-kind="deep-dive" style="--card-accent: var(--accent);">
+            <div class="card-meta">
+              <span class="meta-tag">Session 5</span>
+              <span class="meta-type">Deep dive</span>
+            </div>
+            <h3>Canny, Hough, Harris, HoG, and Color</h3>
+            <p>A richer session covering detection pipelines, feature extraction, previews of later topics, demos, and a quiz.</p>
+            <div class="card-footer">
+              <span>Interactive revision mix</span>
+              <span class="card-arrow">Open -></span>
+            </div>
+          </a>
+        </div>
+        <div class="empty-state">
+          <strong>No matching Computer Vision resources</strong>
+          <p>Try a broader search term or switch the content filter back to all resources.</p>
+          <span>Adjust search or filter</span>
+        </div>
+      </section>
+
+      <section class="subject-panel" id="panel-dmml" data-subject="dmml">
+        <div class="panel-header">
+          <div>
+            <h2>DMML</h2>
+            <p>A structured path through data representation, management, architecture, pipelines, and modern ML workflows.</p>
+          </div>
+          <div class="panel-chip">8 resources</div>
+        </div>
+
+        <div class="filter-row" aria-label="DMML filters">
+          <button class="filter-chip active" type="button" data-filter="all">All</button>
+          <button class="filter-chip" type="button" data-filter="chapter">Chapters</button>
+        </div>
+
+        <div class="section-label">Core chapters</div>
+        <div class="resource-grid">
+          <a class="resource-card" href="DM4ML/DMML_Session1_StudyTool.html" data-kind="chapter" style="--card-accent: var(--accent-3);">
+            <div class="card-meta">
+              <span class="meta-tag">CS 1</span>
+              <span class="meta-type">Chapter</span>
+            </div>
+            <h3>Data Representations</h3>
+            <p>Data formats, models, query languages, serialization, and core processing fundamentals.</p>
+            <div class="card-footer">
+              <span>Foundation layer</span>
+              <span class="card-arrow">Open -></span>
+            </div>
+          </a>
+
+          <a class="resource-card" href="DM4ML/DMML_CS2_StudyTool.html" data-kind="chapter" style="--card-accent: var(--accent-3);">
+            <div class="card-meta">
+              <span class="meta-tag">CS 2</span>
+              <span class="meta-type">Chapter</span>
+            </div>
+            <h3>Data Management Fundamentals</h3>
+            <p>Principles, components, roles, and life cycle phases involved in managing data systems.</p>
+            <div class="card-footer">
+              <span>Systems overview</span>
+              <span class="card-arrow">Open -></span>
+            </div>
+          </a>
+
+          <a class="resource-card" href="DM4ML/Data_Architectures_Study_Tool.html" data-kind="chapter" style="--card-accent: var(--accent-3);">
+            <div class="card-meta">
+              <span class="meta-tag">CS 3</span>
+              <span class="meta-type">Chapter</span>
+            </div>
+            <h3>Data Architectures</h3>
+            <p>Traditional and modern architectures, plus comparisons across lakehouse, warehouse, and data lake patterns.</p>
+            <div class="card-footer">
+              <span>Architecture focus</span>
+              <span class="card-arrow">Open -></span>
+            </div>
+          </a>
+
+          <a class="resource-card" href="DM4ML/data_pipelines_study.html" data-kind="chapter" style="--card-accent: var(--accent-3);">
+            <div class="card-meta">
+              <span class="meta-tag">CS 4</span>
+              <span class="meta-type">Chapter</span>
+            </div>
+            <h3>Data Pipelines</h3>
+            <p>Data flow modes, ETL and ELT patterns, the modern stack, and unified movement across systems.</p>
+            <div class="card-footer">
+              <span>Workflow heavy</span>
+              <span class="card-arrow">Open -></span>
+            </div>
+          </a>
+
+          <a class="resource-card" href="DM4ML/DMML_CS5_StudyTool.html" data-kind="chapter" style="--card-accent: var(--accent-3);">
+            <div class="card-meta">
+              <span class="meta-tag">CS 5</span>
+              <span class="meta-type">Chapter</span>
+            </div>
+            <h3>Modern Data Infrastructure and DataOps</h3>
+            <p>Data science infrastructure, ML data serving, CI and CD pipelines, observability, and DataOps.</p>
+            <div class="card-footer">
+              <span>Ops and delivery</span>
+              <span class="card-arrow">Open -></span>
+            </div>
+          </a>
+
+          <a class="resource-card" href="DM4ML/DMML_CS6_StudyTool.html" data-kind="chapter" style="--card-accent: var(--accent-3);">
+            <div class="card-meta">
+              <span class="meta-tag">CS 6</span>
+              <span class="meta-type">Chapter</span>
+            </div>
+            <h3>ML Lifecycle and Workflow</h3>
+            <p>End-to-end ML lifecycle, software layers, and the bridge from DataOps to MLOps.</p>
+            <div class="card-footer">
+              <span>Lifecycle mapping</span>
+              <span class="card-arrow">Open -></span>
+            </div>
+          </a>
+
+          <a class="resource-card" href="DM4ML/DMML_CS7_StudyTool.html" data-kind="chapter" style="--card-accent: var(--accent-3);">
+            <div class="card-meta">
+              <span class="meta-tag">CS 7</span>
+              <span class="meta-type">Chapter</span>
+            </div>
+            <h3>Data Collection and Ingestion</h3>
+            <p>Data sources, ingestion strategies, source contracts, lineage, and governance considerations.</p>
+            <div class="card-footer">
+              <span>Pipeline entry point</span>
+              <span class="card-arrow">Open -></span>
+            </div>
+          </a>
+
+          <a class="resource-card" href="DM4ML/DMML_CS8_StudyTool.html" data-kind="chapter" style="--card-accent: var(--accent-3);">
+            <div class="card-meta">
+              <span class="meta-tag">CS 8</span>
+              <span class="meta-type">Chapter</span>
+            </div>
+            <h3>Data Profiling and Validation</h3>
+            <p>Quality dimensions, skew and drift, bias and fairness, and validation frameworks for ML systems.</p>
+            <div class="card-footer">
+              <span>Quality and trust</span>
+              <span class="card-arrow">Open -></span>
+            </div>
+          </a>
+        </div>
+        <div class="empty-state">
+          <strong>No matching DMML resources</strong>
+          <p>Try a simpler keyword or clear the subject filter to return to the full chapter list.</p>
+          <span>Broaden your query</span>
+        </div>
+      </section>
+
+      <section class="subject-panel" id="panel-drl" data-subject="drl">
+        <div class="panel-header">
+          <div>
+            <h2>Deep RL</h2>
+            <p>A balanced mix of theory and interactivity, from bandits and MDPs to dynamic programming and Monte Carlo methods.</p>
+          </div>
+          <div class="panel-chip">8 resources</div>
+        </div>
+
+        <div class="filter-row" aria-label="Deep RL filters">
+          <button class="filter-chip active" type="button" data-filter="all">All</button>
+          <button class="filter-chip" type="button" data-filter="guide">Guides</button>
+          <button class="filter-chip" type="button" data-filter="simulator">Simulators</button>
+        </div>
+
+        <div class="section-label">Theory and interactive tools</div>
+        <div class="resource-grid">
+          <a class="resource-card" href="DRL/DRL_cs1_study_guide.html" data-kind="guide" style="--card-accent: var(--accent-2);">
+            <div class="card-meta">
+              <span class="meta-tag">Session 1</span>
+              <span class="meta-type">Guide</span>
+            </div>
+            <h3>Introduction to RL</h3>
+            <p>Agent-environment basics, policy and value concepts, and temporal-difference learning through classic examples.</p>
+            <div class="card-footer">
+              <span>Start here</span>
+              <span class="card-arrow">Open -></span>
+            </div>
+          </a>
+
+          <a class="resource-card" href="DRL/DRL_cs2_study_guide.html" data-kind="guide" style="--card-accent: var(--accent-2);">
+            <div class="card-meta">
+              <span class="meta-tag">Session 2</span>
+              <span class="meta-type">Guide</span>
+            </div>
+            <h3>Multi-Armed Bandits</h3>
+            <p>Exploration versus exploitation, epsilon-greedy, UCB, gradient bandits, and non-stationary updates.</p>
+            <div class="card-footer">
+              <span>Core RL setup</span>
+              <span class="card-arrow">Open -></span>
+            </div>
+          </a>
+
+          <a class="resource-card" href="DRL/deep_rl_bandits_v2_enhanced.html" data-kind="guide" style="--card-accent: var(--accent-2);">
+            <div class="card-meta">
+              <span class="meta-tag">Session 2 Notes</span>
+              <span class="meta-type">Guide</span>
+            </div>
+            <h3>Multi-Armed Bandits Enhanced</h3>
+            <p>A richer companion view of bandit algorithms with more depth around action-value estimation.</p>
+            <div class="card-footer">
+              <span>Supplementary deepening</span>
+              <span class="card-arrow">Open -></span>
+            </div>
+          </a>
+
+          <a class="resource-card" href="DRL/rl_bandit_complete.html" data-kind="simulator" style="--card-accent: var(--accent-2);">
+            <div class="card-meta">
+              <span class="meta-tag">Bandits</span>
+              <span class="meta-type">Complete Lab</span>
+            </div>
+            <h3>Complete Bandit Simulator</h3>
+            <p>Explore epsilon-greedy, UCB, and optimistic initialization, then compare how each strategy learns over time.</p>
+            <div class="card-footer">
+              <span>Interactive strategy lab</span>
+              <span class="card-arrow">Open -></span>
+            </div>
+          </a>
+
+          <a class="resource-card" href="DRL/cs3_study_guide.html" data-kind="guide" style="--card-accent: var(--accent-2);">
+            <div class="card-meta">
+              <span class="meta-tag">Session 3</span>
+              <span class="meta-type">Guide</span>
+            </div>
+            <h3>Finite Markov Decision Processes</h3>
+            <p>Markov property, state and action values, returns, Bellman equations, and MDP framing.</p>
+            <div class="card-footer">
+              <span>Decision process basics</span>
+              <span class="card-arrow">Open -></span>
+            </div>
+          </a>
+
+          <a class="resource-card" href="DRL/cs4_study_guide.html" data-kind="guide" style="--card-accent: var(--accent-2);">
+            <div class="card-meta">
+              <span class="meta-tag">Session 4</span>
+              <span class="meta-type">Guide</span>
+            </div>
+            <h3>Dynamic Programming</h3>
+            <p>Policy evaluation, policy iteration, value iteration, and generalized policy iteration.</p>
+            <div class="card-footer">
+              <span>Algorithmic core</span>
+              <span class="card-arrow">Open -></span>
+            </div>
+          </a>
+
+          <a class="resource-card" href="DRL/mdp_dp_simulator.html" data-kind="simulator" style="--card-accent: var(--accent-2);">
+            <div class="card-meta">
+              <span class="meta-tag">MDP and DP</span>
+              <span class="meta-type">Simulator</span>
+            </div>
+            <h3>MDP and DP Simulator</h3>
+            <p>Experiment with environments and dynamic programming routines to reinforce the mechanics behind the math.</p>
+            <div class="card-footer">
+              <span>Interactive exploration</span>
+              <span class="card-arrow">Open -></span>
+            </div>
+          </a>
+
+          <a class="resource-card" href="DRL/mc_simulator.html" data-kind="simulator" style="--card-accent: var(--accent-2);">
+            <div class="card-meta">
+              <span class="meta-tag">Monte Carlo</span>
+              <span class="meta-type">Simulator</span>
+            </div>
+            <h3>Monte Carlo Methods</h3>
+            <p>Interact with Monte Carlo prediction and control concepts through a dedicated simulator experience.</p>
+            <div class="card-footer">
+              <span>Practice and intuition</span>
+              <span class="card-arrow">Open -></span>
+            </div>
+          </a>
+        </div>
+        <div class="empty-state">
+          <strong>No matching Deep RL resources</strong>
+          <p>Try searching for bandits, MDP, Monte Carlo, or simulator to narrow in on a specific concept.</p>
+          <span>Search by RL concept</span>
+        </div>
+      </section>
+
+      <section class="subject-panel" id="panel-aci" data-subject="aci">
+        <div class="panel-header">
+          <div>
+            <h2>Advanced Computational Intelligence</h2>
+            <p>This subject space is ready for future content and already styled to match the rest of the hub once chapters are added.</p>
+          </div>
+          <div class="panel-chip">Ready for expansion</div>
+        </div>
+
+        <div class="filter-row" aria-label="ACI filters">
+          <button class="filter-chip active" type="button" data-filter="all">All</button>
+        </div>
+
+        <div class="empty-state visible">
+          <strong>No ACI resources added yet</strong>
+          <p>Add new ACI chapter cards into this panel and they will automatically inherit the layout, theme support, and search behavior.</p>
+          <span>Future-ready panel</span>
+        </div>
+      </section>
+    </main>
+
+    <footer>BITS Pilani | WILP | M.Tech AIML | Semester 2</footer>
+  </div>
 
   <script>
-    const ACCENTS = { gold:'var(--gold)', teal:'var(--teal)', sky:'var(--sky)', violet:'var(--violet)' };
-    function showSubject(id, tab){
-      document.querySelectorAll('.subject-panel').forEach(p=>p.classList.remove('active'));
-      document.querySelectorAll('.subject-tab').forEach(t=>t.classList.remove('active'));
-      document.getElementById('panel-'+id).classList.add('active');
-      tab.classList.add('active');
-      const accent = ACCENTS[tab.dataset.accent];
-      document.getElementById('eyebrow').style.color = accent;
-      document.getElementById('hl').style.color = accent;
-      history.replaceState(null, '', '#'+id);
-      window.scrollTo({ top:0, behavior:'smooth' });
+    const THEME_KEY = "study-hub-theme";
+    const root = document.documentElement;
+    const themeToggle = document.getElementById("themeToggle");
+    const themeToggleText = document.getElementById("themeToggleText");
+    const searchInput = document.getElementById("searchInput");
+    const resultsPill = document.getElementById("resultsPill");
+    const subjectTabs = Array.from(document.querySelectorAll(".subject-tab"));
+    const subjectPanels = Array.from(document.querySelectorAll(".subject-panel"));
+    const resourceCards = Array.from(document.querySelectorAll(".resource-card"));
+    const metricResources = document.getElementById("metricResources");
+    const metricSimulators = document.getElementById("metricSimulators");
+    const jumpFeatured = document.getElementById("jumpFeatured");
+
+    function applyTheme(theme) {
+      const nextTheme = theme === "light" ? "light" : "dark";
+      root.setAttribute("data-theme", nextTheme);
+      localStorage.setItem(THEME_KEY, nextTheme);
+      themeToggle.setAttribute("aria-pressed", String(nextTheme === "light"));
+      themeToggleText.textContent = nextTheme === "light" ? "Day mode" : "Night mode";
     }
-    // deep-link support (#dmml etc.)
-    window.addEventListener('load', ()=>{
-      const id = location.hash.replace('#','');
-      const tab = document.querySelector('.subject-tab[data-subject="'+id+'"]');
-      if(tab) showSubject(id, tab);
+
+    function initTheme() {
+      const savedTheme = localStorage.getItem(THEME_KEY);
+      const systemPrefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+      applyTheme(savedTheme || (systemPrefersLight ? "light" : "dark"));
+    }
+
+    function setActiveSubject(subjectId, updateHash = true) {
+      subjectTabs.forEach((tab) => {
+        const isActive = tab.dataset.subject === subjectId;
+        tab.classList.toggle("active", isActive);
+        tab.setAttribute("aria-pressed", String(isActive));
+      });
+
+      subjectPanels.forEach((panel) => {
+        panel.classList.toggle("active", panel.dataset.subject === subjectId);
+      });
+
+      if (updateHash) {
+        history.replaceState(null, "", "#" + subjectId);
+      }
+
+      applyFilters();
+    }
+
+    function getActivePanel() {
+      return document.querySelector(".subject-panel.active");
+    }
+
+    function getActiveFilter(panel) {
+      return panel?.querySelector(".filter-chip.active")?.dataset.filter || "all";
+    }
+
+    function applyFilters() {
+      const panel = getActivePanel();
+      if (!panel) return;
+
+      const filter = getActiveFilter(panel);
+      const query = searchInput.value.trim().toLowerCase();
+      const cards = Array.from(panel.querySelectorAll(".resource-card"));
+      let visibleCount = 0;
+
+      cards.forEach((card) => {
+        const matchesFilter = filter === "all" || card.dataset.kind === filter;
+        const haystack = card.textContent.toLowerCase();
+        const matchesSearch = !query || haystack.includes(query);
+        const visible = matchesFilter && matchesSearch;
+        card.hidden = !visible;
+        if (visible) visibleCount += 1;
+      });
+
+      const emptyState = panel.querySelector(".empty-state");
+      if (emptyState) {
+        const hasCards = cards.length > 0;
+        emptyState.classList.toggle("visible", hasCards && visibleCount === 0);
+      }
+
+      const subjectName = panel.querySelector("h2")?.textContent || "resources";
+      if (!query && filter === "all") {
+        resultsPill.textContent = "Showing all " + subjectName + " resources";
+      } else {
+        resultsPill.textContent = visibleCount + " result" + (visibleCount === 1 ? "" : "s") + " in " + subjectName;
+      }
+    }
+
+    function bindFilters() {
+      document.querySelectorAll(".filter-row").forEach((row) => {
+        row.addEventListener("click", (event) => {
+          const chip = event.target.closest(".filter-chip");
+          if (!chip) return;
+          row.querySelectorAll(".filter-chip").forEach((item) => item.classList.remove("active"));
+          chip.classList.add("active");
+          applyFilters();
+        });
+      });
+    }
+
+    function initMetrics() {
+      metricResources.textContent = String(resourceCards.length);
+      const simulatorCount = document.querySelectorAll('.resource-card[data-kind="simulator"]').length;
+      metricSimulators.textContent = String(simulatorCount);
+    }
+
+    function initTabs() {
+      subjectTabs.forEach((tab) => {
+        tab.setAttribute("aria-pressed", String(tab.classList.contains("active")));
+        tab.addEventListener("click", () => {
+          setActiveSubject(tab.dataset.subject);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+      });
+    }
+
+    function initDeepLink() {
+      const deepLinked = location.hash.replace("#", "");
+      const targetTab = subjectTabs.find((tab) => tab.dataset.subject === deepLinked);
+      if (targetTab) {
+        setActiveSubject(targetTab.dataset.subject, false);
+      } else {
+        applyFilters();
+      }
+    }
+
+    themeToggle.addEventListener("click", () => {
+      const nextTheme = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      applyTheme(nextTheme);
     });
+
+    searchInput.addEventListener("input", applyFilters);
+
+    jumpFeatured.addEventListener("click", () => {
+      setActiveSubject("drl");
+      const simulatorsChip = document.querySelector('#panel-drl .filter-chip[data-filter="simulator"]');
+      if (simulatorsChip) {
+        document.querySelectorAll("#panel-drl .filter-chip").forEach((chip) => chip.classList.remove("active"));
+        simulatorsChip.classList.add("active");
+      }
+      applyFilters();
+      document.getElementById("subjects").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    initTheme();
+    initMetrics();
+    initTabs();
+    bindFilters();
+    initDeepLink();
   </script>
 </body>
 </html>

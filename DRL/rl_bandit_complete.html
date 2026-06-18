@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RL Bandit Simulator — ε-Greedy · UCB · Optimistic</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ============================================================
+   TOKENS
+   ============================================================ */
+:root {
+  --bg:#0F1117; --bg2:#151821; --card:#1A1D27; --card2:#20243A;
+  --border:#2A2D3E; --text:#E8EAF0; --text2:#8B90A8; --text3:#5A5F7A;
+  --blue:#4F8EF7;   --blue-dim:rgba(79,142,247,0.15);
+  --orange:#F7944F; --orange-dim:rgba(247,148,79,0.15);
+  --green:#4FCF8E;  --green-dim:rgba(79,207,142,0.15);
+  --purple:#A78BFA; --purple-dim:rgba(167,139,250,0.15);
+  --teal:#4FF7D4;   --teal-dim:rgba(79,247,212,0.15);
+  --gold:#F7D94F;   --gold-dim:rgba(247,217,79,0.15);
+  --red:#F76F6F;
+  --font-d:'Space Grotesk',sans-serif;
+  --font-b:'Inter',sans-serif;
+  --font-m:'JetBrains Mono',monospace;
+  --r:12px; --rs:8px;
+  --tr:0.25s cubic-bezier(0.4,0,0.2,1);
+}
+[data-theme="light"]{
+  --bg:#F0F2F8; --bg2:#E8EBF4; --card:#FFFFFF; --card2:#F4F6FF;
+  --border:#DDE0EC; --text:#1A1D2E; --text2:#5A5F7A; --text3:#8B90A8;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font-b);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background var(--tr),color var(--tr);}
+
+/* ============================================================
+   TOP NAV
+   ============================================================ */
+.topnav{
+  background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:stretch;
+  position:sticky; top:0; z-index:200;
+  height:52px;
+}
+.nav-brand{
+  display:flex; align-items:center; gap:10px;
+  padding:0 20px;
+  border-right:1px solid var(--border);
+  flex-shrink:0;
+}
+.nav-brand-text{font-family:var(--font-d);font-size:15px;font-weight:700;letter-spacing:-0.3px;}
+.nav-tabs{display:flex; flex:1;}
+.nav-tab{
+  display:flex; align-items:center; gap:8px;
+  padding:0 20px;
+  font-size:13px; font-weight:500;
+  color:var(--text3);
+  cursor:pointer;
+  border:none; background:transparent;
+  border-bottom:2px solid transparent;
+  transition:all var(--tr);
+  white-space:nowrap;
+  font-family:var(--font-b);
+}
+.nav-tab:hover{color:var(--text); background:var(--card);}
+.nav-tab.active{color:var(--text); border-bottom-color:var(--tab-accent,var(--blue));}
+.nav-tab .tab-dot{width:8px;height:8px;border-radius:50%;background:var(--tab-accent,var(--blue));flex-shrink:0;}
+.nav-tab[data-tab="eps"] {--tab-accent:var(--orange);}
+.nav-tab[data-tab="ucb"] {--tab-accent:var(--teal);}
+.nav-tab[data-tab="oiv"] {--tab-accent:var(--gold);}
+.nav-tab[data-tab="cmp"] {--tab-accent:var(--purple);}
+.nav-right{display:flex;align-items:center;gap:8px;padding:0 16px;border-left:1px solid var(--border);flex-shrink:0;}
+.btn-icon{background:var(--card);border:1px solid var(--border);border-radius:var(--rs);padding:5px 10px;cursor:pointer;font-size:13px;color:var(--text2);transition:all var(--tr);}
+.btn-icon:hover{border-color:var(--blue);color:var(--text);}
+.chk-label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer;white-space:nowrap;}
+.chk-label input{accent-color:var(--purple);width:13px;height:13px;}
+
+/* ============================================================
+   PAGES
+   ============================================================ */
+.page{display:none;}
+.page.active{display:block;}
+
+/* ============================================================
+   SHARED LAYOUT
+   ============================================================ */
+.layout{display:grid;grid-template-columns:268px 1fr;min-height:calc(100vh - 52px);}
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:18px;overflow-y:auto;max-height:calc(100vh - 52px);position:sticky;top:52px;}
+.content{padding:18px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;}
+
+/* ============================================================
+   SIDEBAR CONTROLS
+   ============================================================ */
+.sb-section{margin-bottom:22px;}
+.sb-label{font-family:var(--font-d);font-size:10px;font-weight:600;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.sb-label::after{content:'';flex:1;height:1px;background:var(--border);}
+.ctrl{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
+.ctrl label{font-size:12px;color:var(--text2);font-weight:500;display:flex;justify-content:space-between;}
+.ctrl label .v{font-family:var(--font-m);color:var(--accent,var(--blue));font-size:12px;}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;background:var(--border);border-radius:2px;outline:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--accent,var(--blue));cursor:pointer;}
+select{width:100%;padding:7px 9px;background:var(--card);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-size:13px;font-family:var(--font-b);cursor:pointer;outline:none;}
+select:focus{border-color:var(--accent,var(--blue));}
+.radio-g{display:flex;flex-direction:column;gap:5px;}
+.radio-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);cursor:pointer;padding:5px 8px;border-radius:var(--rs);border:1px solid transparent;transition:all var(--tr);}
+.radio-item:hover{background:var(--card);border-color:var(--border);}
+.radio-item.active{background:rgba(var(--accent-rgb,79,142,247),0.12);border-color:var(--accent,var(--blue));color:var(--text);}
+.radio-item input{width:13px;height:13px;}
+.btn{font-family:var(--font-b);font-size:13px;font-weight:500;padding:7px 13px;border-radius:var(--rs);border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;transition:all var(--tr);display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
+.btn:hover{background:var(--card2);border-color:var(--accent,var(--blue));color:var(--accent,var(--blue));}
+.btn.primary{background:var(--accent,var(--blue));border-color:var(--accent,var(--blue));color:#fff;}
+.btn.primary:hover{opacity:.9;color:#fff;}
+.btn.success{background:var(--green);border-color:var(--green);color:#111;}
+.btn.success:hover{opacity:.9;color:#111;}
+.btn.warn{background:var(--orange);border-color:var(--orange);color:#fff;}
+.btn.warn:hover{opacity:.9;color:#fff;}
+.btn.sm{font-size:12px;padding:5px 10px;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-col{display:flex;flex-direction:column;gap:7px;}
+.btn-col .btn{width:100%;justify-content:center;}
+.preset-btn{padding:8px 10px;background:var(--card);border:1px solid var(--border);border-radius:var(--rs);color:var(--text2);font-size:12px;cursor:pointer;text-align:left;transition:all var(--tr);font-family:var(--font-b);width:100%;margin-bottom:5px;}
+.preset-btn:hover{border-color:var(--accent,var(--blue));color:var(--text);background:rgba(var(--accent-rgb,79,142,247),0.1);}
+.preset-btn strong{display:block;color:var(--text);font-size:13px;margin-bottom:2px;}
+
+/* ============================================================
+   SHARED COMPONENTS
+   ============================================================ */
+.stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.stat-box{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:11px;text-align:center;}
+.stat-val{font-family:var(--font-d);font-size:21px;font-weight:700;color:var(--accent,var(--blue));display:block;}
+.stat-lbl{font-size:10px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.5px;}
+
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.sec-title{font-family:var(--font-d);font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;}
+
+/* ARM CARDS */
+.arm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(125px,1fr));gap:10px;}
+.arm-card{background:var(--card);border:2px solid var(--border);border-radius:var(--r);padding:13px;transition:all var(--tr);position:relative;overflow:hidden;}
+.arm-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--border);transition:background var(--tr);}
+.arm-card.sel{border-color:var(--accent,var(--blue));box-shadow:0 0 18px rgba(var(--accent-rgb,79,142,247),.18);}
+.arm-card.sel::before{background:var(--accent,var(--blue));}
+@keyframes fp{0%{transform:scale(1);}50%{transform:scale(1.04);}100%{transform:scale(1);}}
+.arm-card.sel{animation:fp .5s ease;}
+.arm-nm{font-family:var(--font-d);font-size:17px;font-weight:700;margin-bottom:6px;}
+.arm-lbl{font-size:10px;color:var(--text3);margin-bottom:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.arm-st{font-size:11px;color:var(--text3);display:flex;justify-content:space-between;margin-bottom:3px;}
+.arm-st span:last-child{font-family:var(--font-m);color:var(--text2);}
+.arm-qbar{background:var(--border);border-radius:4px;height:4px;margin-top:7px;overflow:hidden;}
+.arm-qbar-fill{height:100%;background:linear-gradient(90deg,var(--accent,var(--blue)),var(--purple));border-radius:4px;transition:width .5s ease;}
+.arm-badge{position:absolute;top:8px;right:8px;font-family:var(--font-m);font-size:10px;border-radius:5px;padding:2px 5px;opacity:0;transition:opacity var(--tr);}
+.arm-badge.show{opacity:1;}
+
+/* ALGO PANEL */
+.algo-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;}
+.steps-track{display:flex;flex-direction:column;gap:9px;}
+.step-row{display:flex;gap:11px;opacity:.3;transition:all var(--tr);}
+.step-row.active{opacity:1;}
+.step-row.done{opacity:.65;}
+.step-n{width:22px;height:22px;border-radius:50%;background:var(--border);color:var(--text3);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all var(--tr);font-family:var(--font-m);}
+.step-row.active .step-n{background:rgba(var(--accent-rgb,79,142,247),.15);color:var(--accent,var(--blue));border:1px solid var(--accent,var(--blue));}
+.step-row.done .step-n{background:var(--green-dim);color:var(--green);border:1px solid var(--green);}
+.step-ttl{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;}
+.step-dsc{font-size:12px;color:var(--text2);line-height:1.5;}
+.step-fml{font-family:var(--font-m);font-size:12px;background:var(--bg2);padding:7px 11px;border-radius:var(--rs);margin-top:5px;border-left:2px solid var(--accent,var(--blue));color:var(--text);line-height:1.6;}
+.beginner-note{margin-top:7px;padding:7px 11px;background:rgba(var(--accent-rgb,79,142,247),.1);border-radius:var(--rs);border-left:2px solid var(--accent,var(--blue));font-size:12px;color:var(--text2);line-height:1.6;display:none;}
+.beginner-mode .beginner-note{display:block;}
+
+/* DECISION STRIP (ε-greedy) */
+.decision-strip{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center;margin-bottom:16px;padding:14px;background:var(--bg2);border-radius:var(--r);border:1px solid var(--border);}
+.ds-block{text-align:center;padding:10px;border-radius:var(--rs);background:var(--card);border:1px solid var(--border);transition:all var(--tr);}
+.ds-block.hi-exp{background:var(--orange-dim);border-color:var(--orange);}
+.ds-block.hi-xpl{background:var(--green-dim);border-color:var(--green);}
+.ds-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+.ds-val{font-family:var(--font-m);font-size:20px;color:var(--text);transition:color var(--tr);}
+.ds-block.hi-exp .ds-val{color:var(--orange);}
+.ds-block.hi-xpl .ds-val{color:var(--green);}
+.ds-mid{text-align:center;}
+.ds-cmp{font-family:var(--font-m);font-size:12px;color:var(--text2);margin:3px 0;}
+.ds-verdict{font-family:var(--font-d);font-size:11px;font-weight:700;letter-spacing:1px;padding:3px 10px;border-radius:20px;opacity:0;transition:all var(--tr);}
+.ds-verdict.exp{opacity:1;background:var(--orange-dim);color:var(--orange);border:1px solid var(--orange);}
+.ds-verdict.xpl{opacity:1;background:var(--green-dim);color:var(--green);border:1px solid var(--green);}
+
+/* UCB SCORE BARS */
+.ucb-score-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;}
+.ucb-bar-row{display:grid;grid-template-columns:28px 1fr 105px;align-items:center;gap:9px;margin-bottom:8px;}
+.ucb-anm{font-family:var(--font-m);font-size:13px;font-weight:600;}
+.ucb-outer{background:var(--border);border-radius:5px;height:26px;position:relative;overflow:hidden;}
+.ucb-q-fill{position:absolute;top:0;left:0;height:100%;background:var(--blue);border-radius:5px 0 0 5px;transition:width .45s ease;}
+.ucb-b-fill{position:absolute;top:0;height:100%;background:var(--teal);opacity:.85;transition:left .45s ease,width .45s ease;}
+.ucb-outer.sel-bar .ucb-q-fill{background:var(--green);}
+.ucb-outer.sel-bar .ucb-b-fill{background:var(--purple);}
+.ucb-bar-lbl{position:absolute;right:5px;top:50%;transform:translateY(-50%);font-family:var(--font-m);font-size:10px;color:rgba(255,255,255,.75);pointer-events:none;}
+.ucb-info{font-family:var(--font-m);font-size:11px;color:var(--text2);}
+.ucb-score-num{font-size:12px;color:var(--text);font-weight:500;}
+.ucb-legend{display:flex;gap:14px;margin-bottom:10px;flex-wrap:wrap;}
+.ucb-leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);}
+.ucb-leg-sw{width:12px;height:9px;border-radius:2px;}
+
+/* OIV — optimistic bars */
+.oiv-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;}
+.oiv-bar-row{display:grid;grid-template-columns:28px 1fr 80px;align-items:center;gap:9px;margin-bottom:8px;}
+.oiv-outer{background:var(--border);border-radius:5px;height:26px;position:relative;overflow:hidden;}
+.oiv-q-fill{position:absolute;top:0;left:0;height:100%;transition:width .45s ease;border-radius:5px;}
+.oiv-truth-line{position:absolute;top:0;height:100%;width:2px;background:var(--red);opacity:.7;transition:left .45s ease;}
+.oiv-bar-lbl{position:absolute;right:5px;top:50%;transform:translateY(-50%);font-family:var(--font-m);font-size:10px;color:rgba(255,255,255,.75);pointer-events:none;}
+.oiv-info{font-family:var(--font-m);font-size:11px;color:var(--text2);}
+.oiv-q-val{font-size:12px;font-weight:500;}
+/* disappointment indicator */
+.disappoint{display:inline-block;font-size:10px;padding:1px 6px;border-radius:10px;margin-left:4px;}
+.disappoint.pos{background:var(--green-dim);color:var(--green);}
+.disappoint.neg{background:var(--red);color:#fff;}
+.init-warn{background:var(--gold-dim);border:1px solid var(--gold);border-radius:var(--rs);padding:9px 13px;font-size:12px;color:var(--gold);margin-bottom:12px;display:none;}
+.init-warn.show{display:block;}
+
+/* FORMULA HERO */
+.fml-hero{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:14px;text-align:center;}
+.fml-main{font-family:var(--font-m);font-size:15px;color:var(--text);letter-spacing:.3px;margin-bottom:8px;}
+.fml-terms{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-top:6px;}
+.fml-term{text-align:center;}
+.fml-tv{font-family:var(--font-m);font-size:12px;padding:3px 9px;border-radius:5px;margin-bottom:2px;}
+.fml-tl{font-size:10px;color:var(--text3);}
+
+/* CHARTS */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.chart-box{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px;}
+.chart-ttl{font-family:var(--font-d);font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;}
+.chart-wrap{position:relative;height:185px;}
+
+/* HISTORY */
+.hist-box{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
+.hist-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 15px;border-bottom:1px solid var(--border);}
+.hist-wrap{overflow-x:auto;max-height:250px;overflow-y:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead{position:sticky;top:0;z-index:2;}
+thead th{background:var(--card2);padding:8px 11px;text-align:left;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-size:10px;white-space:nowrap;border-bottom:1px solid var(--border);}
+tbody tr{border-bottom:1px solid var(--border);transition:background var(--tr);}
+tbody tr:hover{background:var(--card2);}
+tbody tr.latest{background:rgba(var(--accent-rgb,79,142,247),.12);}
+tbody td{padding:7px 11px;color:var(--text2);font-family:var(--font-m);white-space:nowrap;}
+.tag{border-radius:10px;padding:1px 7px;font-family:var(--font-b);font-size:10px;font-weight:600;letter-spacing:.5px;}
+.tag-exp{background:var(--orange-dim);color:var(--orange);border:1px solid var(--orange);}
+.tag-xpl{background:var(--green-dim);color:var(--green);border:1px solid var(--green);}
+.tag-init{background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold);}
+.tag-dis{background:var(--purple-dim);color:var(--purple);border:1px solid var(--purple);}
+
+/* THEORY */
+.theory-box{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
+.theory-toggle{display:flex;align-items:center;justify-content:space-between;padding:13px 15px;cursor:pointer;user-select:none;transition:background var(--tr);}
+.theory-toggle:hover{background:var(--card2);}
+.theory-icon{transition:transform var(--tr);color:var(--text3);}
+.theory-toggle.open .theory-icon{transform:rotate(180deg);}
+.theory-body{display:none;padding:0 15px 15px;}
+.theory-body.open{display:block;}
+.theory-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:10px;}
+.tc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);padding:13px;}
+.tc h4{font-family:var(--font-d);font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px;}
+.tc p{font-size:12px;color:var(--text2);line-height:1.6;}
+.tc code{font-family:var(--font-m);font-size:11px;background:var(--border);padding:1px 4px;border-radius:3px;}
+
+/* ============================================================
+   COMPARE PAGE
+   ============================================================ */
+.cmp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.cmp-card{background:var(--card);border:2px solid var(--border);border-radius:var(--r);padding:16px;transition:all var(--tr);}
+.cmp-card.winner{border-color:var(--gold);box-shadow:0 0 18px var(--gold-dim);}
+.cmp-card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.cmp-name{font-family:var(--font-d);font-size:15px;font-weight:700;}
+.cmp-badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;}
+.cmp-stat-row{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:5px;}
+.cmp-stat-row strong{font-family:var(--font-m);color:var(--text);}
+.cmp-chart-wrap{position:relative;height:130px;margin-top:12px;}
+.cmp-arm-row{display:flex;align-items:center;gap:7px;margin-bottom:5px;}
+.cmp-anm{font-family:var(--font-m);font-size:11px;width:22px;color:var(--text2);}
+.cmp-bar-out{flex:1;background:var(--border);border-radius:3px;height:7px;overflow:hidden;}
+.cmp-bar-in{height:100%;border-radius:3px;transition:width .4s ease;min-width:2px;}
+.cmp-val{font-family:var(--font-m);font-size:10px;color:var(--text3);width:36px;text-align:right;}
+.cmp-controls{display:flex;align-items:center;gap:10px;padding:14px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);flex-wrap:wrap;}
+.cmp-controls label{font-size:12px;color:var(--text2);}
+.cmp-controls input[type=range]{width:120px;}
+.winner-badge{display:none;text-align:center;padding:10px;background:var(--gold-dim);border:1px solid var(--gold);border-radius:var(--rs);font-size:12px;color:var(--gold);margin-top:10px;}
+.winner-badge.show{display:block;}
+.cmp-full-chart{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;}
+.cmp-full-wrap{position:relative;height:260px;}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.fade-in{animation:fadeUp .3s ease both;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr;}
+  .sidebar{max-height:none;position:static;border-right:none;border-bottom:1px solid var(--border);}
+  .charts-row{grid-template-columns:1fr;}
+  .stats-strip{grid-template-columns:repeat(2,1fr);}
+  .cmp-grid{grid-template-columns:1fr;}
+  .decision-strip{grid-template-columns:1fr;}
+  .nav-tab span.tab-name{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     TOP NAV
+     ============================================================ -->
+<nav class="topnav">
+  <div class="nav-brand">
+    <span style="font-size:18px;">🎰</span>
+    <span class="nav-brand-text">Bandit Lab</span>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-tab="eps" onclick="switchTab('eps')">
+      <div class="tab-dot"></div><span class="tab-name">ε-Greedy</span>
+    </button>
+    <button class="nav-tab" data-tab="ucb" onclick="switchTab('ucb')">
+      <div class="tab-dot"></div><span class="tab-name">UCB</span>
+    </button>
+    <button class="nav-tab" data-tab="oiv" onclick="switchTab('oiv')">
+      <div class="tab-dot"></div><span class="tab-name">Optimistic Init</span>
+    </button>
+    <button class="nav-tab" data-tab="cmp" onclick="switchTab('cmp')">
+      <div class="tab-dot"></div><span class="tab-name">⚖️ Compare All</span>
+    </button>
+  </div>
+  <div class="nav-right">
+    <label class="chk-label"><input type="checkbox" id="globalBeginner" onchange="toggleBeginner(this.checked)"> Beginner Mode</label>
+    <button class="btn-icon" onclick="toggleTheme()">🌓</button>
+  </div>
+</nav>
+
+<!-- ============================================================
+     PAGE 1: ε-GREEDY
+     ============================================================ -->
+<div class="page active" id="page-eps" style="--accent:var(--orange);--accent-rgb:247,148,79;">
+<div class="layout">
+<aside class="sidebar">
+  <div class="sb-section">
+    <div class="sb-label">Configuration</div>
+    <div class="ctrl"><label>Arms <span class="v" id="e-armsV">5</span></label><input type="range" id="e-arms" min="2" max="10" value="5" oninput="eUpArms(this.value)"></div>
+    <div class="ctrl"><label>Epsilon (ε) <span class="v" id="e-epsV">0.20</span></label><input type="range" id="e-eps" min="0" max="1" step="0.01" value="0.20" oninput="eUpEps(this.value)"></div>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Step Size</div>
+    <div class="radio-g">
+      <label class="radio-item active" id="e-ss-avg-lbl"><input type="radio" name="e-ss" value="avg" checked onchange="eUpSS('avg')"> Sample Average (1/N)</label>
+      <label class="radio-item" id="e-ss-a-lbl"><input type="radio" name="e-ss" value="alpha" onchange="eUpSS('alpha')"> Constant Alpha</label>
+    </div>
+    <div class="ctrl" id="e-alpha-row" style="display:none;margin-top:8px;">
+      <label>Alpha (α) <span class="v" id="e-alphaV">0.10</span></label>
+      <input type="range" id="e-alpha" min="0.01" max="1" step="0.01" value="0.10" oninput="eUpAlpha(this.value)">
+    </div>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Reward</div>
+    <div class="radio-g">
+      <label class="radio-item active" id="e-rr-lbl"><input type="radio" name="e-rm" value="random" checked onchange="eUpRM('random')"> Random</label>
+      <label class="radio-item" id="e-rm-lbl"><input type="radio" name="e-rm" value="manual" onchange="eUpRM('manual')"> Manual</label>
+    </div>
+    <div id="e-manual-wrap" style="display:none;margin-top:7px;">
+      <input type="number" id="e-manual-r" value="5" min="-10" max="20" step="0.5" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-family:var(--font-m);font-size:14px;padding:6px 10px;outline:none;">
+    </div>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Controls</div>
+    <div class="btn-col">
+      <button class="btn primary" onclick="eStep()">▶ Run One Step</button>
+      <button class="btn" onclick="eSteps(10)">⏩ Run 10 Steps</button>
+      <button class="btn success" id="e-autoBtn" onclick="eToggleAuto()">⚡ Auto Play</button>
+      <button class="btn warn" id="e-pauseBtn" onclick="ePause()" disabled>⏸ Pause</button>
+      <button class="btn" onclick="eReset()">↺ Reset</button>
+    </div>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Presets</div>
+    <button class="preset-btn" onclick="eLoadPreset('r')"><strong>🍕 Restaurant</strong>Pizza · Burger · Noodles · Sushi · Kebab</button>
+    <button class="preset-btn" onclick="eLoadPreset('a')"><strong>📣 Ad Selection</strong>Ad A · Ad B · Ad C · Ad D</button>
+    <button class="preset-btn" onclick="eLoadPreset('d')"><strong>💊 Drug Trial</strong>S · T · R · C</button>
+  </div>
+</aside>
+<main class="content">
+  <div class="stats-strip">
+    <div class="stat-box"><span class="stat-val" id="e-st-step">0</span><div class="stat-lbl">Steps</div></div>
+    <div class="stat-box"><span class="stat-val" id="e-st-total">0.00</span><div class="stat-lbl">Total Reward</div></div>
+    <div class="stat-box"><span class="stat-val" id="e-st-exprate">0%</span><div class="stat-lbl">Explore Rate</div></div>
+    <div class="stat-box"><span class="stat-val" id="e-st-avg">0.00</span><div class="stat-lbl">Avg Reward</div></div>
+  </div>
+  <div><div class="sec-hdr"><div class="sec-title">Action Arms</div></div><div class="arm-grid" id="e-arm-grid"></div></div>
+  <div class="algo-panel">
+    <div class="sec-hdr" style="margin-bottom:14px;">
+      <div class="sec-title">Step-by-Step</div>
+      <span id="e-algo-tag" style="font-size:12px;color:var(--text3);">Awaiting…</span>
+    </div>
+    <div class="decision-strip">
+      <div class="ds-block" id="e-ds-r"><div class="ds-lbl">Random r</div><div class="ds-val" id="e-ds-rv">—</div></div>
+      <div class="ds-mid"><div class="ds-cmp" id="e-ds-cmp">r vs ε</div><div class="ds-verdict" id="e-ds-verdict">—</div></div>
+      <div class="ds-block" id="e-ds-e"><div class="ds-lbl">Epsilon ε</div><div class="ds-val" id="e-ds-ev">—</div></div>
+    </div>
+    <div class="steps-track" id="e-steps"></div>
+  </div>
+  <div class="charts-row">
+    <div class="chart-box"><div class="chart-ttl">📈 Q-Values Over Time</div><div class="chart-wrap"><canvas id="e-qchart"></canvas></div></div>
+    <div class="chart-box"><div class="chart-ttl">💰 Cumulative Reward</div><div class="chart-wrap"><canvas id="e-rchart"></canvas></div></div>
+  </div>
+  <div class="hist-box">
+    <div class="hist-hdr"><div class="sec-title">Step History</div><button class="btn sm" onclick="document.getElementById('e-hist').innerHTML=''">Clear</button></div>
+    <div class="hist-wrap"><table><thead><tr><th>t</th><th>r</th><th>ε</th><th>Decision</th><th>Action</th><th>Reward</th><th>Old Q</th><th>New Q</th></tr></thead><tbody id="e-hist"></tbody></table></div>
+  </div>
+  <div class="theory-box">
+    <div class="theory-toggle" id="e-th-toggle" onclick="toggleTheory('e')"><div class="sec-title">📚 ε-Greedy Theory</div><span class="theory-icon">▼</span></div>
+    <div class="theory-body" id="e-th-body">
+      <div class="theory-grid">
+        <div class="tc"><h4>🎰 Multi-Armed Bandit</h4><p>A row of slot machines, each with a different average reward. You don't know which is best. Goal: maximize total reward over time by making smart choices.</p></div>
+        <div class="tc"><h4>🔍 Exploration vs Exploitation</h4><p>Explore = try new arms to gather information. Exploit = use what you know to pick the best arm. You can't do both fully at once — this is the core tradeoff.</p></div>
+        <div class="tc"><h4>ε-Greedy Rule</h4><p>Generate r ~ Uniform(0,1). If r &lt; ε → explore (random arm). Else → exploit (highest Q). ε = 0.1 means 10% exploration, 90% exploitation.</p></div>
+        <div class="tc"><h4>Q(a) — Action Value</h4><p>Your running estimate of arm a's average reward. Updated every time arm a is chosen: <code>Q_new = Q_old + α(R − Q_old)</code>.</p></div>
+        <div class="tc"><h4>Sample Average vs Constant α</h4><p>Sample average (α=1/N) weights all observations equally — good for stationary problems. Constant α weights recent rewards more — better for non-stationary problems.</p></div>
+        <div class="tc"><h4>❌ Why Pure Greedy Fails</h4><p>ε=0 means only exploitation. If the first arm tried by accident gives a decent reward, the agent picks it forever — never discovering better arms. Exploration breaks this trap.</p></div>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+</div>
+
+<!-- ============================================================
+     PAGE 2: UCB
+     ============================================================ -->
+<div class="page" id="page-ucb" style="--accent:var(--teal);--accent-rgb:79,247,212;">
+<div class="layout">
+<aside class="sidebar">
+  <div class="sb-section">
+    <div class="sb-label">Configuration</div>
+    <div class="ctrl"><label>Arms <span class="v" id="u-armsV">5</span></label><input type="range" id="u-arms" min="2" max="10" value="5" oninput="uUpArms(this.value)"></div>
+    <div class="ctrl"><label>Confidence c <span class="v" id="u-cV">2.0</span></label><input type="range" id="u-c" min="0.1" max="5" step="0.1" value="2.0" oninput="uUpC(this.value)"></div>
+    <p style="font-size:11px;color:var(--text3);line-height:1.5;margin-top:-4px;">Higher c = larger exploration bonus = explores more aggressively.</p>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Reward</div>
+    <div class="radio-g">
+      <label class="radio-item active" id="u-rr-lbl"><input type="radio" name="u-rm" value="random" checked onchange="uUpRM('random')"> Random</label>
+      <label class="radio-item" id="u-rm-lbl"><input type="radio" name="u-rm" value="manual" onchange="uUpRM('manual')"> Manual</label>
+    </div>
+    <div id="u-manual-wrap" style="display:none;margin-top:7px;">
+      <input type="number" id="u-manual-r" value="5" min="-10" max="20" step="0.5" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-family:var(--font-m);font-size:14px;padding:6px 10px;outline:none;">
+    </div>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Controls</div>
+    <div class="btn-col">
+      <button class="btn primary" onclick="uStep()">▶ Run One Step</button>
+      <button class="btn" onclick="uSteps(10)">⏩ Run 10 Steps</button>
+      <button class="btn success" id="u-autoBtn" onclick="uToggleAuto()">⚡ Auto Play</button>
+      <button class="btn warn" id="u-pauseBtn" onclick="uPause()" disabled>⏸ Pause</button>
+      <button class="btn" onclick="uReset()">↺ Reset</button>
+    </div>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Presets</div>
+    <button class="preset-btn" onclick="uLoadPreset('r')"><strong>🍕 Restaurant</strong>Pizza · Burger · Noodles · Sushi · Kebab</button>
+    <button class="preset-btn" onclick="uLoadPreset('a')"><strong>📣 Ad Selection</strong>Ad A · Ad B · Ad C · Ad D</button>
+    <button class="preset-btn" onclick="uLoadPreset('d')"><strong>💊 Drug Trial</strong>S · T · R · C</button>
+  </div>
+</aside>
+<main class="content">
+  <div class="stats-strip">
+    <div class="stat-box"><span class="stat-val" id="u-st-step">0</span><div class="stat-lbl">Steps (t)</div></div>
+    <div class="stat-box"><span class="stat-val" id="u-st-total">0.00</span><div class="stat-lbl">Total Reward</div></div>
+    <div class="stat-box"><span class="stat-val" id="u-st-avg">0.00</span><div class="stat-lbl">Avg Reward</div></div>
+    <div class="stat-box"><span class="stat-val" id="u-st-best">—</span><div class="stat-lbl">Most Picked</div></div>
+  </div>
+  <div class="ucb-score-panel">
+    <div class="sec-hdr"><div class="sec-title">UCB Score = Q(a) + Bonus</div><span style="font-size:11px;color:var(--text3);">🔵 Q-value &nbsp;|&nbsp; 🟢 Exploration Bonus</span></div>
+    <div class="ucb-legend">
+      <div class="ucb-leg-item"><div class="ucb-leg-sw" style="background:var(--blue)"></div>Q(a)</div>
+      <div class="ucb-leg-item"><div class="ucb-leg-sw" style="background:var(--teal)"></div>c·√(ln t/N(a))</div>
+      <div class="ucb-leg-item"><div class="ucb-leg-sw" style="background:var(--green)"></div>Selected Q</div>
+      <div class="ucb-leg-item"><div class="ucb-leg-sw" style="background:var(--purple)"></div>Selected Bonus</div>
+    </div>
+    <div class="init-warn" id="u-init-warn">⚠️ N(a)=0 for some arms → bonus = ∞. Round-robin initialization: trying each arm once first.</div>
+    <div id="u-ucb-bars"></div>
+  </div>
+  <div><div class="sec-hdr"><div class="sec-title">Action Arms</div></div><div class="arm-grid" id="u-arm-grid"></div></div>
+  <div class="algo-panel">
+    <div class="sec-hdr" style="margin-bottom:14px;">
+      <div class="sec-title">Step-by-Step</div>
+      <span id="u-algo-tag" style="font-size:12px;color:var(--text3);">Awaiting…</span>
+    </div>
+    <div class="fml-hero">
+      <div class="fml-main">A<sub>t</sub> = argmax<sub>a</sub> [ <span style="color:var(--blue)">Q(a)</span> + <span style="color:var(--orange)">c</span> · <span style="color:var(--teal)">√(ln t / N(a))</span> ]</div>
+      <div class="fml-terms">
+        <div class="fml-term"><div class="fml-tv" style="background:var(--blue-dim);color:var(--blue)" id="u-ft-q">—</div><div class="fml-tl">Q(a)</div></div>
+        <div class="fml-term"><div class="fml-tv" style="background:var(--orange-dim);color:var(--orange)" id="u-ft-c">—</div><div class="fml-tl">c</div></div>
+        <div class="fml-term"><div class="fml-tv" style="background:var(--teal-dim);color:var(--teal)" id="u-ft-b">—</div><div class="fml-tl">bonus</div></div>
+        <div class="fml-term"><div class="fml-tv" style="background:var(--green-dim);color:var(--green)" id="u-ft-tot">—</div><div class="fml-tl">UCB score</div></div>
+      </div>
+    </div>
+    <div class="steps-track" id="u-steps"></div>
+  </div>
+  <div class="charts-row">
+    <div class="chart-box"><div class="chart-ttl">📈 Q-Values Over Time</div><div class="chart-wrap"><canvas id="u-qchart"></canvas></div></div>
+    <div class="chart-box"><div class="chart-ttl">💰 Cumulative Reward</div><div class="chart-wrap"><canvas id="u-rchart"></canvas></div></div>
+  </div>
+  <div class="hist-box">
+    <div class="hist-hdr"><div class="sec-title">Step History</div><button class="btn sm" onclick="document.getElementById('u-hist').innerHTML=''">Clear</button></div>
+    <div class="hist-wrap"><table><thead><tr><th>t</th><th>Action</th><th>N(a)</th><th>Q old</th><th>ln t</th><th>Bonus</th><th>Score</th><th>Reward</th><th>Q new</th></tr></thead><tbody id="u-hist"></tbody></table></div>
+  </div>
+  <div class="theory-box">
+    <div class="theory-toggle" id="u-th-toggle" onclick="toggleTheory('u')"><div class="sec-title">📚 UCB Theory</div><span class="theory-icon">▼</span></div>
+    <div class="theory-body" id="u-th-body">
+      <div class="theory-grid">
+        <div class="tc"><h4>Why UCB over ε-Greedy?</h4><p>ε-greedy explores blindly — random arm regardless of uncertainty. UCB explores intelligently — arms with high uncertainty get a bonus, making them more attractive to try.</p></div>
+        <div class="tc"><h4>The Bonus Shrinks</h4><p>Every time arm a is chosen, N(a)↑ → bonus shrinks. You become more confident, so it needs less encouragement. The bonus falls fast (linear denominator).</p></div>
+        <div class="tc"><h4>The Bonus Grows with t</h4><p>Each step, t↑ → ln(t) grows slowly → all bonuses increase slightly. Neglected arms become "stale" and regain attention. But ln is slow, so this effect tapers.</p></div>
+        <div class="tc"><h4>c — Confidence Level</h4><p>c=0 → pure greedy. c=2 → classic UCB1. Higher c → tries uncertain arms more aggressively. Lower c → sticks to known good arms more.</p></div>
+        <div class="tc"><h4>N(a)=0 Convention</h4><p>Unvisited arms have N(a)=0 → division by zero → bonus = ∞. Solution: try each arm once first (round-robin) before computing UCB scores.</p></div>
+        <div class="tc"><h4>O(log T) Regret</h4><p>UCB1 (Auer et al. 2002) achieves O(log T) cumulative regret — matching the Lai & Robbins lower bound. UCB is essentially optimal for stochastic bandits.</p></div>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+</div>
+
+<!-- ============================================================
+     PAGE 3: OPTIMISTIC INITIAL VALUES
+     ============================================================ -->
+<div class="page" id="page-oiv" style="--accent:var(--gold);--accent-rgb:247,217,79;">
+<div class="layout">
+<aside class="sidebar">
+  <div class="sb-section">
+    <div class="sb-label">Configuration</div>
+    <div class="ctrl"><label>Arms <span class="v" id="o-armsV">5</span></label><input type="range" id="o-arms" min="2" max="10" value="5" oninput="oUpArms(this.value)"></div>
+    <div class="ctrl"><label>Q₁ (Initial Value) <span class="v" id="o-q1V">+5.0</span></label><input type="range" id="o-q1" min="0" max="10" step="0.5" value="5" oninput="oUpQ1(this.value)"></div>
+    <div class="ctrl"><label>Alpha (α) <span class="v" id="o-alphaV">0.10</span></label><input type="range" id="o-alpha" min="0.01" max="1" step="0.01" value="0.10" oninput="oUpAlpha(this.value)"></div>
+    <p style="font-size:11px;color:var(--text3);line-height:1.5;margin-top:-4px;">Note: uses constant α (bias persists). With sample average, bias vanishes after each arm is visited once.</p>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Reward</div>
+    <div class="radio-g">
+      <label class="radio-item active" id="o-rr-lbl"><input type="radio" name="o-rm" value="random" checked onchange="oUpRM('random')"> Random</label>
+      <label class="radio-item" id="o-rm-lbl"><input type="radio" name="o-rm" value="manual" onchange="oUpRM('manual')"> Manual</label>
+    </div>
+    <div id="o-manual-wrap" style="display:none;margin-top:7px;">
+      <input type="number" id="o-manual-r" value="1" min="-10" max="20" step="0.5" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);font-family:var(--font-m);font-size:14px;padding:6px 10px;outline:none;">
+    </div>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Controls</div>
+    <div class="btn-col">
+      <button class="btn primary" onclick="oStep()">▶ Run One Step</button>
+      <button class="btn" onclick="oSteps(10)">⏩ Run 10 Steps</button>
+      <button class="btn success" id="o-autoBtn" onclick="oToggleAuto()">⚡ Auto Play</button>
+      <button class="btn warn" id="o-pauseBtn" onclick="oPause()" disabled>⏸ Pause</button>
+      <button class="btn" onclick="oReset()">↺ Reset</button>
+    </div>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Presets</div>
+    <button class="preset-btn" onclick="oLoadPreset('r')"><strong>🍕 Restaurant</strong>Pizza · Burger · Noodles · Sushi · Kebab</button>
+    <button class="preset-btn" onclick="oLoadPreset('a')"><strong>📣 Ad Selection</strong>Ad A · Ad B · Ad C · Ad D</button>
+    <button class="preset-btn" onclick="oLoadPreset('d')"><strong>💊 Drug Trial</strong>S · T · R · C</button>
+  </div>
+</aside>
+<main class="content">
+  <div class="stats-strip">
+    <div class="stat-box"><span class="stat-val" id="o-st-step">0</span><div class="stat-lbl">Steps</div></div>
+    <div class="stat-box"><span class="stat-val" id="o-st-total">0.00</span><div class="stat-lbl">Total Reward</div></div>
+    <div class="stat-box"><span class="stat-val" id="o-st-fresh">5</span><div class="stat-lbl">Untouched Arms</div></div>
+    <div class="stat-box"><span class="stat-val" id="o-st-avg">0.00</span><div class="stat-lbl">Avg Reward</div></div>
+  </div>
+  <!-- OIV signature: disappointment bars -->
+  <div class="oiv-panel">
+    <div class="sec-hdr">
+      <div class="sec-title">Disappointment Tracker — Q₁ decaying toward reality</div>
+      <span style="font-size:11px;color:var(--text3);">🟡 Inflated Q &nbsp;|&nbsp; 🔴 True mean (hidden)</span>
+    </div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6;">
+      Every arm starts at Q₁=<strong id="o-q1-display" style="color:var(--gold)">+5</strong>. Each pull disappoints → Q drops below untried arms → greedy switches. This IS the exploration mechanism.
+    </p>
+    <div id="o-oiv-bars"></div>
+  </div>
+  <div><div class="sec-hdr"><div class="sec-title">Action Arms</div></div><div class="arm-grid" id="o-arm-grid"></div></div>
+  <div class="algo-panel">
+    <div class="sec-hdr" style="margin-bottom:14px;">
+      <div class="sec-title">Step-by-Step</div>
+      <span id="o-algo-tag" style="font-size:12px;color:var(--text3);">Awaiting…</span>
+    </div>
+    <div class="fml-hero">
+      <div class="fml-main">Q<sub>new</sub> = <span style="color:var(--gold)">Q<sub>old</sub></span> + <span style="color:var(--orange)">α</span> · ( <span style="color:var(--purple)">R</span> − <span style="color:var(--gold)">Q<sub>old</sub></span> ) &nbsp;&nbsp;[Q₁ = <span style="color:var(--gold)" id="o-fml-q1">+5</span>, ε = 0]</div>
+      <div class="fml-terms">
+        <div class="fml-term"><div class="fml-tv" style="background:var(--gold-dim);color:var(--gold)" id="o-ft-qold">—</div><div class="fml-tl">Q_old</div></div>
+        <div class="fml-term"><div class="fml-tv" style="background:var(--orange-dim);color:var(--orange)" id="o-ft-alpha">—</div><div class="fml-tl">α</div></div>
+        <div class="fml-term"><div class="fml-tv" style="background:var(--purple-dim);color:var(--purple)" id="o-ft-r">—</div><div class="fml-tl">Reward R</div></div>
+        <div class="fml-term"><div class="fml-tv" style="background:var(--green-dim);color:var(--green)" id="o-ft-qnew">—</div><div class="fml-tl">Q_new</div></div>
+      </div>
+    </div>
+    <div class="steps-track" id="o-steps"></div>
+  </div>
+  <div class="charts-row">
+    <div class="chart-box"><div class="chart-ttl">📈 Q-Values Decaying from Q₁</div><div class="chart-wrap"><canvas id="o-qchart"></canvas></div></div>
+    <div class="chart-box"><div class="chart-ttl">💰 Cumulative Reward</div><div class="chart-wrap"><canvas id="o-rchart"></canvas></div></div>
+  </div>
+  <div class="hist-box">
+    <div class="hist-hdr"><div class="sec-title">Step History</div><button class="btn sm" onclick="document.getElementById('o-hist').innerHTML=''">Clear</button></div>
+    <div class="hist-wrap"><table><thead><tr><th>t</th><th>Action</th><th>Q_old</th><th>Reward R</th><th>Δ = R−Q</th><th>Q_new</th><th>Disappoint?</th></tr></thead><tbody id="o-hist"></tbody></table></div>
+  </div>
+  <div class="theory-box">
+    <div class="theory-toggle" id="o-th-toggle" onclick="toggleTheory('o')"><div class="sec-title">📚 Optimistic Initial Values Theory</div><span class="theory-icon">▼</span></div>
+    <div class="theory-body" id="o-th-body">
+      <div class="theory-grid">
+        <div class="tc"><h4>💡 The Core Idea</h4><p>Set Q₁(a) = +5 for all arms (wildly optimistic). Use pure greedy (ε=0). Reality always disappoints → pulled arm's Q drops below untried arms → greedy is forced to try the next one. Exploration for free.</p></div>
+        <div class="tc"><h4>😞 Disappointment Mechanism</h4><p>Pull arm a → reward R ≈ 0 (true mean) → Q drops: 5 + α(0−5) = 3. Now Q(a)=3 &lt; Q(untried)=5 → greedy switches. Every arm gets tried before any settles.</p></div>
+        <div class="tc"><h4>⚖️ Constant α vs Sample Average</h4><p>With constant α, the initial bias never fully disappears — it decays geometrically as (1−α)ⁿQ₁. With sample average (1/N), the bias vanishes once every arm has been visited once (Robbins-Monro conditions).</p></div>
+        <div class="tc"><h4>✅ When It Works</h4><p>Stationary problems — true reward means don't change. The optimism is a one-time opening burst: all arms explored early, then exploitation takes over. Zero extra parameters.</p></div>
+        <div class="tc"><h4>❌ Why It Fails (Non-Stationary)</h4><p>Once inflated estimates decay, there's no mechanism to keep exploring. If true means shift later, the agent won't notice. UCB re-checks uncertain arms forever; optimism only pushes once.</p></div>
+        <div class="tc"><h4>vs UCB</h4><p>Both avoid random coin flips. UCB tracks per-arm uncertainty on every step — permanent, adaptive re-checking. Optimism is a single initial push — cheap, zero parameters, but spent once estimates settle.</p></div>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+</div>
+
+<!-- ============================================================
+     PAGE 4: COMPARE ALL THREE
+     ============================================================ -->
+<div class="page" id="page-cmp" style="--accent:var(--purple);--accent-rgb:167,139,250;">
+<div class="content" style="padding:20px;">
+  <div class="cmp-controls">
+    <div class="ctrl" style="flex-direction:row;align-items:center;gap:8px;margin:0;">
+      <label style="font-size:12px;color:var(--text2);white-space:nowrap;">Arms:</label>
+      <input type="range" id="cmp-arms" min="2" max="10" value="5" style="width:100px;" oninput="cmpUpArms(this.value)">
+      <span style="font-family:var(--font-m);font-size:12px;color:var(--purple)" id="cmp-armsV">5</span>
+    </div>
+    <div class="ctrl" style="flex-direction:row;align-items:center;gap:8px;margin:0;">
+      <label style="font-size:12px;color:var(--text2);white-space:nowrap;">ε:</label>
+      <input type="range" id="cmp-eps" min="0" max="1" step="0.01" value="0.1" style="width:100px;" oninput="cmpUpEps(this.value)">
+      <span style="font-family:var(--font-m);font-size:12px;color:var(--orange)" id="cmp-epsV">0.10</span>
+    </div>
+    <div class="ctrl" style="flex-direction:row;align-items:center;gap:8px;margin:0;">
+      <label style="font-size:12px;color:var(--text2);white-space:nowrap;">c (UCB):</label>
+      <input type="range" id="cmp-c" min="0.1" max="5" step="0.1" value="2.0" style="width:100px;" oninput="cmpUpC(this.value)">
+      <span style="font-family:var(--font-m);font-size:12px;color:var(--teal)" id="cmp-cV">2.0</span>
+    </div>
+    <div class="ctrl" style="flex-direction:row;align-items:center;gap:8px;margin:0;">
+      <label style="font-size:12px;color:var(--text2);white-space:nowrap;">Q₁ (OIV):</label>
+      <input type="range" id="cmp-q1" min="0" max="10" step="0.5" value="5" style="width:100px;" oninput="cmpUpQ1(this.value)">
+      <span style="font-family:var(--font-m);font-size:12px;color:var(--gold)" id="cmp-q1V">5.0</span>
+    </div>
+    <button class="btn primary" onclick="cmpStep()">▶ Step</button>
+    <button class="btn" onclick="cmpSteps(50)">⏩ 50 Steps</button>
+    <button class="btn success" id="cmp-autoBtn" onclick="cmpToggleAuto()">⚡ Auto</button>
+    <button class="btn warn" id="cmp-pauseBtn" onclick="cmpPause()" disabled>⏸ Pause</button>
+    <button class="btn" onclick="cmpReset()">↺ Reset</button>
+  </div>
+  <div class="cmp-grid" id="cmp-grid">
+    <div class="cmp-card" id="cmp-card-eps">
+      <div class="cmp-card-hdr"><span class="cmp-name" style="color:var(--orange)">ε-Greedy</span><span class="cmp-badge" style="background:var(--orange-dim);color:var(--orange);border:1px solid var(--orange)" id="cmp-eps-badge">ε=0.10</span></div>
+      <div class="cmp-stat-row"><span>Total Reward</span><strong id="cmp-eps-total">0.00</strong></div>
+      <div class="cmp-stat-row"><span>Avg Reward</span><strong id="cmp-eps-avg">0.00</strong></div>
+      <div class="cmp-stat-row"><span>Steps</span><strong id="cmp-eps-steps">0</strong></div>
+      <div id="cmp-eps-arms"></div>
+      <div class="cmp-chart-wrap"><canvas id="cmp-eps-chart"></canvas></div>
+      <div class="winner-badge" id="cmp-eps-winner">🏆 Leading</div>
+    </div>
+    <div class="cmp-card" id="cmp-card-ucb">
+      <div class="cmp-card-hdr"><span class="cmp-name" style="color:var(--teal)">UCB</span><span class="cmp-badge" style="background:var(--teal-dim);color:var(--teal);border:1px solid var(--teal)" id="cmp-ucb-badge">c=2.0</span></div>
+      <div class="cmp-stat-row"><span>Total Reward</span><strong id="cmp-ucb-total">0.00</strong></div>
+      <div class="cmp-stat-row"><span>Avg Reward</span><strong id="cmp-ucb-avg">0.00</strong></div>
+      <div class="cmp-stat-row"><span>Steps</span><strong id="cmp-ucb-steps">0</strong></div>
+      <div id="cmp-ucb-arms"></div>
+      <div class="cmp-chart-wrap"><canvas id="cmp-ucb-chart"></canvas></div>
+      <div class="winner-badge" id="cmp-ucb-winner">🏆 Leading</div>
+    </div>
+    <div class="cmp-card" id="cmp-card-oiv">
+      <div class="cmp-card-hdr"><span class="cmp-name" style="color:var(--gold)">Optimistic</span><span class="cmp-badge" style="background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold)" id="cmp-oiv-badge">Q₁=5.0</span></div>
+      <div class="cmp-stat-row"><span>Total Reward</span><strong id="cmp-oiv-total">0.00</strong></div>
+      <div class="cmp-stat-row"><span>Avg Reward</span><strong id="cmp-oiv-avg">0.00</strong></div>
+      <div class="cmp-stat-row"><span>Steps</span><strong id="cmp-oiv-steps">0</strong></div>
+      <div id="cmp-oiv-arms"></div>
+      <div class="cmp-chart-wrap"><canvas id="cmp-oiv-chart"></canvas></div>
+      <div class="winner-badge" id="cmp-oiv-winner">🏆 Leading</div>
+    </div>
+  </div>
+  <div class="cmp-full-chart">
+    <div class="chart-ttl">📈 Cumulative Reward — All Three Algorithms</div>
+    <div class="cmp-full-wrap"><canvas id="cmp-full-chart"></canvas></div>
+  </div>
+</div>
+</div>
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+const CHART_COLORS = ['#4F8EF7','#F7944F','#4FCF8E','#A78BFA','#F76F6F','#F7D94F','#4FF7D4','#F74FA7','#8BF74F','#4FA7F7'];
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+function gauss(mean, std) {
+  let u=0,v=0;
+  while(!u) u=Math.random();
+  while(!v) v=Math.random();
+  return Math.round((mean + Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)*std)*100)/100;
+}
+function argmax(arr) { let b=0; for(let i=1;i<arr.length;i++) if(arr[i]>arr[b]) b=i; return b; }
+function mkChartOpts(mini) {
+  return {
+    responsive:true, maintainAspectRatio:false,
+    animation:{duration:mini?0:220},
+    plugins:{ legend: mini ? {display:false} : {labels:{font:{family:"'Inter'"},color:'#8B90A8',boxWidth:10,padding:8}} },
+    scales:{
+      x:{ticks:{color:'#5A5F7A',font:{family:"'JetBrains Mono'",size:9},maxTicksLimit:8},grid:{color:'rgba(42,45,62,0.6)'}},
+      y:{ticks:{color:'#5A5F7A',font:{family:"'JetBrains Mono'",size:9}},grid:{color:'rgba(42,45,62,0.6)'}}
+    }
+  };
+}
+function buildQDS(names, qData) {
+  return names.map((n,i)=>({label:`Q(${n})`,data:[...qData[i]],borderColor:CHART_COLORS[i%CHART_COLORS.length],backgroundColor:'transparent',borderWidth:1.5,pointRadius:0,tension:0.3}));
+}
+function stepActivate(prefix, n) { const el = document.getElementById(`${prefix}-s${n}`); if(el) el.classList.add('active'); }
+function stepDone(prefix, n) { const el = document.getElementById(`${prefix}-s${n}`); if(el) { el.classList.remove('active'); el.classList.add('done'); } }
+function buildSteps(prefix, defs) {
+  const wrap = document.getElementById(`${prefix}-steps`);
+  if (!wrap) return;
+  wrap.innerHTML = defs.map((d,i) => `
+    <div class="step-row" id="${prefix}-s${i+1}">
+      <div class="step-n">${i+1}</div>
+      <div>
+        <div class="step-ttl">${d.title}</div>
+        <div class="step-dsc" id="${prefix}-sd${i+1}">Waiting…</div>
+        ${d.hasFml ? `<div class="step-fml" id="${prefix}-sf${i+1}" style="display:none;"></div>` : ''}
+        <div class="beginner-note" id="${prefix}-sn${i+1}"></div>
+      </div>
+    </div>`).join('');
+}
+function addHistRow(tbodyId, cells, accent) {
+  const tbody = document.getElementById(tbodyId);
+  const prev = tbody.querySelector('.latest');
+  if(prev) prev.classList.remove('latest');
+  const tr = document.createElement('tr');
+  tr.className = 'latest fade-in';
+  tr.innerHTML = cells.map((c,i) => `<td ${i===0?'style="color:var(--text3)"':''}>${c}</td>`).join('');
+  tbody.insertBefore(tr, tbody.firstChild);
+  while(tbody.children.length > 200) tbody.removeChild(tbody.lastChild);
+}
+
+function toggleTheme() {
+  document.documentElement.setAttribute('data-theme',
+    document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
+}
+function toggleBeginner(on) {
+  document.body.classList.toggle('beginner-mode', on);
+}
+function toggleTheory(pre) {
+  document.getElementById(`${pre}-th-body`).classList.toggle('open');
+  document.getElementById(`${pre}-th-toggle`).classList.toggle('open');
+}
+function switchTab(tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`page-${tab}`).classList.add('active');
+  document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+}
+
+/* ============================================================
+   ε-GREEDY MODULE
+   ============================================================ */
+const E = {
+  arms:5, eps:0.2, ss:'avg', alpha:0.1, rm:'random',
+  names:['A','B','C','D','E'], labels:null,
+  Q:[], N:[], lastR:[], stepCount:0, totalR:0, exploreCount:0,
+  trueMeans:[], qData:{}, rData:[0],
+  auto:null, qChart:null, rChart:null
+};
+const E_PRESETS = {
+  r:{names:['A','B','C','D','E'],labels:['Pizza','Burger','Noodles','Sushi','Kebab'],arms:5},
+  a:{names:['A','B','C','D'],labels:['Ad A','Ad B','Ad C','Ad D'],arms:4},
+  d:{names:['S','T','R','C'],labels:['Drug S','Drug T','Drug R','Drug C'],arms:4}
+};
+
+function eReset() {
+  E.Q = new Array(E.arms).fill(0);
+  E.N = new Array(E.arms).fill(0);
+  E.lastR = new Array(E.arms).fill(null);
+  E.stepCount=0; E.totalR=0; E.exploreCount=0;
+  E.trueMeans = Array.from({length:E.arms},()=>+(Math.random()*10).toFixed(1));
+  E.qData={}; for(let i=0;i<E.arms;i++) E.qData[i]=[0]; E.rData=[0];
+  eRenderArms(); eUpdateStats();
+  document.getElementById('e-hist').innerHTML='';
+  eResetAlgo();
+  if(E.qChart) eUpdateCharts();
+  ePause();
+}
+function eRenderArms() {
+  const g = document.getElementById('e-arm-grid'); g.innerHTML='';
+  for(let i=0;i<E.arms;i++) {
+    const c = document.createElement('div'); c.className='arm-card'; c.id=`e-arm-${i}`;
+    c.style.setProperty('--accent','var(--orange)');
+    c.innerHTML=`<div class="arm-nm">${E.names[i]}</div><div class="arm-lbl">${E.labels?.[i]||''}</div>
+      <div class="arm-st"><span>Q(a)</span><span>0.000</span></div>
+      <div class="arm-st"><span>N(a)</span><span>0</span></div>
+      <div class="arm-st"><span>Last R</span><span>—</span></div>
+      <div class="arm-qbar"><div class="arm-qbar-fill" style="width:0%"></div></div>
+      <div class="arm-badge" id="e-badge-${i}" style="background:var(--orange-dim);color:var(--orange)">+R</div>`;
+    g.appendChild(c);
+  }
+  buildSteps('e',[
+    {title:'Generate Random Number'},{title:'Compare r with ε'},
+    {title:'Select Action'},{title:'Receive Reward'},{title:'Update Q-Value',hasFml:true}
+  ]);
+}
+function eUpdateArmCard(i) {
+  const c = document.getElementById(`e-arm-${i}`); if(!c) return;
+  const ss = c.querySelectorAll('.arm-st span:last-child');
+  ss[0].textContent=E.Q[i].toFixed(3); ss[1].textContent=E.N[i];
+  ss[2].textContent=E.lastR[i]!==null?E.lastR[i].toFixed(2):'—';
+  c.querySelector('.arm-qbar-fill').style.width = Math.max(0,Math.min(100,(E.Q[i]/15)*100))+'%';
+}
+function eUpdateStats() {
+  document.getElementById('e-st-step').textContent=E.stepCount;
+  document.getElementById('e-st-total').textContent=E.totalR.toFixed(2);
+  const ep = E.stepCount>0?Math.round(E.exploreCount/E.stepCount*100):0;
+  document.getElementById('e-st-exprate').textContent=ep+'%';
+  document.getElementById('e-st-avg').textContent=E.stepCount>0?(E.totalR/E.stepCount).toFixed(2):'0.00';
+}
+function eStep() {
+  const r = Math.random(); const eps = E.eps;
+  const isExp = r < eps;
+  const action = isExp ? Math.floor(Math.random()*E.arms) : argmax(E.Q);
+  const reward = E.rm==='manual' ? parseFloat(document.getElementById('e-manual-r').value)||0 : gauss(E.trueMeans[action],1.5);
+  const oldQ = E.Q[action];
+  E.N[action]++;
+  const alpha = E.ss==='avg' ? 1/E.N[action] : E.alpha;
+  E.Q[action] = oldQ + alpha*(reward-oldQ);
+  E.lastR[action]=reward; E.stepCount++; E.totalR+=reward;
+  if(isExp) E.exploreCount++;
+  for(let i=0;i<E.arms;i++) E.qData[i].push(E.Q[i]);
+  E.rData.push(E.totalR);
+  // animate
+  document.querySelectorAll('[id^=e-arm-]').forEach((c,i)=>{
+    c.classList.remove('sel');
+    if(i===action){c.classList.add('sel');}
+    eUpdateArmCard(i);
+  });
+  const badge = document.getElementById(`e-badge-${action}`);
+  badge.textContent=`+${reward.toFixed(1)}`; badge.classList.add('show');
+  setTimeout(()=>badge.classList.remove('show'),1600);
+  // decision strip
+  const isE = isExp;
+  document.getElementById('e-ds-r').className='ds-block'+(isE?' hi-exp':'');
+  document.getElementById('e-ds-e').className='ds-block'+(!isE?' hi-xpl':'');
+  document.getElementById('e-ds-rv').textContent=r.toFixed(4);
+  document.getElementById('e-ds-ev').textContent=eps.toFixed(2);
+  document.getElementById('e-ds-cmp').textContent=isE?`${r.toFixed(4)} < ${eps.toFixed(2)}`:`${r.toFixed(4)} ≥ ${eps.toFixed(2)}`;
+  const dv = document.getElementById('e-ds-verdict');
+  dv.className='ds-verdict '+(isE?'exp':'xpl');
+  dv.textContent=isE?'EXPLORE':'EXPLOIT';
+  // steps
+  [1,2,3,4,5].forEach(n=>{const el=document.getElementById(`e-s${n}`);if(el){el.classList.remove('active','done');}});
+  stepActivate('e',1); document.getElementById('e-sd1').textContent=`Generated r = ${r.toFixed(4)}`;
+  document.getElementById('e-sn1') && (document.getElementById('e-sn1').textContent=`We drew a random number r = ${r.toFixed(4)} from uniform(0,1). This is our coin flip.`);
+  stepActivate('e',2); document.getElementById('e-sd2').textContent=isE?`r(${r.toFixed(4)}) < ε(${eps.toFixed(2)}) → EXPLORE`:`r(${r.toFixed(4)}) ≥ ε(${eps.toFixed(2)}) → EXPLOIT`;
+  document.getElementById('e-sn2') && (document.getElementById('e-sn2').textContent=isE?`Since ${r.toFixed(4)} < ε(${eps.toFixed(2)}), we explore — pick a random arm.`:`Since ${r.toFixed(4)} ≥ ε(${eps.toFixed(2)}), we exploit — pick the best known arm.`);
+  stepActivate('e',3); document.getElementById('e-sd3').textContent=isE?`Explore: randomly chose arm ${E.names[action]}`:`Exploit: arm ${E.names[action]} had highest Q=${oldQ.toFixed(2)}`;
+  document.getElementById('e-sn3') && (document.getElementById('e-sn3').textContent=`Action "${E.names[action]}" was selected.`);
+  stepActivate('e',4); document.getElementById('e-sd4').textContent=`Arm ${E.names[action]} returned reward R = ${reward.toFixed(3)}`;
+  document.getElementById('e-sn4') && (document.getElementById('e-sn4').textContent=`We got a reward of ${reward.toFixed(3)} from arm "${E.names[action]}".`);
+  stepActivate('e',5); document.getElementById('e-sd5').textContent=`Q(${E.names[action]}): ${oldQ.toFixed(3)} → ${E.Q[action].toFixed(4)}`;
+  const aLabel = E.ss==='avg'?`1/${E.N[action]}`:`α=${E.alpha}`;
+  const sf5 = document.getElementById('e-sf5');
+  if(sf5){sf5.style.display='block';sf5.innerHTML=`Q_new = Q_old + α(R − Q_old)<br>= <span style="color:var(--orange)">${oldQ.toFixed(3)}</span> + <span style="color:var(--teal)">${aLabel}</span>·(<span style="color:var(--purple)">${reward.toFixed(3)}</span> − <span style="color:var(--orange)">${oldQ.toFixed(3)}</span>)<br>= <span style="color:var(--green)">${E.Q[action].toFixed(4)}</span>`;}
+  document.getElementById('e-sn5') && (document.getElementById('e-sn5').textContent=`Updated estimate for "${E.names[action]}": old=${oldQ.toFixed(3)}, reward=${reward.toFixed(3)}, new=${E.Q[action].toFixed(4)}.`);
+  setTimeout(()=>[1,2,3,4,5].forEach(n=>stepDone('e',n)),500);
+  document.getElementById('e-algo-tag').textContent=`Step ${E.stepCount} — ${isE?'🔍 EXPLORE':'⚡ EXPLOIT'}`;
+  document.getElementById('e-algo-tag').style.color=isE?'var(--orange)':'var(--green)';
+  eUpdateStats(); eUpdateCharts();
+  addHistRow('e-hist',[E.stepCount,r.toFixed(4),eps.toFixed(2),isE?'<span class="tag tag-exp">EXPLORE</span>':'<span class="tag tag-xpl">EXPLOIT</span>',E.names[action],reward.toFixed(3),oldQ.toFixed(3),E.Q[action].toFixed(3)]);
+}
+function eSteps(n){for(let i=0;i<n;i++)eStep();}
+function eToggleAuto(){
+  if(E.auto){ePause();return;}
+  document.getElementById('e-autoBtn').disabled=true; document.getElementById('e-pauseBtn').disabled=false;
+  E.auto=setInterval(eStep,350);
+}
+function ePause(){
+  if(E.auto){clearInterval(E.auto);E.auto=null;}
+  document.getElementById('e-autoBtn').disabled=false; document.getElementById('e-pauseBtn').disabled=true;
+}
+function eLoadPreset(k){const p=E_PRESETS[k];E.arms=p.arms;E.names=[...p.names];E.labels=[...p.labels];document.getElementById('e-arms').value=p.arms;document.getElementById('e-armsV').textContent=p.arms;eReset();if(E.qChart){E.qChart.data.datasets=buildQDS(E.names,E.qData);E.qChart.update();}}
+function eUpArms(v){E.arms=parseInt(v);document.getElementById('e-armsV').textContent=v;E.names='ABCDEFGHIJ'.slice(0,E.arms).split('');E.labels=null;eReset();if(E.qChart){E.qChart.data.datasets=buildQDS(E.names,E.qData);E.qChart.update();}}
+function eUpEps(v){E.eps=parseFloat(v);document.getElementById('e-epsV').textContent=parseFloat(v).toFixed(2);}
+function eUpSS(v){E.ss=v;document.getElementById('e-alpha-row').style.display=v==='alpha'?'flex':'none';['e-ss-avg-lbl','e-ss-a-lbl'].forEach(id=>document.getElementById(id).classList.remove('active'));document.getElementById(v==='avg'?'e-ss-avg-lbl':'e-ss-a-lbl').classList.add('active');}
+function eUpAlpha(v){E.alpha=parseFloat(v);document.getElementById('e-alphaV').textContent=parseFloat(v).toFixed(2);}
+function eUpRM(v){E.rm=v;document.getElementById('e-manual-wrap').style.display=v==='manual'?'block':'none';['e-rr-lbl','e-rm-lbl'].forEach(id=>document.getElementById(id).classList.remove('active'));document.getElementById(v==='random'?'e-rr-lbl':'e-rm-lbl').classList.add('active');}
+function eResetAlgo(){['e-ds-rv','e-ds-ev'].forEach(id=>document.getElementById(id).textContent='—');document.getElementById('e-ds-cmp').textContent='r vs ε';document.getElementById('e-ds-verdict').className='ds-verdict';document.getElementById('e-ds-r').className='ds-block';document.getElementById('e-ds-e').className='ds-block';document.getElementById('e-algo-tag').textContent='Awaiting…';document.getElementById('e-algo-tag').style.color='';}
+function eInitCharts(){
+  E.qChart=new Chart(document.getElementById('e-qchart').getContext('2d'),{type:'line',data:{labels:['0'],datasets:buildQDS(E.names,E.qData)},options:mkChartOpts(false)});
+  E.rChart=new Chart(document.getElementById('e-rchart').getContext('2d'),{type:'line',data:{labels:['0'],datasets:[{label:'Cumulative Reward',data:[0],borderColor:'#F7944F',backgroundColor:'rgba(247,148,79,0.1)',borderWidth:2,pointRadius:0,fill:true,tension:0.3}]},options:mkChartOpts(false)});
+}
+function eUpdateCharts(){
+  const lbl=Array.from({length:E.stepCount+1},(_,i)=>i);
+  E.qChart.data.labels=lbl; E.qChart.data.datasets=buildQDS(E.names,E.qData); E.qChart.update('none');
+  E.rChart.data.labels=lbl; E.rChart.data.datasets[0].data=E.rData; E.rChart.update('none');
+}
+
+/* ============================================================
+   UCB MODULE
+   ============================================================ */
+const U = {
+  arms:5, c:2.0, rm:'random',
+  names:['A','B','C','D','E'], labels:null,
+  Q:[], N:[], lastR:[], stepCount:0, totalR:0,
+  trueMeans:[], qData:{}, rData:[0],
+  auto:null, qChart:null, rChart:null
+};
+const U_PRESETS = E_PRESETS;
+
+function uReset(){
+  U.Q=new Array(U.arms).fill(0); U.N=new Array(U.arms).fill(0); U.lastR=new Array(U.arms).fill(null);
+  U.stepCount=0; U.totalR=0;
+  U.trueMeans=Array.from({length:U.arms},()=>+(Math.random()*10).toFixed(1));
+  U.qData={}; for(let i=0;i<U.arms;i++) U.qData[i]=[0]; U.rData=[0];
+  uRenderArms(); uRenderUCBBars(); uUpdateStats();
+  document.getElementById('u-hist').innerHTML=''; uResetAlgo();
+  document.getElementById('u-init-warn').classList.add('show');
+  if(U.qChart) uUpdateCharts(); uPause();
+}
+function uRenderArms(){
+  const g=document.getElementById('u-arm-grid'); g.innerHTML='';
+  for(let i=0;i<U.arms;i++){
+    const c=document.createElement('div'); c.className='arm-card'; c.id=`u-arm-${i}`;
+    c.style.setProperty('--accent','var(--teal)');
+    c.innerHTML=`<div class="arm-nm">${U.names[i]}</div><div class="arm-lbl">${U.labels?.[i]||''}</div>
+      <div class="arm-st"><span>Q(a)</span><span>0.000</span></div>
+      <div class="arm-st"><span>N(a)</span><span>0</span></div>
+      <div class="arm-st"><span>Bonus</span><span>∞</span></div>
+      <div class="arm-qbar"><div class="arm-qbar-fill" style="width:0%"></div></div>
+      <div class="arm-badge" id="u-badge-${i}" style="background:var(--teal-dim);color:var(--teal)">+R</div>`;
+    g.appendChild(c);
+  }
+  buildSteps('u',[
+    {title:'Check N(a) — init?'},{title:'Compute ln t'},
+    {title:'Compute UCB scores',hasFml:true},{title:'Select arm with highest score'},
+    {title:'Receive reward & update Q',hasFml:true}
+  ]);
+}
+function uUpdateArmCard(i){
+  const c=document.getElementById(`u-arm-${i}`); if(!c) return;
+  const t=Math.max(U.stepCount,1);
+  const bonus=U.N[i]===0?'∞':(U.c*Math.sqrt(Math.log(Math.max(t,2))/U.N[i])).toFixed(3);
+  const ss=c.querySelectorAll('.arm-st span:last-child');
+  ss[0].textContent=U.Q[i].toFixed(3); ss[1].textContent=U.N[i]; ss[2].textContent=bonus;
+  c.querySelector('.arm-qbar-fill').style.width=Math.max(0,Math.min(100,(U.Q[i]/15)*100))+'%';
+}
+function uUpdateStats(){
+  document.getElementById('u-st-step').textContent=U.stepCount;
+  document.getElementById('u-st-total').textContent=U.totalR.toFixed(2);
+  document.getElementById('u-st-avg').textContent=U.stepCount>0?(U.totalR/U.stepCount).toFixed(2):'0.00';
+  const mp=U.N.indexOf(Math.max(...U.N));
+  document.getElementById('u-st-best').textContent=U.N[mp]>0?`${U.names[mp]}(${U.N[mp]})`:'—';
+}
+function uRenderUCBBars(sel){
+  const wrap=document.getElementById('u-ucb-bars'); wrap.innerHTML='';
+  const t=Math.max(U.stepCount,1);
+  const scores=U.Q.map((q,i)=>{if(U.N[i]===0)return q+10;return q+U.c*Math.sqrt(Math.log(Math.max(t,2))/U.N[i]);});
+  const mx=Math.max(...scores,0.1);
+  for(let i=0;i<U.arms;i++){
+    const isSel=sel===i;
+    const n=U.N[i];
+    let bonus=n===0?null:U.c*Math.sqrt(Math.log(Math.max(t,2))/n);
+    let score=bonus===null?null:U.Q[i]+bonus;
+    const qPct=mx>0?Math.max(0,Math.min(100,(U.Q[i]/mx)*100)):0;
+    const bPct=bonus!==null?Math.max(0,Math.min(100-qPct,(bonus/mx)*100)):0;
+    const row=document.createElement('div'); row.className='ucb-bar-row';
+    row.innerHTML=`<div class="ucb-anm">${U.names[i]}</div>
+      <div class="ucb-outer${isSel?' sel-bar':''}">
+        <div class="ucb-q-fill" style="width:${qPct}%"></div>
+        <div class="ucb-b-fill" style="left:${qPct}%;width:${bPct}%"></div>
+        <div class="ucb-bar-lbl">${n===0?'∞':score.toFixed(2)}</div>
+      </div>
+      <div class="ucb-info"><div class="ucb-score-num">${n===0?'∞':score.toFixed(3)}</div><div style="font-size:10px;color:var(--text3)">Q=${U.Q[i].toFixed(2)} b=${n===0?'∞':bonus.toFixed(2)} N=${n}</div></div>`;
+    wrap.appendChild(row);
+  }
+}
+function uStep(){
+  U.stepCount++;
+  const t=U.stepCount;
+  let action; let isInit=false;
+  if(U.N.some(n=>n===0)){action=U.N.indexOf(0);isInit=true;}
+  else{
+    const scores=U.Q.map((q,i)=>q+U.c*Math.sqrt(Math.log(t)/U.N[i]));
+    action=scores.indexOf(Math.max(...scores));
+  }
+  const reward=U.rm==='manual'?parseFloat(document.getElementById('u-manual-r').value)||0:gauss(U.trueMeans[action],1.5);
+  const oldQ=U.Q[action];
+  U.N[action]++; const alpha=1/U.N[action];
+  U.Q[action]=oldQ+alpha*(reward-oldQ);
+  U.lastR[action]=reward; U.totalR+=reward;
+  for(let i=0;i<U.arms;i++) U.qData[i].push(U.Q[i]); U.rData.push(U.totalR);
+  const lnt=t>1?Math.log(t):0;
+  const bonusVal=U.N[action]>1?U.c*Math.sqrt(lnt/(U.N[action]-1)):0;
+  // cards
+  document.querySelectorAll('[id^=u-arm-]').forEach((c,i)=>{c.classList.remove('sel');if(i===action)c.classList.add('sel');uUpdateArmCard(i);});
+  const badge=document.getElementById(`u-badge-${action}`);
+  badge.textContent=`+${reward.toFixed(1)}`; badge.classList.add('show');
+  setTimeout(()=>badge.classList.remove('show'),1600);
+  // formula terms
+  document.getElementById('u-ft-q').textContent=oldQ.toFixed(3);
+  document.getElementById('u-ft-c').textContent=U.c.toFixed(1);
+  document.getElementById('u-ft-b').textContent=isInit?'∞':bonusVal.toFixed(3);
+  document.getElementById('u-ft-tot').textContent=isInit?'∞':(oldQ+bonusVal).toFixed(3);
+  // steps
+  [1,2,3,4,5].forEach(n=>{const el=document.getElementById(`u-s${n}`);if(el)el.classList.remove('active','done');});
+  stepActivate('u',1); document.getElementById('u-sd1').textContent=isInit?`N(${U.names[action]})=0 → unvisited. Round-robin init.`:`All arms visited. t=${t}`;
+  document.getElementById('u-sn1')&&(document.getElementById('u-sn1').textContent=isInit?`Arm "${U.names[action]}" hasn't been tried yet. UCB gives it infinite bonus, so it goes first.`:`All arms have been tried at least once. We compute UCB scores for step t=${t}.`);
+  stepActivate('u',2); document.getElementById('u-sd2').textContent=`ln(${t}) = ${lnt.toFixed(4)}`;
+  document.getElementById('u-sn2')&&(document.getElementById('u-sn2').textContent=`The natural log of t=${t} is ${lnt.toFixed(4)}. This grows slowly, keeping neglected arms from being forgotten forever.`);
+  stepActivate('u',3);
+  const sf3=document.getElementById('u-sf3');
+  if(sf3){sf3.style.display='block';const txt=U.names.slice(0,U.arms).map((n,i)=>{if(U.N[i]===0)return `${n}: ∞`;const b=U.c*Math.sqrt(lnt/U.N[i]);return `${n}: ${U.Q[i].toFixed(2)}+${b.toFixed(2)}=${(U.Q[i]+b).toFixed(2)}`;}).join(' | ');sf3.innerHTML=`<span style="color:var(--teal)">${txt}</span>`;}
+  document.getElementById('u-sd3').textContent=`UCB = Q(a) + ${U.c}·√(${lnt.toFixed(3)}/N(a)) for each arm`;
+  document.getElementById('u-sn3')&&(document.getElementById('u-sn3').textContent=`Each arm's score = its Q-value + exploration bonus. Arms tried rarely get a bigger bonus.`);
+  stepActivate('u',4); document.getElementById('u-sd4').textContent=`Selected arm ${U.names[action]} (score = ${isInit?'∞':(oldQ+bonusVal).toFixed(3)})`;
+  document.getElementById('u-sn4')&&(document.getElementById('u-sn4').textContent=`Arm "${U.names[action]}" had the highest UCB score — ${isInit?'because it was unvisited':'best Q+bonus combination'}.`);
+  stepActivate('u',5);
+  const sf5=document.getElementById('u-sf5');
+  if(sf5){sf5.style.display='block';sf5.innerHTML=`Q_new = ${oldQ.toFixed(3)} + (1/${U.N[action]})·(${reward.toFixed(3)} − ${oldQ.toFixed(3)}) = <span style="color:var(--green)">${U.Q[action].toFixed(4)}</span>`;}
+  document.getElementById('u-sd5').textContent=`Q(${U.names[action]}): ${oldQ.toFixed(3)} → ${U.Q[action].toFixed(4)} | R=${reward.toFixed(2)}`;
+  document.getElementById('u-sn5')&&(document.getElementById('u-sn5').textContent=`Updated Q for "${U.names[action]}". N(${U.names[action]}) is now ${U.N[action]}, so its bonus will shrink next step.`);
+  setTimeout(()=>[1,2,3,4,5].forEach(n=>stepDone('u',n)),500);
+  document.getElementById('u-algo-tag').textContent=isInit?`Step ${t} — 🔧 INIT(${U.names[action]})`:`Step ${t} — 🎯 UCB→${U.names[action]}`;
+  document.getElementById('u-algo-tag').style.color=isInit?'var(--gold)':'var(--teal)';
+  uUpdateStats(); uRenderUCBBars(action); uUpdateCharts();
+  if(!U.N.some(n=>n===0)) document.getElementById('u-init-warn').classList.remove('show');
+  addHistRow('u-hist',[t,U.names[action],U.N[action]-1,oldQ.toFixed(3),lnt.toFixed(3),`<span style="color:var(--teal)">${isInit?'∞':bonusVal.toFixed(3)}</span>`,`<span style="color:var(--green);font-weight:500">${isInit?'∞':(oldQ+bonusVal).toFixed(3)}</span>`,`<span style="color:var(--purple)">${reward.toFixed(3)}</span>`,U.Q[action].toFixed(3)]);
+}
+function uSteps(n){for(let i=0;i<n;i++)uStep();}
+function uToggleAuto(){if(U.auto){uPause();return;}document.getElementById('u-autoBtn').disabled=true;document.getElementById('u-pauseBtn').disabled=false;U.auto=setInterval(uStep,350);}
+function uPause(){if(U.auto){clearInterval(U.auto);U.auto=null;}document.getElementById('u-autoBtn').disabled=false;document.getElementById('u-pauseBtn').disabled=true;}
+function uLoadPreset(k){const p=U_PRESETS[k];U.arms=p.arms;U.names=[...p.names];U.labels=[...p.labels];document.getElementById('u-arms').value=p.arms;document.getElementById('u-armsV').textContent=p.arms;uReset();if(U.qChart){U.qChart.data.datasets=buildQDS(U.names,U.qData);U.qChart.update();}}
+function uUpArms(v){U.arms=parseInt(v);document.getElementById('u-armsV').textContent=v;U.names='ABCDEFGHIJ'.slice(0,U.arms).split('');U.labels=null;uReset();if(U.qChart){U.qChart.data.datasets=buildQDS(U.names,U.qData);U.qChart.update();}}
+function uUpC(v){U.c=parseFloat(v);document.getElementById('u-cV').textContent=parseFloat(v).toFixed(1);uRenderUCBBars();}
+function uUpRM(v){U.rm=v;document.getElementById('u-manual-wrap').style.display=v==='manual'?'block':'none';['u-rr-lbl','u-rm-lbl'].forEach(id=>document.getElementById(id).classList.remove('active'));document.getElementById(v==='random'?'u-rr-lbl':'u-rm-lbl').classList.add('active');}
+function uResetAlgo(){document.getElementById('u-algo-tag').textContent='Awaiting…';document.getElementById('u-algo-tag').style.color='';['u-ft-q','u-ft-c','u-ft-b','u-ft-tot'].forEach(id=>document.getElementById(id).textContent='—');}
+function uInitCharts(){
+  U.qChart=new Chart(document.getElementById('u-qchart').getContext('2d'),{type:'line',data:{labels:['0'],datasets:buildQDS(U.names,U.qData)},options:mkChartOpts(false)});
+  U.rChart=new Chart(document.getElementById('u-rchart').getContext('2d'),{type:'line',data:{labels:['0'],datasets:[{label:'Cumulative Reward',data:[0],borderColor:'#4FF7D4',backgroundColor:'rgba(79,247,212,0.1)',borderWidth:2,pointRadius:0,fill:true,tension:0.3}]},options:mkChartOpts(false)});
+}
+function uUpdateCharts(){
+  const lbl=Array.from({length:U.stepCount+1},(_,i)=>i);
+  U.qChart.data.labels=lbl; U.qChart.data.datasets=buildQDS(U.names,U.qData); U.qChart.update('none');
+  U.rChart.data.labels=lbl; U.rChart.data.datasets[0].data=U.rData; U.rChart.update('none');
+}
+
+/* ============================================================
+   OPTIMISTIC INITIAL VALUES MODULE
+   ============================================================ */
+const O = {
+  arms:5, q1:5, alpha:0.1, rm:'random',
+  names:['A','B','C','D','E'], labels:null,
+  Q:[], N:[], lastR:[], stepCount:0, totalR:0,
+  trueMeans:[], qData:{}, rData:[0],
+  auto:null, qChart:null, rChart:null
+};
+const O_PRESETS = E_PRESETS;
+
+function oReset(){
+  O.Q=new Array(O.arms).fill(O.q1); O.N=new Array(O.arms).fill(0); O.lastR=new Array(O.arms).fill(null);
+  O.stepCount=0; O.totalR=0;
+  O.trueMeans=Array.from({length:O.arms},()=>+(Math.random()*10).toFixed(1));
+  O.qData={}; for(let i=0;i<O.arms;i++) O.qData[i]=[O.q1]; O.rData=[0];
+  oRenderArms(); oRenderOIVBars(); oUpdateStats();
+  document.getElementById('o-hist').innerHTML=''; oResetAlgo();
+  document.getElementById('o-q1-display').textContent='+'+O.q1;
+  document.getElementById('o-fml-q1').textContent='+'+O.q1;
+  if(O.qChart) oUpdateCharts(); oPause();
+}
+function oRenderArms(){
+  const g=document.getElementById('o-arm-grid'); g.innerHTML='';
+  for(let i=0;i<O.arms;i++){
+    const c=document.createElement('div'); c.className='arm-card'; c.id=`o-arm-${i}`;
+    c.style.setProperty('--accent','var(--gold)');
+    c.innerHTML=`<div class="arm-nm">${O.names[i]}</div><div class="arm-lbl">${O.labels?.[i]||''}</div>
+      <div class="arm-st"><span>Q(a)</span><span>${O.q1.toFixed(2)}</span></div>
+      <div class="arm-st"><span>N(a)</span><span>0</span></div>
+      <div class="arm-st"><span>Last R</span><span>—</span></div>
+      <div class="arm-qbar"><div class="arm-qbar-fill" style="width:${(O.q1/O.q1)*100}%;background:var(--gold)"></div></div>
+      <div class="arm-badge" id="o-badge-${i}" style="background:var(--gold-dim);color:var(--gold)">+R</div>`;
+    g.appendChild(c);
+  }
+  buildSteps('o',[
+    {title:'Pure Greedy: select argmax Q(a)'},{title:'Receive Reward'},
+    {title:'Check Disappointment (R < Q_old?)'},{title:'Update Q via constant α',hasFml:true},
+    {title:'Remaining optimism = (1−α)ⁿ·Q₁'}
+  ]);
+}
+function oUpdateArmCard(i){
+  const c=document.getElementById(`o-arm-${i}`); if(!c) return;
+  const ss=c.querySelectorAll('.arm-st span:last-child');
+  ss[0].textContent=O.Q[i].toFixed(3); ss[1].textContent=O.N[i];
+  ss[2].textContent=O.lastR[i]!==null?O.lastR[i].toFixed(2):'—';
+  const pct=Math.max(0,Math.min(100,(O.Q[i]/O.q1)*100));
+  const fill=c.querySelector('.arm-qbar-fill');
+  fill.style.width=pct+'%';
+  fill.style.background=O.Q[i]>=(O.q1*0.8)?'var(--gold)':O.Q[i]>=(O.q1*0.5)?'var(--orange)':'var(--blue)';
+}
+function oUpdateStats(){
+  document.getElementById('o-st-step').textContent=O.stepCount;
+  document.getElementById('o-st-total').textContent=O.totalR.toFixed(2);
+  document.getElementById('o-st-fresh').textContent=O.N.filter(n=>n===0).length;
+  document.getElementById('o-st-avg').textContent=O.stepCount>0?(O.totalR/O.stepCount).toFixed(2):'0.00';
+}
+function oRenderOIVBars(){
+  const wrap=document.getElementById('o-oiv-bars'); wrap.innerHTML='';
+  const q1=O.q1||1;
+  for(let i=0;i<O.arms;i++){
+    const qPct=Math.max(0,Math.min(100,(O.Q[i]/q1)*100));
+    const truePct=Math.max(0,Math.min(100,(O.trueMeans[i]/q1)*100));
+    const color=O.Q[i]>=(q1*0.8)?'var(--gold)':O.Q[i]>=(q1*0.5)?'var(--orange)':'var(--blue)';
+    const row=document.createElement('div'); row.className='oiv-bar-row';
+    row.innerHTML=`<div class="ucb-anm" style="color:var(--gold)">${O.names[i]}</div>
+      <div class="oiv-outer">
+        <div class="oiv-q-fill" style="width:${qPct}%;background:${color}"></div>
+        <div class="oiv-truth-line" style="left:${truePct}%" title="True mean: ${O.trueMeans[i]}"></div>
+        <div class="oiv-bar-lbl">${O.Q[i].toFixed(2)}</div>
+      </div>
+      <div class="oiv-info">
+        <div class="oiv-q-val" style="color:${color}">${O.Q[i].toFixed(3)}</div>
+        <div style="font-size:10px;color:var(--text3)">N=${O.N[i]} | μ≈${O.trueMeans[i]}</div>
+      </div>`;
+    wrap.appendChild(row);
+  }
+}
+function oStep(){
+  // Pure greedy — no epsilon
+  const action=argmax(O.Q);
+  const reward=O.rm==='manual'?parseFloat(document.getElementById('o-manual-r').value)||0:gauss(O.trueMeans[action],1.5);
+  const oldQ=O.Q[action];
+  O.N[action]++;
+  O.Q[action]=oldQ+O.alpha*(reward-oldQ);
+  O.lastR[action]=reward; O.stepCount++; O.totalR+=reward;
+  for(let i=0;i<O.arms;i++) O.qData[i].push(O.Q[i]); O.rData.push(O.totalR);
+  const disappoint=reward<oldQ;
+  const delta=reward-oldQ;
+  // remaining optimism
+  const remOpt=Math.pow(1-O.alpha,O.N[action])*O.q1;
+  // cards
+  document.querySelectorAll('[id^=o-arm-]').forEach((c,i)=>{c.classList.remove('sel');if(i===action)c.classList.add('sel');oUpdateArmCard(i);});
+  const badge=document.getElementById(`o-badge-${action}`);
+  badge.textContent=`${reward.toFixed(1)}`; badge.classList.add('show');
+  setTimeout(()=>badge.classList.remove('show'),1600);
+  // formula terms
+  document.getElementById('o-ft-qold').textContent=oldQ.toFixed(3);
+  document.getElementById('o-ft-alpha').textContent=O.alpha.toFixed(2);
+  document.getElementById('o-ft-r').textContent=reward.toFixed(3);
+  document.getElementById('o-ft-qnew').textContent=O.Q[action].toFixed(3);
+  // steps
+  [1,2,3,4,5].forEach(n=>{const el=document.getElementById(`o-s${n}`);if(el)el.classList.remove('active','done');});
+  stepActivate('o',1); document.getElementById('o-sd1').textContent=`argmax Q → Arm ${O.names[action]} (Q=${oldQ.toFixed(3)}) [ε=0, pure greedy]`;
+  document.getElementById('o-sn1')&&(document.getElementById('o-sn1').textContent=`Pure greedy (ε=0): always pick the arm with the highest Q-value. Arm "${O.names[action]}" currently has Q=${oldQ.toFixed(3)}.`);
+  stepActivate('o',2); document.getElementById('o-sd2').textContent=`Arm ${O.names[action]} returned R = ${reward.toFixed(3)}`;
+  document.getElementById('o-sn2')&&(document.getElementById('o-sn2').textContent=`We got reward ${reward.toFixed(3)}. The true mean for this arm is approximately ${O.trueMeans[action]}.`);
+  stepActivate('o',3); document.getElementById('o-sd3').textContent=disappoint?`YES: R(${reward.toFixed(3)}) < Q_old(${oldQ.toFixed(3)}) → Q drops → other arms look better → SWITCH`:`NO: R(${reward.toFixed(3)}) ≥ Q_old(${oldQ.toFixed(3)}) → Q rises (rare early on)`;
+  document.getElementById('o-sn3')&&(document.getElementById('o-sn3').textContent=disappoint?`The reward was LESS than the inflated estimate. This is disappointment — Q drops, making untried arms (still at Q₁=${O.q1}) more attractive. Greedy will switch!`:`Reward was at or above the current estimate. Unusual in early steps. Q stays high.`);
+  stepActivate('o',4);
+  const sf4=document.getElementById('o-sf4');
+  if(sf4){sf4.style.display='block';sf4.innerHTML=`Q_new = Q_old + α·(R − Q_old)<br>= <span style="color:var(--gold)">${oldQ.toFixed(3)}</span> + <span style="color:var(--orange)">${O.alpha}</span>·(<span style="color:var(--purple)">${reward.toFixed(3)}</span> − <span style="color:var(--gold)">${oldQ.toFixed(3)}</span>)<br>= <span style="color:${disappoint?'var(--blue)':'var(--green)'}">${O.Q[action].toFixed(4)}</span> (${disappoint?'↓ dropped':'↑ rose'})`;}
+  document.getElementById('o-sd4').textContent=`Q(${O.names[action]}): ${oldQ.toFixed(3)} → ${O.Q[action].toFixed(4)} | Δ=${delta.toFixed(3)}`;
+  document.getElementById('o-sn4')&&(document.getElementById('o-sn4').textContent=`Updated with constant α=${O.alpha}. The bias from Q₁=${O.q1} never fully disappears — it shrinks geometrically.`);
+  stepActivate('o',5); document.getElementById('o-sd5').textContent=`Remaining optimism ≈ (1−${O.alpha})^${O.N[action]} × ${O.q1} = ${remOpt.toFixed(3)}`;
+  document.getElementById('o-sn5')&&(document.getElementById('o-sn5').textContent=`The initial optimism bias is now ${remOpt.toFixed(3)} — it never reaches zero with constant α. With sample average, it would vanish completely once visited.`);
+  setTimeout(()=>[1,2,3,4,5].forEach(n=>stepDone('o',n)),500);
+  document.getElementById('o-algo-tag').textContent=`Step ${O.stepCount} — ${disappoint?'😞 DISAPPOINT':'✓ arm '+O.names[action]}`;
+  document.getElementById('o-algo-tag').style.color=disappoint?'var(--orange)':'var(--green)';
+  oUpdateStats(); oRenderOIVBars(); oUpdateCharts();
+  addHistRow('o-hist',[O.stepCount,O.names[action],oldQ.toFixed(3),`<span style="color:var(--purple)">${reward.toFixed(3)}</span>`,`<span style="color:${disappoint?'var(--red)':'var(--green)'}">${delta.toFixed(3)}</span>`,O.Q[action].toFixed(3),disappoint?'<span class="tag tag-dis">YES 😞</span>':'<span class="tag tag-xpl">no</span>']);
+}
+function oSteps(n){for(let i=0;i<n;i++)oStep();}
+function oToggleAuto(){if(O.auto){oPause();return;}document.getElementById('o-autoBtn').disabled=true;document.getElementById('o-pauseBtn').disabled=false;O.auto=setInterval(oStep,350);}
+function oPause(){if(O.auto){clearInterval(O.auto);O.auto=null;}document.getElementById('o-autoBtn').disabled=false;document.getElementById('o-pauseBtn').disabled=true;}
+function oLoadPreset(k){const p=O_PRESETS[k];O.arms=p.arms;O.names=[...p.names];O.labels=[...p.labels];document.getElementById('o-arms').value=p.arms;document.getElementById('o-armsV').textContent=p.arms;oReset();if(O.qChart){O.qChart.data.datasets=buildQDS(O.names,O.qData);O.qChart.update();}}
+function oUpArms(v){O.arms=parseInt(v);document.getElementById('o-armsV').textContent=v;O.names='ABCDEFGHIJ'.slice(0,O.arms).split('');O.labels=null;oReset();if(O.qChart){O.qChart.data.datasets=buildQDS(O.names,O.qData);O.qChart.update();}}
+function oUpQ1(v){O.q1=parseFloat(v);document.getElementById('o-q1V').textContent='+'+parseFloat(v).toFixed(1);document.getElementById('o-q1-display').textContent='+'+parseFloat(v).toFixed(1);document.getElementById('o-fml-q1').textContent='+'+parseFloat(v).toFixed(1);oReset();}
+function oUpAlpha(v){O.alpha=parseFloat(v);document.getElementById('o-alphaV').textContent=parseFloat(v).toFixed(2);}
+function oUpRM(v){O.rm=v;document.getElementById('o-manual-wrap').style.display=v==='manual'?'block':'none';['o-rr-lbl','o-rm-lbl'].forEach(id=>document.getElementById(id).classList.remove('active'));document.getElementById(v==='random'?'o-rr-lbl':'o-rm-lbl').classList.add('active');}
+function oResetAlgo(){document.getElementById('o-algo-tag').textContent='Awaiting…';document.getElementById('o-algo-tag').style.color='';['o-ft-qold','o-ft-alpha','o-ft-r','o-ft-qnew'].forEach(id=>document.getElementById(id).textContent='—');}
+function oInitCharts(){
+  O.qChart=new Chart(document.getElementById('o-qchart').getContext('2d'),{type:'line',data:{labels:['0'],datasets:buildQDS(O.names,O.qData)},options:mkChartOpts(false)});
+  O.rChart=new Chart(document.getElementById('o-rchart').getContext('2d'),{type:'line',data:{labels:['0'],datasets:[{label:'Cumulative Reward',data:[0],borderColor:'#F7D94F',backgroundColor:'rgba(247,217,79,0.1)',borderWidth:2,pointRadius:0,fill:true,tension:0.3}]},options:mkChartOpts(false)});
+}
+function oUpdateCharts(){
+  const lbl=Array.from({length:O.stepCount+1},(_,i)=>i);
+  O.qChart.data.labels=lbl; O.qChart.data.datasets=buildQDS(O.names,O.qData); O.qChart.update('none');
+  O.rChart.data.labels=lbl; O.rChart.data.datasets[0].data=O.rData; O.rChart.update('none');
+}
+
+/* ============================================================
+   COMPARE MODULE
+   ============================================================ */
+const CMP = {
+  arms:5, eps:0.1, c:2.0, q1:5.0, alpha:0.1,
+  names:['A','B','C','D','E'],
+  trueMeans:[],
+  eps_s:{Q:[],N:[],total:0,history:[]},
+  ucb_s:{Q:[],N:[],total:0,history:[]},
+  oiv_s:{Q:[],N:[],total:0,history:[]},
+  stepCount:0, auto:null,
+  charts:{}
+};
+
+function cmpReset(){
+  CMP.trueMeans=Array.from({length:CMP.arms},()=>+(Math.random()*10).toFixed(1));
+  CMP.names='ABCDEFGHIJ'.slice(0,CMP.arms).split('');
+  CMP.eps_s={Q:new Array(CMP.arms).fill(0),N:new Array(CMP.arms).fill(0),total:0,history:[0]};
+  CMP.ucb_s={Q:new Array(CMP.arms).fill(0),N:new Array(CMP.arms).fill(0),total:0,history:[0]};
+  CMP.oiv_s={Q:new Array(CMP.arms).fill(CMP.q1),N:new Array(CMP.arms).fill(0),total:0,history:[0]};
+  CMP.stepCount=0;
+  cmpRenderCards(); cmpUpdateCharts(); cmpHighlightWinner();
+  cmpPause();
+}
+function cmpStepOne(s, isEps, isUCB, isOIV){
+  CMP.stepCount++;
+  const t=CMP.stepCount;
+  // eps-greedy
+  if(isEps){
+    const r=Math.random(); const isExp=r<CMP.eps;
+    const a=isExp?Math.floor(Math.random()*CMP.arms):argmax(s.eps_s.Q);
+    const rw=gauss(CMP.trueMeans[a],1.5);
+    const oq=s.eps_s.Q[a]; s.eps_s.N[a]++;
+    s.eps_s.Q[a]=oq+(1/s.eps_s.N[a])*(rw-oq);
+    s.eps_s.total+=rw; s.eps_s.history.push(s.eps_s.total);
+  }
+  // UCB
+  if(isUCB){
+    let a;
+    if(s.ucb_s.N.some(n=>n===0)) a=s.ucb_s.N.indexOf(0);
+    else{const sc=s.ucb_s.Q.map((q,i)=>q+CMP.c*Math.sqrt(Math.log(t)/s.ucb_s.N[i]));a=sc.indexOf(Math.max(...sc));}
+    const rw=gauss(CMP.trueMeans[a],1.5);
+    const oq=s.ucb_s.Q[a]; s.ucb_s.N[a]++;
+    s.ucb_s.Q[a]=oq+(1/s.ucb_s.N[a])*(rw-oq);
+    s.ucb_s.total+=rw; s.ucb_s.history.push(s.ucb_s.total);
+  }
+  // OIV
+  if(isOIV){
+    const a=argmax(s.oiv_s.Q);
+    const rw=gauss(CMP.trueMeans[a],1.5);
+    const oq=s.oiv_s.Q[a]; s.oiv_s.N[a]++;
+    s.oiv_s.Q[a]=oq+CMP.alpha*(rw-oq);
+    s.oiv_s.total+=rw; s.oiv_s.history.push(s.oiv_s.total);
+  }
+}
+function cmpStep(){
+  cmpStepOne(CMP,true,true,true);
+  cmpRenderCards(); cmpUpdateCharts(); cmpHighlightWinner();
+  ['eps','ucb','oiv'].forEach(k=>document.getElementById(`cmp-${k}-steps`).textContent=CMP.stepCount);
+}
+function cmpSteps(n){for(let i=0;i<n;i++) cmpStepOne(CMP,true,true,true); cmpRenderCards(); cmpUpdateCharts(); cmpHighlightWinner();['eps','ucb','oiv'].forEach(k=>document.getElementById(`cmp-${k}-steps`).textContent=CMP.stepCount);}
+function cmpToggleAuto(){if(CMP.auto){cmpPause();return;}document.getElementById('cmp-autoBtn').disabled=true;document.getElementById('cmp-pauseBtn').disabled=false;CMP.auto=setInterval(()=>{cmpStepOne(CMP,true,true,true);cmpRenderCards();cmpUpdateCharts();cmpHighlightWinner();['eps','ucb','oiv'].forEach(k=>document.getElementById(`cmp-${k}-steps`).textContent=CMP.stepCount);},300);}
+function cmpPause(){if(CMP.auto){clearInterval(CMP.auto);CMP.auto=null;}document.getElementById('cmp-autoBtn').disabled=false;document.getElementById('cmp-pauseBtn').disabled=true;}
+function cmpRenderCards(){
+  const configs=[
+    {key:'eps',s:CMP.eps_s,color:'var(--orange)'},
+    {key:'ucb',s:CMP.ucb_s,color:'var(--teal)'},
+    {key:'oiv',s:CMP.oiv_s,color:'var(--gold)'}
+  ];
+  configs.forEach(({key,s,color})=>{
+    document.getElementById(`cmp-${key}-total`).textContent=s.total.toFixed(2);
+    document.getElementById(`cmp-${key}-avg`).textContent=CMP.stepCount>0?(s.total/CMP.stepCount).toFixed(2):'0.00';
+    const wrap=document.getElementById(`cmp-${key}-arms`); wrap.innerHTML='';
+    const maxQ=Math.max(...s.Q,0.01);
+    for(let i=0;i<CMP.arms;i++){
+      const pct=Math.max(0,Math.min(100,(s.Q[i]/maxQ)*100));
+      wrap.innerHTML+=`<div class="cmp-arm-row"><span class="cmp-anm">${CMP.names[i]}</span><div class="cmp-bar-out"><div class="cmp-bar-in" style="width:${pct}%;background:${color}"></div></div><span class="cmp-val">${s.Q[i].toFixed(2)}</span></div>`;
+    }
+  });
+}
+function cmpHighlightWinner(){
+  const totals={eps:CMP.eps_s.total,ucb:CMP.ucb_s.total,oiv:CMP.oiv_s.total};
+  const maxT=Math.max(...Object.values(totals));
+  ['eps','ucb','oiv'].forEach(k=>{
+    const card=document.getElementById(`cmp-card-${k}`);
+    const badge=document.getElementById(`cmp-${k}-winner`);
+    const isWin=totals[k]===maxT&&maxT>0;
+    card.classList.toggle('winner',isWin); badge.classList.toggle('show',isWin);
+  });
+}
+function cmpInitCharts(){
+  const miniOpts=mkChartOpts(true);
+  ['eps','ucb','oiv'].forEach((k,ki)=>{
+    const colors=['#F7944F','#4FF7D4','#F7D94F'];
+    CMP.charts[k]=new Chart(document.getElementById(`cmp-${k}-chart`).getContext('2d'),{
+      type:'line',data:{labels:[],datasets:[{data:[],borderColor:colors[ki],backgroundColor:`${colors[ki]}20`,borderWidth:1.5,pointRadius:0,fill:true,tension:0.3}]},options:miniOpts
+    });
+  });
+  CMP.charts.full=new Chart(document.getElementById('cmp-full-chart').getContext('2d'),{
+    type:'line',
+    data:{labels:[],datasets:[
+      {label:'ε-Greedy',data:[],borderColor:'#F7944F',backgroundColor:'transparent',borderWidth:2,pointRadius:0,tension:0.3},
+      {label:'UCB',data:[],borderColor:'#4FF7D4',backgroundColor:'transparent',borderWidth:2,pointRadius:0,tension:0.3},
+      {label:'Optimistic',data:[],borderColor:'#F7D94F',backgroundColor:'transparent',borderWidth:2,pointRadius:0,tension:0.3}
+    ]},
+    options:mkChartOpts(false)
+  });
+}
+function cmpUpdateCharts(){
+  const n=Math.max(CMP.eps_s.history.length,1);
+  const lbl=Array.from({length:n},(_,i)=>i);
+  ['eps','ucb','oiv'].forEach(k=>{
+    const s=CMP[`${k}_s`];
+    CMP.charts[k].data.labels=Array.from({length:s.history.length},(_,i)=>i);
+    CMP.charts[k].data.datasets[0].data=s.history;
+    CMP.charts[k].update('none');
+  });
+  CMP.charts.full.data.labels=lbl;
+  CMP.charts.full.data.datasets[0].data=CMP.eps_s.history;
+  CMP.charts.full.data.datasets[1].data=CMP.ucb_s.history;
+  CMP.charts.full.data.datasets[2].data=CMP.oiv_s.history;
+  CMP.charts.full.update('none');
+}
+function cmpUpArms(v){CMP.arms=parseInt(v);document.getElementById('cmp-armsV').textContent=v;cmpReset();}
+function cmpUpEps(v){CMP.eps=parseFloat(v);document.getElementById('cmp-epsV').textContent=parseFloat(v).toFixed(2);document.getElementById('cmp-eps-badge').textContent=`ε=${parseFloat(v).toFixed(2)}`;}
+function cmpUpC(v){CMP.c=parseFloat(v);document.getElementById('cmp-cV').textContent=parseFloat(v).toFixed(1);document.getElementById('cmp-ucb-badge').textContent=`c=${parseFloat(v).toFixed(1)}`;}
+function cmpUpQ1(v){CMP.q1=parseFloat(v);document.getElementById('cmp-q1V').textContent=parseFloat(v).toFixed(1);document.getElementById('cmp-oiv-badge').textContent=`Q₁=${parseFloat(v).toFixed(1)}`;cmpReset();}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+window.addEventListener('DOMContentLoaded',()=>{
+  eReset(); eInitCharts();
+  uReset(); uInitCharts();
+  oReset(); oInitCharts();
+  cmpReset(); cmpInitCharts();
+});
+</script>
+</body>
+</html>
