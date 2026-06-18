@@ -1,0 +1,1868 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MDP & Dynamic Programming — BITS Pilani DRL</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================ TOKENS */
+:root {
+  --bg:#0A0E1A; --bg2:#0F1525; --card:#141929; --card2:#1A2035;
+  --border:#1E2640; --text:#E8ECF4; --text2:#8892B0; --text3:#4A5480;
+  --c1:#64FFDA; --c2:#7B61FF; --c3:#FF6B9D; --c4:#00C9FF; --c5:#FFB347; --c6:#56CFE1;
+  --green:#4FCF8E; --orange:#F7944F; --purple:#A78BFA;
+  --red:#F76F6F; --gold:#F7D94F; --blue:#4F8EF7;
+  --font-d:'Space Grotesk',sans-serif; --font-b:'Inter',sans-serif; --font-m:'JetBrains Mono',monospace;
+  --r:12px; --rs:8px; --tr:0.22s cubic-bezier(0.4,0,0.2,1);
+}
+[data-theme="light"]{
+  --bg:#F0F4FF; --bg2:#E8EDF8; --card:#FFFFFF; --card2:#F0F4FF;
+  --border:#D0D8F0; --text:#0A1028; --text2:#4A5480; --text3:#8892B0;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--font-b);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background var(--tr),color var(--tr);}
+/* ============================================================ NAV */
+.topnav{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:stretch;position:sticky;top:0;z-index:200;height:50px;}
+.nav-brand{display:flex;align-items:center;gap:10px;padding:0 18px;border-right:1px solid var(--border);flex-shrink:0;}
+.nav-brand-icon{font-size:18px;}
+.nav-brand-text{font-family:var(--font-d);font-size:14px;font-weight:700;white-space:nowrap;}
+.nav-tabs{display:flex;flex:1;overflow-x:auto;}
+.nav-tabs::-webkit-scrollbar{height:0;}
+.nav-tab{display:flex;align-items:center;gap:6px;padding:0 14px;font-size:12px;font-weight:500;color:var(--text3);cursor:pointer;border:none;background:transparent;border-bottom:2px solid transparent;transition:all var(--tr);white-space:nowrap;font-family:var(--font-b);}
+.nav-tab:hover{color:var(--text);background:var(--card);}
+.nav-tab.active{color:var(--text);border-bottom-color:var(--tab-color,var(--c1));}
+.tab-dot{width:7px;height:7px;border-radius:50%;background:var(--tab-color,var(--c1));flex-shrink:0;}
+.nav-right{display:flex;align-items:center;gap:8px;padding:0 14px;border-left:1px solid var(--border);flex-shrink:0;}
+.btn-icon{background:var(--card);border:1px solid var(--border);border-radius:var(--rs);padding:4px 9px;cursor:pointer;font-size:13px;color:var(--text2);transition:all var(--tr);}
+.btn-icon:hover{border-color:var(--c1);color:var(--text);}
+/* ============================================================ PAGES */
+.page{display:none;}
+.page.active{display:block;}
+.pg-content{max-width:960px;margin:0 auto;padding:20px 16px;}
+/* ============================================================ HERO */
+.pg-hero{border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px;}
+.pg-hero-badge{display:inline-flex;align-items:center;font-family:var(--font-m);font-size:10px;padding:2px 10px;border-radius:20px;border:1px solid;letter-spacing:.5px;margin-bottom:8px;}
+.pg-hero-title{font-family:var(--font-d);font-size:24px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px;}
+.pg-hero-sub{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:8px;}
+/* ============================================================ SHARED */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;}
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;flex-wrap:wrap;}
+.sec-title{font-family:var(--font-d);font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;}
+.hot-badge{background:#FF4444;color:#fff;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700;white-space:nowrap;}
+.formula-box{background:var(--bg2);border-left:3px solid var(--accent,var(--c1));border-radius:var(--rs);padding:10px 14px;font-family:var(--font-m);font-size:13px;color:var(--text);line-height:1.7;}
+.btn{font-family:var(--font-b);font-size:12px;font-weight:500;padding:6px 12px;border-radius:var(--rs);border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;transition:all var(--tr);display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
+.btn:hover{background:var(--card2);border-color:var(--accent,var(--c1));color:var(--accent,var(--c1));}
+.btn.primary{background:var(--accent,var(--c1));border-color:var(--accent,var(--c1));color:#0A0E1A;}
+.btn.primary:hover{opacity:.9;color:#0A0E1A;}
+.btn.sm{font-size:11px;padding:5px 9px;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.ctrl{display:flex;flex-direction:column;gap:5px;margin-bottom:10px;}
+.ctrl label{font-size:12px;color:var(--text2);font-weight:500;}
+.ctrl-inline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.ctrl-inline label{font-size:12px;color:var(--text2);white-space:nowrap;}
+.v{font-family:var(--font-m);font-size:12px;}
+input[type=range]{-webkit-appearance:none;height:4px;background:var(--border);border-radius:2px;outline:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent,var(--c1));cursor:pointer;}
+/* ============================================================ EXAM ALERT BOX */
+.exam-alert-box{background:linear-gradient(135deg,#FF444408,transparent);border:1px solid #FF444433;border-radius:var(--r);padding:16px;margin-bottom:16px;}
+.ea-title{font-family:var(--font-d);font-size:13px;font-weight:700;color:#FF4444;margin-bottom:12px;}
+.ea-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
+.ea-item{background:var(--card);border:1px solid var(--border);border-radius:var(--rs);padding:10px;}
+.ea-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
+.ea-val{font-size:12px;color:var(--text2);}
+/* ============================================================ LADDER (S1) */
+.ladder-wrap{display:flex;flex-direction:column;gap:0;}
+.ladder-rung{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:all var(--tr);cursor:pointer;}
+.ladder-rung:hover{border-color:var(--c1)44;}
+.rung-head{display:flex;align-items:center;gap:10px;padding:12px 14px;}
+.rung-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;border:1px solid;}
+.rung-main{flex:1;}
+.rung-title{font-family:var(--font-d);font-size:14px;font-weight:600;}
+.rung-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.rung-tag{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;}
+.rung-arrow{color:var(--text3);font-size:12px;transition:transform var(--tr);}
+.rung-body{padding:0 14px 14px;}
+.rung-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:10px;}
+.rung-col{background:var(--card);border-radius:var(--rs);padding:10px;}
+.rung-item-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.rung-item-val{font-size:12px;color:var(--text2);line-height:1.5;}
+.ladder-connector{display:flex;align-items:center;gap:10px;padding:4px 14px;}
+.lc-line{width:2px;height:24px;background:var(--border);margin-left:13px;}
+.lc-add{font-size:11px;font-weight:600;margin-left:4px;}
+/* ============================================================ SAR TAPE (S1) */
+.sar-tape{display:flex;gap:3px;overflow-x:auto;padding:10px;background:var(--bg2);border-radius:var(--r);min-height:56px;align-items:center;border:1px solid var(--border);}
+.sar-cell{display:flex;flex-direction:column;align-items:center;padding:6px 10px;border-radius:var(--rs);font-family:var(--font-m);font-size:12px;white-space:nowrap;transition:all var(--tr);flex-shrink:0;}
+.sar-type{font-size:9px;margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px;}
+.sar-cell.S{background:#7B61FF22;border:1px solid #7B61FF44;color:#7B61FF;}
+.sar-cell.A{background:#64FFDA22;border:1px solid #64FFDA44;color:#64FFDA;}
+.sar-cell.R{background:#FF6B9D22;border:1px solid #FF6B9D44;color:#FF6B9D;}
+.sar-cell.new{animation:sarPop .4s ease;}
+@keyframes sarPop{0%{transform:scale(0.7);opacity:0;}100%{transform:scale(1);opacity:1;}}
+.sar-explain{background:var(--bg2);border-radius:var(--rs);padding:10px 14px;font-size:12px;color:var(--text2);border:1px solid var(--border);line-height:1.6;min-height:40px;}
+/* ============================================================ AE LOOP (S1) */
+.ae-loop{display:flex;align-items:center;justify-content:center;gap:0;padding:16px;background:var(--bg2);border-radius:var(--r);margin-bottom:12px;flex-wrap:wrap;gap:10px;}
+.ae-box{background:var(--card);border:2px solid var(--border);border-radius:var(--r);padding:14px 20px;text-align:center;min-width:120px;}
+.ae-box.agent-box{border-color:#64FFDA44;}
+.ae-box.env-box{border-color:#7B61FF44;}
+.ae-label{font-family:var(--font-d);font-size:13px;font-weight:700;margin-bottom:4px;}
+.ae-sub{font-size:11px;color:var(--text2);line-height:1.5;}
+.ae-arrows{display:flex;flex-direction:column;gap:8px;padding:0 16px;align-items:center;min-width:140px;}
+.ae-arrow{display:flex;align-items:center;gap:4px;}
+.ae-arr-label{font-size:11px;font-weight:600;width:60px;text-align:right;}
+.ae-arr-line{height:2px;width:60px;}
+.ae-arr-tip{font-size:14px;}
+.ae-arrow-left{flex-direction:row-reverse;}
+.ae-arr-tip2{font-size:14px;}
+.ae-arr-line{height:2px;width:60px;}
+.ae-arr-label2{font-size:11px;font-weight:600;width:80px;}
+.ae-steps-list{display:flex;flex-direction:column;gap:6px;}
+.ae-step{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);}
+.ae-step-n{width:20px;height:20px;border-radius:50%;background:#64FFDA22;color:#64FFDA;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;}
+/* ============================================================ MARKOV (S1) */
+.markov-demo{background:var(--bg2);border-radius:var(--r);padding:14px;}
+.markov-eq{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+.markov-lhs,.markov-rhs{font-family:var(--font-m);font-size:13px;padding:6px 10px;background:var(--card);border-radius:6px;}
+.markov-eq-sign{font-size:18px;font-weight:700;color:var(--c1);}
+.markov-ex-box{background:var(--card);border-radius:var(--rs);padding:12px;border:1px solid var(--border);font-size:12px;color:var(--text2);line-height:1.6;}
+/* ============================================================ QUIZ (S1) */
+.quiz-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px;}
+.quiz-q{font-size:13px;color:var(--text);margin-bottom:10px;line-height:1.5;}
+.quiz-opts{display:flex;flex-direction:column;gap:6px;}
+.quiz-opt{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--rs);border:1px solid var(--border);cursor:pointer;font-size:12px;color:var(--text2);transition:all var(--tr);background:var(--card);}
+.quiz-opt:hover{border-color:var(--c1)44;color:var(--text);}
+.quiz-opt.correct{background:#64FFDA22;border-color:#64FFDA;color:#64FFDA;}
+.quiz-opt.wrong{background:#FF444422;border-color:#FF4444;color:#FF4444;}
+.quiz-explain{margin-top:8px;padding:8px 12px;border-radius:var(--rs);font-size:12px;line-height:1.6;display:none;}
+/* ============================================================ TUPLE (S2) */
+.tuple-strip{display:flex;align-items:center;gap:4px;padding:12px;background:var(--bg2);border-radius:var(--r);margin-bottom:10px;flex-wrap:wrap;justify-content:center;}
+.tuple-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 14px;border-radius:var(--rs);border:1px solid var(--border);cursor:pointer;transition:all var(--tr);background:var(--card);}
+.tuple-item:hover,.tuple-item.active{border-color:var(--accent,var(--c2));background:var(--card2);}
+.ti-sym{font-family:var(--font-m);font-size:22px;font-weight:700;}
+.ti-name{font-size:10px;color:var(--text3);}
+.tuple-sep{font-family:var(--font-m);font-size:20px;color:var(--text3);}
+.tuple-detail{background:var(--bg2);border-radius:var(--r);padding:14px;border:1px solid var(--border);min-height:60px;}
+/* ============================================================ EQ TABS (S2, S5) */
+.eq-tabs{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap;}
+.eq-tab{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--card);color:var(--text2);font-size:12px;cursor:pointer;transition:all var(--tr);}
+.eq-tab.active{background:var(--accent,var(--c2))22;border-color:var(--accent,var(--c2));color:var(--accent,var(--c2));}
+.eq-explain{background:var(--card);border-radius:var(--rs);padding:12px;border:1px solid var(--border);}
+.eq-q{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.eq-a{font-size:13px;font-weight:500;margin-bottom:8px;line-height:1.5;}
+.eq-note{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:6px;}
+.eq-use{font-size:12px;color:var(--text2);line-height:1.6;}
+/* ============================================================ ROBOT TABLE (S2) */
+.robot-controls{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;}
+.robot-table-wrap{overflow-x:auto;}
+.robot-table{width:100%;border-collapse:collapse;font-size:12px;}
+.robot-table th{background:var(--card2);padding:7px 10px;text-align:left;font-weight:600;color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);}
+.robot-table td{padding:7px 10px;border-bottom:1px solid var(--border);font-family:var(--font-m);color:var(--text2);}
+.robot-table td.prob{color:var(--c4);}
+.robot-table td.state-high{color:var(--c1);}
+.robot-table td.state-low{color:var(--orange);}
+.robot-table tr:hover td{background:var(--card2);}
+/* ============================================================ GRIDWORLD (S2) */
+.gridworld-wrap{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:12px;}
+.gw-grid{display:grid;grid-template-columns:repeat(4,56px);gap:3px;}
+.gw-cell{width:56px;height:48px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;font-family:var(--font-m);border:1px solid var(--border);}
+.gw-legend{display:flex;flex-direction:column;gap:6px;}
+.gw-leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);}
+.gw-swatch{width:14px;height:12px;border-radius:3px;}
+.gw-mdp-table{display:flex;flex-direction:column;gap:5px;}
+.gw-row{display:flex;gap:10px;padding:6px 10px;background:var(--bg2);border-radius:var(--rs);}
+.gw-sym{font-family:var(--font-m);font-size:14px;font-weight:700;color:var(--c2);width:20px;flex-shrink:0;}
+.gw-val{font-size:12px;color:var(--text2);}
+/* ============================================================ RETURNS (S3) */
+.chess-analogy{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+.ca-move{padding:12px;border:1px solid;border-radius:var(--r);min-width:130px;}
+.ca-arrow{font-size:12px;color:var(--text3);flex:1;text-align:center;}
+.formula-cards{display:flex;flex-direction:column;gap:8px;}
+.fml-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px;cursor:pointer;transition:all var(--tr);}
+.fml-card:hover{border-color:var(--c3)44;}
+.fml-card-hdr{display:flex;align-items:center;gap:8px;}
+.fml-num{font-family:var(--font-m);font-size:14px;font-weight:700;width:24px;}
+.fml-name{font-size:13px;font-weight:500;flex:1;}
+.fml-arrow{color:var(--text3);font-size:11px;transition:transform var(--tr);}
+.gamma-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-bottom:10px;}
+.gamma-cell{background:var(--card);border-radius:var(--rs);padding:8px;text-align:center;border:1px solid var(--border);}
+.gamma-cell .gc-step{font-size:10px;color:var(--text3);margin-bottom:3px;}
+.gamma-cell .gc-val{font-family:var(--font-m);font-size:14px;font-weight:600;}
+.gamma-desc{font-size:12px;color:var(--text2);padding:8px 12px;background:var(--bg2);border-radius:var(--rs);line-height:1.6;}
+.calc-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.calc-steps{background:var(--bg2);border-radius:var(--r);padding:14px;border:1px solid var(--border);}
+.calc-step{margin-bottom:8px;font-size:12px;color:var(--text2);line-height:1.7;}
+.calc-step .cs-n{font-family:var(--font-m);color:var(--c3);font-weight:600;}
+.evc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;}
+.evc-card{background:var(--bg2);border:1px solid;border-radius:var(--r);padding:14px;}
+.evc-title{font-family:var(--font-d);font-size:14px;font-weight:700;margin-bottom:10px;}
+.evc-item{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);}
+.evc-item:last-child{border-bottom:none;}
+.evc-item strong{text-align:right;}
+/* ============================================================ VALUE FUNCTIONS (S4) */
+.vq-split{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:start;margin-bottom:10px;}
+.vq-box{background:var(--bg2);border:2px solid var(--border);border-radius:var(--r);padding:14px;cursor:pointer;transition:all var(--tr);}
+.vq-box:hover{border-color:var(--c4)44;}
+.vq-sym{font-family:var(--font-m);font-size:20px;font-weight:700;margin-bottom:4px;}
+.vq-name{font-size:12px;font-weight:600;margin-bottom:8px;}
+.vq-q{font-size:11px;color:var(--text2);font-style:italic;margin-bottom:6px;}
+.vq-note{font-size:11px;color:var(--text3);margin-bottom:6px;}
+.vq-use{font-size:11px;font-weight:600;}
+.vq-vs{display:flex;align-items:center;font-size:16px;font-weight:700;color:var(--text3);padding-top:60px;}
+.vq-detail{background:var(--bg2);border-radius:var(--rs);padding:12px;border:1px solid var(--border);font-size:12px;color:var(--text2);line-height:1.6;}
+.deriv-steps{display:flex;flex-direction:column;gap:10px;}
+.ds-row{display:flex;gap:10px;transition:opacity var(--tr);}
+.ds-n{width:24px;height:24px;border-radius:50%;background:#00C9FF22;color:#00C9FF;border:1px solid #00C9FF44;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;font-family:var(--font-m);}
+.ds-title{font-size:12px;font-weight:600;margin-bottom:4px;}
+.ds-note{font-size:11px;color:var(--text3);margin-top:4px;line-height:1.5;}
+.bterm-table{display:flex;flex-direction:column;gap:4px;}
+.bterm-row{display:grid;grid-template-columns:120px 80px 1fr;gap:8px;align-items:center;padding:7px 10px;background:var(--bg2);border-radius:var(--rs);border:1px solid transparent;transition:all var(--tr);}
+.bterm-row.highlight{border-color:var(--accent,var(--c4));}
+.bterm-sym{font-family:var(--font-m);font-size:12px;font-weight:600;}
+.bterm-who{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;}
+.bterm-what{font-size:12px;color:var(--text2);}
+.backup-wrap{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;}
+.backup-legend{display:flex;flex-direction:column;gap:6px;}
+.bl-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);}
+.bl-swatch{width:12px;height:12px;border-radius:2px;flex-shrink:0;}
+.verifier-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;max-width:220px;margin:0 auto 12px;align-items:center;}
+.vg-input{width:65px;background:var(--card2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--font-m);font-size:13px;padding:5px 6px;text-align:center;outline:none;}
+.vg-input:focus{border-color:var(--c4);}
+.vg-spacer{}
+.vg-center{width:65px;height:40px;background:#00C9FF22;border:2px solid #00C9FF;border-radius:var(--rs);display:flex;align-items:center;justify-content:center;font-family:var(--font-m);font-size:14px;font-weight:700;color:#00C9FF;margin:0 auto;}
+.verifier-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.verifier-result{background:var(--bg2);border-radius:var(--r);padding:12px;border:1px solid var(--border);}
+/* ============================================================ OPTIMALITY (S5) */
+.onechange-wrap{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-bottom:10px;}
+.oc-side{background:var(--bg2);border:1px solid;border-radius:var(--r);padding:14px;}
+.oc-title{font-family:var(--font-d);font-size:14px;font-weight:700;margin-bottom:8px;}
+.oc-props{display:flex;flex-direction:column;gap:4px;margin-top:8px;}
+.oc-prop{font-size:12px;color:var(--text2);}
+.oc-arrow{display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--c5);}
+.optval-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.ov-card{background:var(--bg2);border:1px solid;border-radius:var(--r);padding:14px;}
+.ov-sym{font-family:var(--font-m);font-size:18px;font-weight:700;margin-bottom:6px;}
+.eq-parse-table{display:flex;flex-direction:column;gap:4px;}
+.ep-row{display:grid;grid-template-columns:100px 80px 1fr;gap:8px;padding:7px 10px;background:var(--bg2);border-radius:var(--rs);}
+.ep-term{font-family:var(--font-m);font-size:12px;font-weight:600;}
+.ep-who{font-size:10px;color:var(--text3);}
+.ep-what{font-size:12px;color:var(--text2);}
+.bd-explain{font-size:12px;color:var(--text2);line-height:1.7;padding:10px;background:var(--bg2);border-radius:var(--rs);}
+/* ============================================================ DP (S6) */
+.pvc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;}
+.pvc-card{background:var(--bg2);border:1px solid;border-radius:var(--r);padding:14px;}
+.pvc-title{font-family:var(--font-d);font-size:14px;font-weight:700;margin-bottom:8px;}
+.pvc-op,.pvc-algo,.pvc-goal{font-size:12px;color:var(--text2);margin-bottom:4px;}
+.vi-states-display{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px;}
+.vi-state-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px;text-align:center;transition:all var(--tr);}
+.vi-state-box.selected{border-color:var(--c6);background:#56CFE111;}
+.vis-name{font-family:var(--font-d);font-size:14px;font-weight:700;margin-bottom:4px;}
+.vis-v{font-family:var(--font-m);font-size:22px;font-weight:700;color:var(--c6);margin-bottom:4px;}
+.vis-action{font-size:11px;color:var(--text2);}
+.vi-workings{background:var(--bg2);border-radius:var(--r);padding:14px;border:1px solid var(--border);min-height:60px;font-size:12px;color:var(--text2);line-height:1.8;}
+.vi-step-row{margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+.vi-step-row:last-child{border-bottom:none;margin-bottom:0;}
+.vi-state-hdr{font-family:var(--font-d);font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.vi-calc{font-family:var(--font-m);font-size:11px;color:var(--text3);line-height:1.8;}
+.vi-result{font-family:var(--font-m);font-size:12px;color:var(--c6);font-weight:600;}
+.vi-policy-display{background:#64FFDA22;border:1px solid #64FFDA44;border-radius:var(--r);padding:14px;}
+.pi-cycle{display:flex;flex-direction:column;align-items:flex-start;gap:0;}
+.pi-phase{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;width:100%;transition:all var(--tr);}
+.pi-phase.active-phase{border-color:var(--c6);background:#56CFE111;}
+.pi-ph-title{font-family:var(--font-d);font-size:13px;font-weight:700;margin-bottom:5px;}
+.pi-ph-body{font-size:12px;color:var(--text2);line-height:1.6;}
+.pi-arrow{color:var(--text3);padding:3px 20px;font-size:16px;}
+.pi-numerical{background:var(--bg2);border-radius:var(--r);padding:14px;border:1px solid var(--border);font-size:12px;color:var(--text2);line-height:1.8;}
+.vipi-table{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;font-size:12px;}
+.vipi-hdr,.vipi-row{display:grid;grid-template-columns:140px 1fr 1fr;gap:0;}
+.vipi-hdr{background:var(--card2);padding:8px 12px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;}
+.vipi-hdr div,.vipi-row div{padding:7px 12px;border-right:1px solid var(--border);}
+.vipi-hdr div:last-child,.vipi-row div:last-child{border-right:none;}
+.vipi-row{border-top:1px solid var(--border);}
+.vipi-row:hover{background:var(--card2);}
+.vipi-prop{color:var(--text2);font-weight:500;}
+.gpi-table{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;font-size:12px;}
+.gpi-hdr,.gpi-row{display:grid;grid-template-columns:140px 160px 1fr;gap:0;}
+.gpi-hdr{background:var(--card2);padding:7px 12px;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;}
+.gpi-hdr div,.gpi-row div{padding:7px 12px;border-right:1px solid var(--border);}
+.gpi-hdr div:last-child,.gpi-row div:last-child{border-right:none;}
+.gpi-row{border-top:1px solid var(--border);}
+.gpi-row:hover{background:var(--card2);}
+/* ============================================================ MISC */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+@media(max-width:700px){
+  .vq-split{grid-template-columns:1fr;}
+  .vq-vs{display:none;}
+  .onechange-wrap{grid-template-columns:1fr;}
+  .oc-arrow{flex-direction:row;}
+  .optval-grid{grid-template-columns:1fr;}
+  .evc-grid,.pvc-grid{grid-template-columns:1fr;}
+  .ep-row,.bterm-row{grid-template-columns:1fr;}
+  .vipi-hdr,.vipi-row{grid-template-columns:1fr;}
+  .gpi-hdr,.gpi-row{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="topnav">
+  <div class="nav-brand">
+    <span class="nav-brand-icon">🧠</span>
+    <span class="nav-brand-text">MDP & DP</span>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-tab="s1" onclick="switchTab('s1')" style="--tab-color:#64FFDA"><div class="tab-dot"></div>MAB→MDP</button>
+    <button class="nav-tab" data-tab="s2" onclick="switchTab('s2')" style="--tab-color:#7B61FF"><div class="tab-dot"></div>MDP Formalism</button>
+    <button class="nav-tab" data-tab="s3" onclick="switchTab('s3')" style="--tab-color:#FF6B9D"><div class="tab-dot"></div>Returns</button>
+    <button class="nav-tab" data-tab="s4" onclick="switchTab('s4')" style="--tab-color:#00C9FF"><div class="tab-dot"></div>Value Functions</button>
+    <button class="nav-tab" data-tab="s5" onclick="switchTab('s5')" style="--tab-color:#FFB347"><div class="tab-dot"></div>Optimality</button>
+    <button class="nav-tab" data-tab="s6" onclick="switchTab('s6')" style="--tab-color:#56CFE1"><div class="tab-dot"></div>Dyn. Programming</button>
+  </div>
+  <div class="nav-right">
+    <button class="btn-icon" onclick="toggleTheme()">🌓</button>
+  </div>
+</nav>
+
+<!-- PAGE 1: MAB → MDP -->
+<div class="page active" id="page-s1" style="--accent:#64FFDA;--accent-rgb:100,255,218;">
+<div class="pg-content">
+
+<!-- HERO -->
+<div class="pg-hero" style="border-color:#64FFDA33;background:linear-gradient(135deg,#64FFDA08,transparent)">
+  <div class="pg-hero-badge" style="background:#64FFDA22;color:#64FFDA;border-color:#64FFDA44">Section 1</div>
+  <h2 class="pg-hero-title">MAB → Contextual Bandit → Full MDP</h2>
+  <p class="pg-hero-sub">Why do MDPs exist? Because some decisions only pay off 50 moves later.</p>
+  <span class="hot-badge">🔥 midsem hot</span>
+</div>
+
+<!-- THREE-LEVEL LADDER -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">The Three-Level Progression</div><span style="font-size:11px;color:var(--text3)">Click each level to expand</span></div>
+  <p style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6;">
+    The single question that separates all three: <strong style="color:#64FFDA">"Does my action change the state I'm in?"</strong>
+  </p>
+  <div class="ladder-wrap" id="ladderWrap">
+    <div class="ladder-rung" id="rung0" onclick="toggleRung(0)">
+      <div class="rung-head">
+        <div class="rung-num" style="background:#64FFDA22;color:#64FFDA;border-color:#64FFDA44">1</div>
+        <div class="rung-main">
+          <div class="rung-title">Multi-Armed Bandit (MAB)</div>
+          <div class="rung-sub">Action → Reward &nbsp;|&nbsp; No state, no tomorrow</div>
+        </div>
+        <div class="rung-tag" style="background:#64FFDA22;color:#64FFDA">No State</div>
+        <div class="rung-arrow" id="rarrow0">▼</div>
+      </div>
+      <div class="rung-body" id="rbody0" style="display:none;">
+        <div class="rung-grid">
+          <div class="rung-col">
+            <div class="rung-item-lbl">Example</div>
+            <div class="rung-item-val">Choosing an ad variant. One situation, K choices, instant payoff.</div>
+          </div>
+          <div class="rung-col">
+            <div class="rung-item-lbl">State?</div>
+            <div class="rung-item-val" style="color:var(--red)">❌ None at all</div>
+          </div>
+          <div class="rung-col">
+            <div class="rung-item-lbl">Action changes state?</div>
+            <div class="rung-item-val" style="color:var(--red)">❌ No state to change</div>
+          </div>
+          <div class="rung-col">
+            <div class="rung-item-lbl">Missing</div>
+            <div class="rung-item-val">State + any concept of tomorrow</div>
+          </div>
+        </div>
+        <div class="formula-box" style="border-left-color:#64FFDA;margin-top:10px;">
+          Action <span style="color:#64FFDA">a</span> → Reward <span style="color:var(--gold)">R</span> &nbsp;&nbsp;(done — no next state)
+        </div>
+      </div>
+    </div>
+
+    <div class="ladder-connector"><div class="lc-line"></div><div class="lc-add" style="color:#64FFDA">+ State (context)</div></div>
+
+    <div class="ladder-rung" id="rung1" onclick="toggleRung(1)">
+      <div class="rung-head">
+        <div class="rung-num" style="background:#7B61FF22;color:#7B61FF;border-color:#7B61FF44">2</div>
+        <div class="rung-main">
+          <div class="rung-title">Contextual Bandit</div>
+          <div class="rung-sub">Context + Action → Reward &nbsp;|&nbsp; State exists but action doesn't change it</div>
+        </div>
+        <div class="rung-tag" style="background:#7B61FF22;color:#7B61FF">State, No Transition</div>
+        <div class="rung-arrow" id="rarrow1">▼</div>
+      </div>
+      <div class="rung-body" id="rbody1" style="display:none;">
+        <div class="rung-grid">
+          <div class="rung-col">
+            <div class="rung-item-lbl">Example</div>
+            <div class="rung-item-val">Arjun's juice stall: customer's age group changes which juice to push — but selling mango juice doesn't change the customer's age.</div>
+          </div>
+          <div class="rung-col">
+            <div class="rung-item-lbl">State?</div>
+            <div class="rung-item-val" style="color:#64FFDA">✅ Yes — context exists</div>
+          </div>
+          <div class="rung-col">
+            <div class="rung-item-lbl">Action changes state?</div>
+            <div class="rung-item-val" style="color:var(--red)">❌ No — state is exogenous</div>
+          </div>
+          <div class="rung-col">
+            <div class="rung-item-lbl">Missing</div>
+            <div class="rung-item-val">State transitions caused by actions</div>
+          </div>
+        </div>
+        <div class="formula-box" style="border-left-color:#7B61FF;margin-top:10px;">
+          Context <span style="color:#7B61FF">s</span> + Action <span style="color:#64FFDA">a</span> → Reward <span style="color:var(--gold)">R</span> &nbsp;&nbsp;(state unchanged)
+        </div>
+      </div>
+    </div>
+
+    <div class="ladder-connector"><div class="lc-line"></div><div class="lc-add" style="color:#7B61FF">+ State Transitions</div></div>
+
+    <div class="ladder-rung" id="rung2" onclick="toggleRung(2)" style="border-color:#FF6B9D44;">
+      <div class="rung-head">
+        <div class="rung-num" style="background:#FF6B9D22;color:#FF6B9D;border-color:#FF6B9D44">3</div>
+        <div class="rung-main">
+          <div class="rung-title">Full RL / MDP</div>
+          <div class="rung-sub">State + Action → Reward + New State &nbsp;|&nbsp; Actions reshape the world</div>
+        </div>
+        <div class="rung-tag" style="background:#FF6B9D22;color:#FF6B9D">Complete Picture</div>
+        <div class="rung-arrow" id="rarrow2">▼</div>
+      </div>
+      <div class="rung-body" id="rbody2" style="display:none;">
+        <div class="rung-grid">
+          <div class="rung-col">
+            <div class="rung-item-lbl">Example</div>
+            <div class="rung-item-val">Chess: each move changes the board. Warehouse robot: picking a can drains battery, changing state for every future decision.</div>
+          </div>
+          <div class="rung-col">
+            <div class="rung-item-lbl">State?</div>
+            <div class="rung-item-val" style="color:#64FFDA">✅ Yes</div>
+          </div>
+          <div class="rung-col">
+            <div class="rung-item-lbl">Action changes state?</div>
+            <div class="rung-item-val" style="color:#64FFDA">✅ Yes — this is the key!</div>
+          </div>
+          <div class="rung-col">
+            <div class="rung-item-lbl">Missing</div>
+            <div class="rung-item-val" style="color:#64FFDA">Nothing — this is the full picture</div>
+          </div>
+        </div>
+        <div class="formula-box" style="border-left-color:#FF6B9D;margin-top:10px;">
+          State <span style="color:#7B61FF">s</span> + Action <span style="color:#64FFDA">a</span> → Reward <span style="color:var(--gold)">R</span> + <strong style="color:#FF6B9D">New State s'</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SAR SEQUENCE ANIMATOR -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr">
+    <div class="sec-title">SAR Sequence Animator</div>
+    <span class="hot-badge">🔥 exam critical</span>
+  </div>
+  <p style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6;">
+    Reward is indexed <strong style="color:#64FFDA">R<sub>t+1</sub></strong>, not R<sub>t</sub>. The agent acts at time t, the environment responds at t+1 with both the new state AND reward. Step through to see why.
+  </p>
+  <div class="sar-tape" id="sarTape"></div>
+  <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+    <button class="btn sm primary" onclick="sarStep()" id="sarStepBtn">▶ Next Step</button>
+    <button class="btn sm" onclick="sarReset()">↺ Reset</button>
+  </div>
+  <div class="sar-explain" id="sarExplain" style="margin-top:12px;"></div>
+</div>
+
+<!-- AGENT-ENVIRONMENT LOOP -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">Agent–Environment Interface</div></div>
+  <div class="ae-loop">
+    <div class="ae-box agent-box" id="ae-agent">
+      <div class="ae-label">AGENT</div>
+      <div class="ae-sub">Observes S<sub>t</sub><br>Selects A<sub>t</sub></div>
+    </div>
+    <div class="ae-arrows">
+      <div class="ae-arrow ae-arrow-right" id="ae-arr-action">
+        <div class="ae-arr-label" style="color:#64FFDA">A<sub>t</sub></div>
+        <div class="ae-arr-line" style="background:#64FFDA"></div>
+        <div class="ae-arr-tip" style="border-left-color:#64FFDA">▶</div>
+      </div>
+      <div class="ae-arrow ae-arrow-left" id="ae-arr-state">
+        <div class="ae-arr-tip2" style="border-right-color:#7B61FF">◀</div>
+        <div class="ae-arr-line" style="background:#7B61FF"></div>
+        <div class="ae-arr-label2" style="color:#7B61FF">S<sub>t+1</sub>, R<sub>t+1</sub></div>
+      </div>
+    </div>
+    <div class="ae-box env-box" id="ae-env">
+      <div class="ae-label">ENVIRONMENT</div>
+      <div class="ae-sub">Receives A<sub>t</sub><br>Outputs S<sub>t+1</sub>, R<sub>t+1</sub></div>
+    </div>
+  </div>
+  <div class="ae-steps-list">
+    <div class="ae-step"><span class="ae-step-n">1</span> Agent observes state S<sub>t</sub></div>
+    <div class="ae-step"><span class="ae-step-n">2</span> Agent selects action A<sub>t</sub> (following policy)</div>
+    <div class="ae-step"><span class="ae-step-n">3</span> Environment transitions → S<sub>t+1</sub>, R<sub>t+1</sub></div>
+    <div class="ae-step"><span class="ae-step-n">4</span> Agent uses (S<sub>t</sub>, A<sub>t</sub>, R<sub>t+1</sub>, S<sub>t+1</sub>) to update knowledge</div>
+  </div>
+  <div class="formula-box" style="border-left-color:#64FFDA;margin-top:12px;">
+    Goal: maximise <strong style="color:#64FFDA">cumulative reward</strong>, NOT just R<sub>t+1</sub>
+  </div>
+</div>
+
+<!-- MARKOV PROPERTY -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">The Markov Property</div><span class="hot-badge">🔥 exam critical</span></div>
+  <p style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:14px;">
+    The future depends <strong style="color:#64FFDA">only on the current state</strong>, not the full history. Toggle to see what this means.
+  </p>
+  <div class="markov-demo">
+    <div class="markov-eq">
+      <div class="markov-lhs">p(S<sub>t+1</sub>, R<sub>t+1</sub> | <span id="markov-cond" style="color:#64FFDA">S<sub>t</sub>, A<sub>t</sub></span>)</div>
+      <div class="markov-eq-sign">=</div>
+      <div class="markov-rhs">p(S<sub>t+1</sub>, R<sub>t+1</sub> | S<sub>0</sub>, A<sub>0</sub>, ···, S<sub>t</sub>, A<sub>t</sub>)</div>
+    </div>
+    <div style="display:flex;gap:8px;margin:12px 0;flex-wrap:wrap;">
+      <button class="btn sm" id="markov-chess-btn" onclick="showMarkovEx('chess')">♟ Chess Example</button>
+      <button class="btn sm" id="markov-robot-btn" onclick="showMarkovEx('robot')">🤖 Robot Example</button>
+      <button class="btn sm" id="markov-break-btn" onclick="showMarkovEx('break')">❌ When It Breaks</button>
+    </div>
+    <div class="markov-ex-box" id="markovExBox" style="display:none;"></div>
+  </div>
+  <div class="formula-box" style="border-left-color:#64FFDA;margin-top:12px;">
+    The state must be a <strong style="color:#64FFDA">sufficient statistic</strong> — knowing any extra history gives zero additional predictive power.
+  </div>
+</div>
+
+<!-- CLASSIFY SCENARIOS QUIZ -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">🧠 Classify the Scenario</div><span style="font-size:11px;color:var(--text3)">5 exam-style questions</span></div>
+  <div id="quizWrap"></div>
+</div>
+
+<!-- EXAM ALERT -->
+<div class="exam-alert-box">
+  <div class="ea-title">⚡ Exam Alert — Know Cold</div>
+  <div class="ea-grid">
+    <div class="ea-item"><div class="ea-lbl">SAR sequence</div><div class="ea-val formula-box" style="border-left-color:#64FFDA;">S₀, A₀, <span style="color:var(--red)">R₁</span>, S₁, A₁, <span style="color:var(--red)">R₂</span>, S₂, ···</div></div>
+    <div class="ea-item"><div class="ea-lbl">Common mistake</div><div class="ea-val" style="font-size:12px;color:var(--text2)">Writing R<sub>t</sub> instead of R<sub>t+1</sub>. Reward arrives <em>after</em> the transition — it belongs to t+1.</div></div>
+    <div class="ea-item"><div class="ea-lbl">Key question</div><div class="ea-val" style="font-size:12px;color:#64FFDA;font-weight:600;">"Does my action change the state?" → determines MAB / Contextual / MDP</div></div>
+    <div class="ea-item"><div class="ea-lbl">Markov property</div><div class="ea-val" style="font-size:12px;color:var(--text2)">Future depends only on current state. Chess: board position tells you everything — no need for full move history.</div></div>
+  </div>
+</div>
+
+</div>
+</div>
+<!-- PAGE 2: MDP Formalism -->
+<div class="page" id="page-s2" style="--accent:#7B61FF;--accent-rgb:123,97,255;">
+<div class="pg-content">
+
+<div class="pg-hero" style="border-color:#7B61FF33;background:linear-gradient(135deg,#7B61FF08,transparent)">
+  <div class="pg-hero-badge" style="background:#7B61FF22;color:#7B61FF;border-color:#7B61FF44">Section 2</div>
+  <h2 class="pg-hero-title">MDP Formalism</h2>
+  <p class="pg-hero-sub">The 5-tuple ⟨S, A, P, R, γ⟩ — the language every RL problem is translated into.</p>
+  <span class="hot-badge">🔥 midsem hot</span>
+</div>
+
+<!-- 5-TUPLE EXPLORER -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">The MDP 5-Tuple ⟨S, A, P, R, γ⟩</div><span style="font-size:11px;color:var(--text3)">Click each component</span></div>
+  <div class="tuple-strip" id="tupleStrip">
+    <div class="tuple-item" onclick="selectTuple(0)" id="ti0">
+      <div class="ti-sym" style="color:#7B61FF">S</div><div class="ti-name">States</div>
+    </div>
+    <div class="tuple-sep">,</div>
+    <div class="tuple-item" onclick="selectTuple(1)" id="ti1">
+      <div class="ti-sym" style="color:#64FFDA">A</div><div class="ti-name">Actions</div>
+    </div>
+    <div class="tuple-sep">,</div>
+    <div class="tuple-item" onclick="selectTuple(2)" id="ti2">
+      <div class="ti-sym" style="color:#FF6B9D">P</div><div class="ti-name">Transitions</div>
+    </div>
+    <div class="tuple-sep">,</div>
+    <div class="tuple-item" onclick="selectTuple(3)" id="ti3">
+      <div class="ti-sym" style="color:#F7D94F">R</div><div class="ti-name">Rewards</div>
+    </div>
+    <div class="tuple-sep">,</div>
+    <div class="tuple-item" onclick="selectTuple(4)" id="ti4">
+      <div class="ti-sym" style="color:#4FF7D4">γ</div><div class="ti-name">Discount</div>
+    </div>
+  </div>
+  <div class="tuple-detail" id="tupleDetail"></div>
+</div>
+
+<!-- THREE DYNAMICS EQUATIONS -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">Three Dynamics Equations</div><span class="hot-badge">🔥 must memorise all 3</span></div>
+  <p style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6;">
+    Each equation answers a different question. Prof: <em>"Why three? Because each answers something different."</em>
+  </p>
+  <div class="eq-tabs">
+    <button class="eq-tab active" onclick="switchEq(0)" id="eqtab0">Eq 1 — Full Joint</button>
+    <button class="eq-tab" onclick="switchEq(1)" id="eqtab1">Eq 2 — Marginal</button>
+    <button class="eq-tab" onclick="switchEq(2)" id="eqtab2">Eq 3 — Expected R</button>
+  </div>
+  <div class="eq-body" id="eqBody0">
+    <div class="formula-box" style="border-left-color:#7B61FF;margin-bottom:12px;font-size:15px;">
+      p(s', r | s, a)
+    </div>
+    <div class="eq-explain">
+      <div class="eq-q">Question answered:</div>
+      <div class="eq-a" style="color:#7B61FF">"What is the chance that action a in state s lands me in s' AND gives me exactly reward r?"</div>
+      <div class="eq-note">This is the <strong>primitive</strong> — the most complete description. All other quantities are derived from it. It captures stochastic transitions AND stochastic rewards jointly.</div>
+      <div class="eq-use"><strong>Use when:</strong> you need the full joint probability of (next state, reward) together.</div>
+    </div>
+  </div>
+  <div class="eq-body" id="eqBody1" style="display:none;">
+    <div class="formula-box" style="border-left-color:#FF6B9D;margin-bottom:12px;font-size:15px;">
+      P(s' | s, a) = <span style="color:#FF6B9D">Σ<sub>r</sub></span> p(s', r | s, a)
+    </div>
+    <div class="eq-explain">
+      <div class="eq-q">Question answered:</div>
+      <div class="eq-a" style="color:#FF6B9D">"What is the probability I end up in s', regardless of what reward I receive?"</div>
+      <div class="eq-note">Sum over ALL possible reward values to eliminate r — this is <strong>marginalizing</strong>. Capital P = lowercase p summed over r.</div>
+      <div class="eq-use"><strong>Warehouse robot example:</strong> Robot moves to "reach customer" — arrives fast (+10) or slowly (+5) but same next state. P(reached | s, move) sums both reward outcomes.</div>
+      <div style="margin-top:8px;padding:8px;background:#FF6B9D11;border-radius:6px;font-size:11px;color:var(--text2);">
+        ⚠️ Most common exam mistake: writing P(s'|s,a) = p(s', r|s,a) for ONE specific r. The marginal requires summing over ALL r values.
+      </div>
+    </div>
+  </div>
+  <div class="eq-body" id="eqBody2" style="display:none;">
+    <div class="formula-box" style="border-left-color:#F7D94F;margin-bottom:12px;font-size:15px;">
+      E[R | s, a, s'] = <span style="color:#F7D94F">Σ<sub>r</sub> r · p(s', r | s, a)</span> / P(s' | s, a)
+    </div>
+    <div class="eq-explain">
+      <div class="eq-q">Question answered:</div>
+      <div class="eq-a" style="color:#F7D94F">"On average, what reward do I get when I go from s via a and land in s'?"</div>
+      <div class="eq-note">Numerator = weighted sum of all rewards on this transition. Denominator = normalises (total probability of making this transition).</div>
+      <div class="eq-use"><strong>Used in:</strong> the Bellman equation to evaluate action choices — lets you compare which action gives the best average reward per transition.</div>
+    </div>
+  </div>
+</div>
+
+<!-- RECYCLING ROBOT INTERACTIVE -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">♻️ Recycling Robot — Transition Table</div><span class="hot-badge">🔥 exam anchor</span></div>
+  <p style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6;">
+    States: <span style="color:#64FFDA">High</span> / <span style="color:#F7944F">Low</span> battery. Adjust α and β, watch probabilities update. Verify they sum to 1 per (s,a) pair.
+  </p>
+  <div class="robot-controls">
+    <div class="ctrl-inline">
+      <label style="font-size:12px;color:var(--text2);">α (stay High from High+Search)</label>
+      <input type="range" id="robot-alpha" min="0" max="1" step="0.1" value="0.7" oninput="updateRobot()">
+      <span class="v" id="robot-alpha-v" style="color:#64FFDA">0.7</span>
+    </div>
+    <div class="ctrl-inline">
+      <label style="font-size:12px;color:var(--text2);">β (stay Low from Low+Search)</label>
+      <input type="range" id="robot-beta" min="0" max="1" step="0.1" value="0.4" oninput="updateRobot()">
+      <span class="v" id="robot-beta-v" style="color:#F7944F">0.4</span>
+    </div>
+  </div>
+  <div class="robot-table-wrap">
+    <table class="robot-table" id="robotTable"></table>
+  </div>
+  <div class="robot-sum-check" id="robotSumCheck" style="margin-top:10px;font-size:12px;"></div>
+</div>
+
+<!-- GRIDWORLD SETUP -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">🏁 Gridworld 3×4 — MDP Components</div></div>
+  <p style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6;">
+    The "Hello World" of RL. Slippery floor: 80% intended, 10% left-perpendicular, 10% right-perpendicular.
+  </p>
+  <div class="gridworld-wrap">
+    <div class="gw-grid" id="gwGrid34"></div>
+    <div class="gw-legend">
+      <div class="gw-leg-item"><div class="gw-swatch" style="background:var(--green)"></div>Goal (+1)</div>
+      <div class="gw-leg-item"><div class="gw-swatch" style="background:var(--red)"></div>Trap (−1)</div>
+      <div class="gw-leg-item"><div class="gw-swatch" style="background:var(--text3)"></div>Wall</div>
+      <div class="gw-leg-item"><div class="gw-swatch" style="background:#7B61FF44"></div>Start S</div>
+    </div>
+  </div>
+  <div class="gw-mdp-table">
+    <div class="gw-row"><span class="gw-sym">S</span><span class="gw-val">All non-wall cells (11 cells)</span></div>
+    <div class="gw-row"><span class="gw-sym">A</span><span class="gw-val">{North, East, South, West}</span></div>
+    <div class="gw-row"><span class="gw-sym">P</span><span class="gw-val">0.8 intended · 0.1 left-perp · 0.1 right-perp (wall → stay)</span></div>
+    <div class="gw-row"><span class="gw-sym">R</span><span class="gw-val">−0.1 per step · +1 at goal · −1 at trap</span></div>
+    <div class="gw-row"><span class="gw-sym">γ</span><span class="gw-val">0.9 (typical)</span></div>
+  </div>
+</div>
+
+<!-- EXAM ALERT -->
+<div class="exam-alert-box">
+  <div class="ea-title">⚡ Exam Alert — Three Equations</div>
+  <div class="ea-grid">
+    <div class="ea-item"><div class="ea-lbl">Joint (primitive)</div><div class="ea-val formula-box" style="border-left-color:#7B61FF;font-size:12px;">p(s', r | s, a)</div></div>
+    <div class="ea-item"><div class="ea-lbl">Marginal (sum over r)</div><div class="ea-val formula-box" style="border-left-color:#FF6B9D;font-size:12px;">P(s'|s,a) = Σ<sub>r</sub> p(s',r|s,a)</div></div>
+    <div class="ea-item"><div class="ea-lbl">Expected R</div><div class="ea-val formula-box" style="border-left-color:#F7D94F;font-size:12px;">E[R|s,a,s'] = Σ<sub>r</sub> r·p / P(s'|s,a)</div></div>
+    <div class="ea-item"><div class="ea-lbl">Prob check</div><div class="ea-val" style="font-size:12px;color:var(--text2)">Per (s,a) pair, ALL s' rows must sum to 1. Adding across different actions is always wrong.</div></div>
+  </div>
+</div>
+
+</div>
+</div>
+<!-- PAGE 3: Returns & Discounting -->
+<div class="page" id="page-s3" style="--accent:#FF6B9D;--accent-rgb:255,107,157;">
+<div class="pg-content">
+
+<div class="pg-hero" style="border-color:#FF6B9D33;background:linear-gradient(135deg,#FF6B9D08,transparent)">
+  <div class="pg-hero-badge" style="background:#FF6B9D22;color:#FF6B9D;border-color:#FF6B9D44">Section 3</div>
+  <h2 class="pg-hero-title">Returns & Discounting</h2>
+  <p class="pg-hero-sub">G<sub>t</sub> = R<sub>t+1</sub> + γG<sub>t+1</sub> — the seed of everything in RL.</p>
+  <span class="hot-badge">🔥 midsem hot</span>
+</div>
+
+<!-- WHY Gt? -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">Why cumulative reward?</div></div>
+  <div class="chess-analogy">
+    <div class="ca-move" id="ca-move" style="background:#FF6B9D22;border-color:#FF6B9D44;">
+      <div style="font-size:28px;text-align:center;margin-bottom:6px;">♟️</div>
+      <div style="font-size:12px;color:#FF6B9D;text-align:center;font-weight:600;">Move 12: sacrifice pawn</div>
+      <div style="font-size:11px;color:var(--text2);text-align:center;margin-top:4px;">Immediate reward ≈ −1</div>
+    </div>
+    <div class="ca-arrow">···28 moves later···</div>
+    <div class="ca-move" style="background:#64FFDA22;border-color:#64FFDA44;">
+      <div style="font-size:28px;text-align:center;margin-bottom:6px;">♚</div>
+      <div style="font-size:12px;color:#64FFDA;text-align:center;font-weight:600;">Move 40: checkmate!</div>
+      <div style="font-size:11px;color:var(--text2);text-align:center;margin-top:4px;">Cumulative return = WIN</div>
+    </div>
+  </div>
+  <div class="formula-box" style="border-left-color:#FF6B9D;margin-top:12px;">
+    We need G<sub>t</sub> — a number that captures <strong style="color:#FF6B9D">all future consequences</strong>, weighted by how far away they are.
+  </div>
+</div>
+
+<!-- FOUR FORMULAS -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">Four Return Formulas</div><span class="hot-badge">🔥 know all 4</span></div>
+  <div class="formula-cards">
+    <div class="fml-card" onclick="expandFml(0)" id="fml0">
+      <div class="fml-card-hdr">
+        <span class="fml-num" style="color:#FF6B9D">F1</span>
+        <span class="fml-name">Discounted Return</span>
+        <span class="fml-arrow" id="farr0">▼</span>
+      </div>
+      <div class="formula-box" style="border-left-color:#FF6B9D;margin-top:8px;font-size:13px;">
+        G<sub>t</sub> = R<sub>t+1</sub> + γR<sub>t+2</sub> + γ²R<sub>t+3</sub> + ··· = <span style="color:#FF6B9D">Σ<sub>k=0</sub><sup>∞</sup> γ<sup>k</sup> R<sub>t+k+1</sub></span>
+      </div>
+      <div class="fml-body" id="fbody0" style="display:none;margin-top:10px;">
+        <p style="font-size:12px;color:var(--text2);line-height:1.6;">Sum of all future rewards, each shrunk by γ raised to its distance. A reward two steps ahead counts for γ² of its face value.</p>
+        <div style="margin-top:8px;padding:8px;background:#FF6B9D11;border-radius:6px;font-size:11px;color:var(--red);">
+          ⚠️ Off-by-one trap: G<sub>t</sub> starts at R<sub>t+1</sub>, NOT R<sub>t</sub>. This is the most common exam mistake.
+        </div>
+      </div>
+    </div>
+    <div class="fml-card" onclick="expandFml(1)" id="fml1" style="border-color:#7B61FF44;">
+      <div class="fml-card-hdr">
+        <span class="fml-num" style="color:#7B61FF">F2</span>
+        <span class="fml-name">Recursive Form ← seed of Bellman</span>
+        <span class="fml-arrow" id="farr1">▼</span>
+      </div>
+      <div class="formula-box" style="border-left-color:#7B61FF;margin-top:8px;font-size:14px;">
+        <strong style="color:#7B61FF">G<sub>t</sub> = R<sub>t+1</sub> + γ G<sub>t+1</sub></strong>
+      </div>
+      <div class="fml-body" id="fbody1" style="display:none;margin-top:10px;">
+        <p style="font-size:12px;color:var(--text2);line-height:1.6;">The return is self-referential — each G<sub>t</sub> contains G<sub>t+1</sub>. Replace G<sub>t+1</sub> with the expected return from state S<sub>t+1</sub> → Bellman equation.</p>
+        <div style="margin-top:8px;padding:8px;background:#7B61FF11;border-radius:6px;font-size:12px;color:#7B61FF;font-weight:600;">
+          🌱 This is the seed of Bellman — memorise it.
+        </div>
+      </div>
+    </div>
+    <div class="fml-card" onclick="expandFml(2)" id="fml2" style="border-color:#64FFDA44;">
+      <div class="fml-card-hdr">
+        <span class="fml-num" style="color:#64FFDA">F3</span>
+        <span class="fml-name">Constant Reward Shortcut</span>
+        <span class="fml-arrow" id="farr2">▼</span>
+      </div>
+      <div class="formula-box" style="border-left-color:#64FFDA;margin-top:8px;font-size:13px;">
+        If R = constant: G<sub>t</sub> = R / (1 − γ)
+      </div>
+      <div class="fml-body" id="fbody2" style="display:none;margin-top:10px;">
+        <p style="font-size:12px;color:var(--text2);line-height:1.6;">Only applies when every reward from the starting point is identical. Geometric series sum. Example: R=1, γ=0.9 → G<sub>t</sub> = 1/0.1 = 10.</p>
+        <div style="margin-top:8px;padding:8px;background:var(--red)22;border-radius:6px;font-size:11px;color:var(--red);">
+          ⚠️ Common mistake: applying this to non-constant sequences. Only works on constant TAILS — split the sequence first.
+        </div>
+      </div>
+    </div>
+    <div class="fml-card" onclick="expandFml(3)" id="fml3" style="border-color:#F7D94F44;">
+      <div class="fml-card-hdr">
+        <span class="fml-num" style="color:#F7D94F">F4</span>
+        <span class="fml-name">Convergence Bound</span>
+        <span class="fml-arrow" id="farr3">▼</span>
+      </div>
+      <div class="formula-box" style="border-left-color:#F7D94F;margin-top:8px;font-size:13px;">
+        |G<sub>t</sub>| ≤ R<sub>max</sub> / (1 − γ)
+      </div>
+      <div class="fml-body" id="fbody3" style="display:none;margin-top:10px;">
+        <p style="font-size:12px;color:var(--text2);line-height:1.6;">If rewards never exceed R<sub>max</sub>, the return is always finite — no matter how long the sequence. Discounting "tames" infinite horizons.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GAMMA EXPLORER -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">γ Explorer — Discount Factor</div></div>
+  <div class="ctrl" style="margin-bottom:14px;">
+    <label style="font-size:12px;color:var(--text2);">γ = <span id="gammaVal" style="color:#FF6B9D;font-family:var(--font-m)">0.90</span></label>
+    <input type="range" id="gammaSlider" min="0" max="0.99" step="0.01" value="0.90" oninput="updateGamma(this.value)">
+  </div>
+  <div class="gamma-grid" id="gammaGrid"></div>
+  <div class="gamma-desc" id="gammaDesc"></div>
+</div>
+
+<!-- EXAM NUMERICAL CALCULATOR -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">🔥 Exam Numerical — G Calculator</div><span class="hot-badge">🔥 midsem exact</span></div>
+  <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6;">
+    The exact exam problem: R₂=2, R₃=R₄=···=7, γ=0.1. Try it or change the values.
+  </p>
+  <div class="calc-controls">
+    <div class="ctrl-inline"><label>R₂ (one-off)</label><input type="number" id="calc-r2" value="2" step="0.5" style="width:70px;background:var(--card2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--font-m);padding:5px 8px;font-size:13px;outline:none;"></div>
+    <div class="ctrl-inline"><label>R constant (tail)</label><input type="number" id="calc-r-tail" value="7" step="0.5" style="width:70px;background:var(--card2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--font-m);padding:5px 8px;font-size:13px;outline:none;"></div>
+    <div class="ctrl-inline"><label>γ</label><input type="number" id="calc-gamma" value="0.1" step="0.05" min="0" max="0.99" style="width:70px;background:var(--card2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--font-m);padding:5px 8px;font-size:13px;outline:none;"></div>
+    <button class="btn sm primary" onclick="computeGt()">Compute G</button>
+  </div>
+  <div class="calc-steps" id="calcSteps" style="margin-top:14px;"></div>
+</div>
+
+<!-- EPISODIC vs CONTINUING -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">Episodic vs Continuing Tasks</div></div>
+  <div class="evc-grid">
+    <div class="evc-card" style="border-color:#64FFDA44;">
+      <div class="evc-title" style="color:#64FFDA">Episodic</div>
+      <div class="evc-item"><span>Endpoint?</span><strong>Yes — terminal state T</strong></div>
+      <div class="evc-item"><span>Return</span><strong style="font-family:var(--font-m)">Σ<sub>t+1</sub><sup>T</sup> R (finite)</strong></div>
+      <div class="evc-item"><span>Discounting</span><strong>Optional</strong></div>
+      <div class="evc-item"><span>Examples</span><strong>Chess, maze, assembly</strong></div>
+    </div>
+    <div class="evc-card" style="border-color:#FF6B9D44;">
+      <div class="evc-title" style="color:#FF6B9D">Continuing</div>
+      <div class="evc-item"><span>Endpoint?</span><strong>No — runs indefinitely</strong></div>
+      <div class="evc-item"><span>Return</span><strong style="font-family:var(--font-m)">Σ γ<sup>k</sup>R (γ&lt;1 required!)</strong></div>
+      <div class="evc-item"><span>Discounting</span><strong style="color:#FF6B9D">Mandatory — else diverges</strong></div>
+      <div class="evc-item"><span>Examples</span><strong>Autonomous driving, robots</strong></div>
+    </div>
+  </div>
+  <div style="margin-top:12px;padding:10px 14px;background:#64FFDA11;border-radius:8px;font-size:12px;color:#64FFDA;border:1px solid #64FFDA33;">
+    💡 Cart-pole: naturally continuing (balance forever) → episodic conversion: episode ends when pole tilts &gt;12°. Prof: <em>"For computation, all continuing tasks are converted into episodic."</em>
+  </div>
+</div>
+
+<!-- EXAM ALERT -->
+<div class="exam-alert-box">
+  <div class="ea-title">⚡ Exam Alert — Returns</div>
+  <div class="ea-grid">
+    <div class="ea-item"><div class="ea-lbl">Recursive (memorise)</div><div class="ea-val formula-box" style="border-left-color:#7B61FF;font-size:13px;font-weight:700;">G<sub>t</sub> = R<sub>t+1</sub> + γ G<sub>t+1</sub></div></div>
+    <div class="ea-item"><div class="ea-lbl">Constant tail shortcut</div><div class="ea-val formula-box" style="border-left-color:#64FFDA;font-size:13px;">G = R / (1 − γ)</div></div>
+    <div class="ea-item"><div class="ea-lbl">🔥 Exact exam numerical</div><div class="ea-val formula-box" style="border-left-color:#FF6B9D;font-size:12px;">R₂=2, tail=7, γ=0.1<br>G₂=7/0.9≈7.78 · G₁=2+0.1×G₂≈2.78</div></div>
+    <div class="ea-item"><div class="ea-lbl">Off-by-one trap</div><div class="ea-val" style="font-size:12px;color:var(--red)">G<sub>t</sub> starts at R<sub>t+1</sub> NOT R<sub>t</sub>. Always.</div></div>
+  </div>
+</div>
+
+</div>
+</div>
+<!-- PAGE 4: Value Functions & Bellman -->
+<div class="page" id="page-s4" style="--accent:#00C9FF;--accent-rgb:0,201,255;">
+<div class="pg-content">
+
+<div class="pg-hero" style="border-color:#00C9FF33;background:linear-gradient(135deg,#00C9FF08,transparent)">
+  <div class="pg-hero-badge" style="background:#00C9FF22;color:#00C9FF;border-color:#00C9FF44">Section 4</div>
+  <h2 class="pg-hero-title">Value Functions & Bellman Equation</h2>
+  <p class="pg-hero-sub">Evaluate infinite future via one step of lookahead — bootstrapping.</p>
+  <span class="hot-badge">🔥 midsem hot</span>
+</div>
+
+<!-- vπ vs qπ -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">Two Value Functions</div><span style="font-size:11px;color:var(--text3)">Click to compare</span></div>
+  <div class="vq-split">
+    <div class="vq-box" id="vbox" onclick="selectVQ('v')" style="border-color:#00C9FF44;">
+      <div class="vq-sym" style="color:#00C9FF">v<sub>π</sub>(s)</div>
+      <div class="vq-name">State-Value Function</div>
+      <div class="formula-box" style="border-left-color:#00C9FF;margin:8px 0;font-size:13px;">v<sub>π</sub>(s) = E<sub>π</sub>[ G<sub>t</sub> | S<sub>t</sub>=s ]</div>
+      <div class="vq-q">Question: <em>"How good is it to be in this state?"</em></div>
+      <div class="vq-note">Averages over ALL actions the policy might choose.</div>
+      <div class="vq-use">✅ Use when: model is available</div>
+    </div>
+    <div class="vq-vs">vs</div>
+    <div class="vq-box" id="qbox" onclick="selectVQ('q')" style="border-color:#FF6B9D44;">
+      <div class="vq-sym" style="color:#FF6B9D">q<sub>π</sub>(s,a)</div>
+      <div class="vq-name">Action-Value Function</div>
+      <div class="formula-box" style="border-left-color:#FF6B9D;margin:8px 0;font-size:13px;">q<sub>π</sub>(s,a) = E<sub>π</sub>[ G<sub>t</sub> | S<sub>t</sub>=s, A<sub>t</sub>=a ]</div>
+      <div class="vq-q">Question: <em>"How good is this specific action?"</em></div>
+      <div class="vq-note">Fixes the FIRST action, then follows π for the rest.</div>
+      <div class="vq-use">✅ Use when: model unavailable (most deep RL)</div>
+    </div>
+  </div>
+  <div class="vq-detail" id="vqDetail" style="margin-top:12px;"></div>
+</div>
+
+<!-- BELLMAN EQUATION DERIVATION -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">Bellman Expectation Equation — 3-Step Derivation</div><span class="hot-badge">🔥 must know</span></div>
+  <div class="deriv-steps" id="derivSteps">
+    <div class="ds-row active" id="ds0">
+      <div class="ds-n">1</div>
+      <div class="ds-content">
+        <div class="ds-title">Expand G<sub>t</sub> one level</div>
+        <div class="formula-box" style="border-left-color:#00C9FF;margin-top:6px;">v<sub>π</sub>(s) = E<sub>π</sub>[ R<sub>t+1</sub> + γ G<sub>t+1</sub> | S<sub>t</sub>=s ]</div>
+        <div class="ds-note">Using G<sub>t</sub> = R<sub>t+1</sub> + γG<sub>t+1</sub> (recursive form from Section 3)</div>
+      </div>
+    </div>
+    <div class="ds-row" id="ds1" style="opacity:.4;">
+      <div class="ds-n">2</div>
+      <div class="ds-content">
+        <div class="ds-title">Separate expectations (linearity)</div>
+        <div class="formula-box" style="border-left-color:#7B61FF;margin-top:6px;">= E<sub>π</sub>[R<sub>t+1</sub>] + γ E<sub>π</sub>[v<sub>π</sub>(S<sub>t+1</sub>)]</div>
+        <div class="ds-note">Because E[G<sub>t+1</sub> | S<sub>t+1</sub>] = v<sub>π</sub>(S<sub>t+1</sub>) by definition of v<sub>π</sub></div>
+      </div>
+    </div>
+    <div class="ds-row" id="ds2" style="opacity:.4;">
+      <div class="ds-n">3</div>
+      <div class="ds-content">
+        <div class="ds-title">Expand into explicit sums</div>
+        <div class="formula-box" style="border-left-color:#FF6B9D;margin-top:6px;font-size:13px;">
+          v<sub>π</sub>(s) = <span style="color:#00C9FF">Σ<sub>a</sub> π(a|s)</span> <span style="color:#FF6B9D">Σ<sub>s',r</sub> p(s',r|s,a)</span> [r + γ v<sub>π</sub>(s')]
+        </div>
+        <div class="ds-note" style="color:#00C9FF;">← This is the Bellman Expectation Equation. Two sums, two sources of randomness.</div>
+      </div>
+    </div>
+    <button class="btn sm primary" onclick="revealDerivStep()" id="derivBtn" style="margin-top:10px;">Show Step 2 →</button>
+  </div>
+</div>
+
+<!-- THE FULL EQUATION BREAKDOWN -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">The Bellman Equation — Term by Term</div></div>
+  <div class="formula-box" style="border-left-color:#00C9FF;font-size:14px;margin-bottom:16px;">
+    v<sub>π</sub>(s) = <span id="bterm-pi" style="color:#00C9FF;cursor:pointer;" onclick="highlightBterm('pi')">Σ<sub>a</sub> π(a|s)</span> <span id="bterm-p" style="color:#FF6B9D;cursor:pointer;" onclick="highlightBterm('p')">Σ<sub>s',r</sub> p(s',r|s,a)</span> [<span id="bterm-r" style="color:#F7D94F;cursor:pointer;" onclick="highlightBterm('r')">r</span> + γ <span id="bterm-v" style="color:#7B61FF;cursor:pointer;" onclick="highlightBterm('v')">v<sub>π</sub>(s')</span>]
+  </div>
+  <div class="bterm-table">
+    <div class="bterm-row" id="btr-pi">
+      <div class="bterm-sym" style="color:#00C9FF">π(a|s)</div>
+      <div class="bterm-who">Agent (Policy)</div>
+      <div class="bterm-what">How likely is this action? Outer sum averages over agent's choices.</div>
+    </div>
+    <div class="bterm-row" id="btr-p">
+      <div class="bterm-sym" style="color:#FF6B9D">p(s',r|s,a)</div>
+      <div class="bterm-who">Environment</div>
+      <div class="bterm-what">How likely is this outcome? Inner sum averages over environment's response.</div>
+    </div>
+    <div class="bterm-row" id="btr-r">
+      <div class="bterm-sym" style="color:#F7D94F">r</div>
+      <div class="bterm-who">Immediate</div>
+      <div class="bterm-what">Reward from this specific transition.</div>
+    </div>
+    <div class="bterm-row" id="btr-v">
+      <div class="bterm-sym" style="color:#7B61FF">v<sub>π</sub>(s')</div>
+      <div class="bterm-who">Bootstrap</div>
+      <div class="bterm-what">Discounted value of where you land — the one-step lookahead. This is why v<sub>π</sub> appears on both sides.</div>
+    </div>
+  </div>
+</div>
+
+<!-- BACKUP DIAGRAM -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">Backup Diagram for v<sub>π</sub></div></div>
+  <div class="backup-wrap">
+    <svg id="backupSVG" viewBox="0 0 340 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:340px;display:block;margin:0 auto;"></svg>
+    <div class="backup-legend">
+      <div class="bl-item"><div class="bl-swatch" style="background:var(--text);border-radius:50%;width:12px;height:12px;"></div>State node</div>
+      <div class="bl-item"><div class="bl-swatch" style="background:#00C9FF;width:12px;height:12px;border-radius:2px;"></div>Action node</div>
+      <div class="bl-item"><div style="font-size:11px;color:#00C9FF">π(a|s)</div>Agent branches</div>
+      <div class="bl-item"><div style="font-size:11px;color:#FF6B9D">p(s'|s,a)</div>Env branches</div>
+    </div>
+  </div>
+</div>
+
+<!-- GRIDWORLD BELLMAN VERIFIER -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">🔥 Gridworld Bellman Verifier</div><span class="hot-badge">exact exam template</span></div>
+  <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6;">
+    Enter 4 neighbour values and γ. Verify v(s) ≈ 0.25×γ×sum of neighbours.
+  </p>
+  <div class="verifier-grid">
+    <div class="vg-spacer"></div>
+    <div><input type="number" id="vg-N" value="2.3" step="0.1" class="vg-input" placeholder="North"></div>
+    <div class="vg-spacer"></div>
+    <div><input type="number" id="vg-W" value="0.4" step="0.1" class="vg-input" placeholder="West"></div>
+    <div class="vg-center" id="vg-center">s</div>
+    <div><input type="number" id="vg-E" value="0.7" step="0.1" class="vg-input" placeholder="East"></div>
+    <div class="vg-spacer"></div>
+    <div><input type="number" id="vg-S" value="-0.4" step="0.1" class="vg-input" placeholder="South"></div>
+    <div class="vg-spacer"></div>
+  </div>
+  <div class="verifier-controls">
+    <div class="ctrl-inline"><label>γ</label><input type="number" id="vg-gamma" value="0.9" step="0.05" min="0" max="0.99" style="width:70px;background:var(--card2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--font-m);padding:5px 8px;font-size:13px;outline:none;"></div>
+    <div class="ctrl-inline"><label>Policy π</label>
+      <select id="vg-policy" style="width:130px;background:var(--card2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:5px 8px;outline:none;">
+        <option value="0.25">Equiprobable (0.25)</option>
+        <option value="det">Deterministic (N=1)</option>
+      </select>
+    </div>
+    <button class="btn sm primary" onclick="verifyBellman()">Verify</button>
+  </div>
+  <div class="verifier-result" id="verifierResult" style="margin-top:12px;"></div>
+</div>
+
+<!-- EXAM ALERT -->
+<div class="exam-alert-box">
+  <div class="ea-title">⚡ Exam Alert — Bellman</div>
+  <div class="ea-grid">
+    <div class="ea-item"><div class="ea-lbl">Full equation</div><div class="ea-val formula-box" style="border-left-color:#00C9FF;font-size:11px;">v<sub>π</sub>(s) = Σ<sub>a</sub>π(a|s) Σ<sub>s',r</sub>p(s',r|s,a)[r + γv<sub>π</sub>(s')]</div></div>
+    <div class="ea-item"><div class="ea-lbl">Two sums rule</div><div class="ea-val" style="font-size:12px;color:var(--text2)">Outer Σ<sub>a</sub> = agent/policy. Inner Σ<sub>s',r</sub> = environment. Never mix them.</div></div>
+    <div class="ea-item"><div class="ea-lbl">Forget γ?</div><div class="ea-val" style="font-size:12px;color:var(--red)">Writing [r + v(s')] instead of [r + γv(s')] loses marks. Always write γ explicitly.</div></div>
+    <div class="ea-item"><div class="ea-lbl">gridworld check</div><div class="ea-val formula-box" style="border-left-color:#F7D94F;font-size:11px;">0.25×0.9×(2.3−0.4+0.4+0.7) = 0.225×3.0 = 0.675 ≈ 0.7 ✓</div></div>
+  </div>
+</div>
+
+</div>
+</div>
+<!-- PAGE 5: Optimality -->
+<div class="page" id="page-s5" style="--accent:#FFB347;--accent-rgb:255,179,71;">
+<div class="pg-content">
+
+<div class="pg-hero" style="border-color:#FFB34733;background:linear-gradient(135deg,#FFB34708,transparent)">
+  <div class="pg-hero-badge" style="background:#FFB34722;color:#FFB347;border-color:#FFB34744">Section 5</div>
+  <h2 class="pg-hero-title">Optimality & Bellman Optimality</h2>
+  <p class="pg-hero-sub">One symbol changes everything: Σ<sub>a</sub>π(a|s) → max<sub>a</sub>. That gap separates prediction from control.</p>
+  <span class="hot-badge">🔥 midsem hot</span>
+</div>
+
+<!-- THE ONE CHANGE -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">The ONE Change That Changes Everything</div></div>
+  <div class="onechange-wrap">
+    <div class="oc-side" style="border-color:#00C9FF44;">
+      <div class="oc-title" style="color:#00C9FF">Bellman EXPECTATION</div>
+      <div class="formula-box" style="border-left-color:#00C9FF;margin:10px 0;font-size:13px;">
+        v<sub>π</sub>(s) = <strong style="color:#00C9FF">Σ<sub>a</sub> π(a|s)</strong> Σ<sub>s',r</sub> p(…) [r + γv<sub>π</sub>(s')]
+      </div>
+      <div class="oc-props">
+        <div class="oc-prop">Question: <em>How good is policy π?</em></div>
+        <div class="oc-prop">Math: <strong style="color:#64FFDA">Linear</strong> — matrix inversion works</div>
+        <div class="oc-prop">Solves: Policy Evaluation</div>
+      </div>
+    </div>
+    <div class="oc-arrow">
+      <div style="font-size:24px;">⇒</div>
+      <div style="font-size:11px;color:#FFB347;font-weight:700;">Σ→max</div>
+    </div>
+    <div class="oc-side" style="border-color:#FFB34744;">
+      <div class="oc-title" style="color:#FFB347">Bellman OPTIMALITY</div>
+      <div class="formula-box" style="border-left-color:#FFB347;margin:10px 0;font-size:13px;">
+        v*(s) = <strong style="color:#FFB347">max<sub>a</sub></strong> Σ<sub>s',r</sub> p(…) [r + γv*(s')]
+      </div>
+      <div class="oc-props">
+        <div class="oc-prop">Question: <em>What's the best possible?</em></div>
+        <div class="oc-prop">Math: <strong style="color:var(--red)">Non-linear</strong> — need iteration</div>
+        <div class="oc-prop">Solves: Value Iteration, Control</div>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:12px;padding:10px 14px;background:#FFB34711;border-radius:8px;font-size:12px;color:#FFB347;border:1px solid #FFB34733;line-height:1.6;">
+    ⚠️ Why non-linear forces iteration: max(f+g) ≠ max(f) + max(g). Superposition fails. As value estimates change, which action wins the max can flip. No closed-form solution — must iterate.
+  </div>
+</div>
+
+<!-- v* and q* definitions -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">Optimal Value Functions</div></div>
+  <div class="optval-grid">
+    <div class="ov-card" style="border-color:#FFB34744;">
+      <div class="ov-sym" style="color:#FFB347">v*(s)</div>
+      <div class="formula-box" style="border-left-color:#FFB347;margin:8px 0;font-size:13px;">v*(s) = max<sub>π</sub> v<sub>π</sub>(s)</div>
+      <p style="font-size:12px;color:var(--text2);line-height:1.6;">Highest possible expected return from state s, across ALL policies. One policy achieves this maximum everywhere simultaneously.</p>
+    </div>
+    <div class="ov-card" style="border-color:#7B61FF44;">
+      <div class="ov-sym" style="color:#7B61FF">q*(s,a)</div>
+      <div class="formula-box" style="border-left-color:#7B61FF;margin:8px 0;font-size:13px;">q*(s,a) = max<sub>π</sub> q<sub>π</sub>(s,a)</div>
+      <p style="font-size:12px;color:var(--text2);line-height:1.6;">Best expected return when you commit to action a from s, then follow optimal policy. Gives policy directly: π*(s) = argmax<sub>a</sub> q*(s,a).</p>
+    </div>
+    <div class="ov-card" style="border-color:#64FFDA44;grid-column:span 2;">
+      <div class="ov-sym" style="color:#64FFDA">Key relation</div>
+      <div class="formula-box" style="border-left-color:#64FFDA;margin:8px 0;font-size:14px;">v*(s) = max<sub>a</sub> q*(s,a)</div>
+      <p style="font-size:12px;color:var(--text2);">Optimal state-value = best action-value you can get by choosing the optimal action.</p>
+    </div>
+  </div>
+</div>
+
+<!-- BOTH OPTIMALITY EQUATIONS -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">Both Bellman Optimality Equations</div><span class="hot-badge">🔥 write from memory</span></div>
+  <div class="eq-tabs">
+    <button class="eq-tab active" onclick="switchOE(0)" id="oetab0">For v*(s)</button>
+    <button class="eq-tab" onclick="switchOE(1)" id="oetab1">For q*(s,a)</button>
+  </div>
+  <div id="oeBody0">
+    <div class="formula-box" style="border-left-color:#FFB347;margin:12px 0;font-size:14px;">
+      v*(s) = <span style="color:#FFB347">max<sub>a</sub></span> Σ<sub>s',r</sub> p(s',r|s,a) [r + γ v*(s')]
+    </div>
+    <div class="eq-parse-table">
+      <div class="ep-row"><div class="ep-term" style="color:#FFB347">max<sub>a</sub></div><div class="ep-who">Agent</div><div class="ep-what">Picks the best action — this is the decision. The max makes this optimality, not expectation.</div></div>
+      <div class="ep-row"><div class="ep-term" style="color:#FF6B9D">Σ<sub>s',r</sub>p</div><div class="ep-who">Environment</div><div class="ep-what">For the chosen action, nature randomly lands you in s'. Agent controls action; environment controls where.</div></div>
+      <div class="ep-row"><div class="ep-term" style="color:#7B61FF">γv*(s')</div><div class="ep-who">Bootstrap</div><div class="ep-what">v* appears on both sides — self-consistency condition (fixed point), not circular reasoning.</div></div>
+    </div>
+  </div>
+  <div id="oeBody1" style="display:none;">
+    <div class="formula-box" style="border-left-color:#7B61FF;margin:12px 0;font-size:14px;">
+      q*(s,a) = Σ<sub>s',r</sub> p(s',r|s,a) [r + γ <span style="color:#FFB347">max<sub>a'</sub></span> q*(s',a')]
+    </div>
+    <div class="eq-parse-table">
+      <div class="ep-row"><div class="ep-term" style="color:#FF6B9D">Σ<sub>s',r</sub>p</div><div class="ep-who">First</div><div class="ep-what">Environment averages first — action a is already committed. Nature picks next state s'.</div></div>
+      <div class="ep-row"><div class="ep-term" style="color:#FFB347">max<sub>a'</sub></div><div class="ep-who">INSIDE Σ</div><div class="ep-what">Agent picks optimally at s' — AFTER the environment reveals s'. max must be INSIDE the sum. This is the most common exam mistake.</div></div>
+    </div>
+    <div style="margin-top:10px;padding:8px 12px;background:var(--red)22;border-radius:6px;font-size:12px;color:var(--red);">
+      ❌ WRONG: max<sub>a'</sub> Σ ... — this puts max OUTSIDE. That means average first then pick best, which is wrong. Agent sees s' before picking.
+    </div>
+  </div>
+</div>
+
+<!-- BACKUP DIAGRAMS COMPARISON -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">Backup Diagrams — v<sub>π</sub> vs v* vs q*</div><span style="font-size:11px;color:var(--text3)">Click to switch</span></div>
+  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+    <button class="btn sm" id="bdbtn0" onclick="switchBD(0)" style="border-color:#00C9FF;color:#00C9FF;">v<sub>π</sub>(s)</button>
+    <button class="btn sm" id="bdbtn1" onclick="switchBD(1)">v*(s)</button>
+    <button class="btn sm" id="bdbtn2" onclick="switchBD(2)">q*(s,a)</button>
+  </div>
+  <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+    <svg id="bdSVG" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg" style="width:200px;flex-shrink:0;"></svg>
+    <div class="bd-explain" id="bdExplain" style="flex:1;min-width:200px;"></div>
+  </div>
+</div>
+
+<!-- POLICY EXTRACTION -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">Extracting π* from v* or q*</div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:600;">Via q* (preferred — no model needed)</div>
+      <div class="formula-box" style="border-left-color:#64FFDA;font-size:13px;">π*(s) = argmax<sub>a</sub> q*(s,a)</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:6px;">Pick whichever action has highest q*. No model lookup needed.</div>
+    </div>
+    <div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:600;">Via v* (requires model)</div>
+      <div class="formula-box" style="border-left-color:#FFB347;font-size:13px;">π*(s) = argmax<sub>a</sub> Σ p(…)[r + γv*(s')]</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:6px;">Need p(s',r|s,a) to simulate each action.</div>
+    </div>
+  </div>
+</div>
+
+<!-- EXAM ALERT -->
+<div class="exam-alert-box">
+  <div class="ea-title">⚡ Exam Alert — Optimality</div>
+  <div class="ea-grid">
+    <div class="ea-item"><div class="ea-lbl">v* equation</div><div class="ea-val formula-box" style="border-left-color:#FFB347;font-size:11px;">v*(s) = max<sub>a</sub> Σ<sub>s',r</sub>p(s',r|s,a)[r+γv*(s')]</div></div>
+    <div class="ea-item"><div class="ea-lbl">q* equation</div><div class="ea-val formula-box" style="border-left-color:#7B61FF;font-size:11px;">q*(s,a) = Σ<sub>s',r</sub>p(…)[r+γ<strong>max<sub>a'</sub></strong>q*(s',a')]</div></div>
+    <div class="ea-item"><div class="ea-lbl">❌ Mistake 1</div><div class="ea-val" style="font-size:12px;color:var(--red)">Writing π(a|s) inside optimality equation. Once you take max, π has no meaning here.</div></div>
+    <div class="ea-item"><div class="ea-lbl">❌ Mistake 2</div><div class="ea-val" style="font-size:12px;color:var(--red)">Placing max<sub>a'</sub> OUTSIDE Σ in q*. Agent picks AFTER seeing s' — max must be inside.</div></div>
+  </div>
+</div>
+
+</div>
+</div>
+<!-- PAGE 6: Dynamic Programming -->
+<div class="page" id="page-s6" style="--accent:#56CFE1;--accent-rgb:86,207,225;">
+<div class="pg-content">
+
+<div class="pg-hero" style="border-color:#56CFE133;background:linear-gradient(135deg,#56CFE108,transparent)">
+  <div class="pg-hero-badge" style="background:#56CFE122;color:#56CFE1;border-color:#56CFE144">Section 6</div>
+  <h2 class="pg-hero-title">Dynamic Programming</h2>
+  <p class="pg-hero-sub">Start with zeros. Apply Bellman. Repeat. Convergence guaranteed.</p>
+  <span class="hot-badge">🔥 midsem hot</span>
+</div>
+
+<!-- PREDICTION vs CONTROL -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">Prediction vs Control</div></div>
+  <div class="pvc-grid">
+    <div class="pvc-card" style="border-color:#00C9FF44;">
+      <div class="pvc-title" style="color:#00C9FF">Prediction (Evaluation)</div>
+      <div class="pvc-op">Operator: <span style="color:#00C9FF">Σ<sub>a</sub>π(a|s)×[…]</span> (weighted average)</div>
+      <div class="pvc-algo">Algorithm: Iterative Policy Evaluation</div>
+      <div class="pvc-goal">Goal: compute v<sub>π</sub> for a given π</div>
+    </div>
+    <div class="pvc-card" style="border-color:#FFB34744;">
+      <div class="pvc-title" style="color:#FFB347">Control (Improvement)</div>
+      <div class="pvc-op">Operator: <span style="color:#FFB347">max<sub>a</sub>×[…]</span> (greedy max)</div>
+      <div class="pvc-algo">Algorithms: Value Iteration / Policy Iteration</div>
+      <div class="pvc-goal">Goal: find the optimal policy π*</div>
+    </div>
+  </div>
+</div>
+
+<!-- VALUE ITERATION STEP TRACER -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">🏎 Race Car — Value Iteration Step Tracer</div><span class="hot-badge">🔥 exact exam numbers</span></div>
+  <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6;">
+    States: Cool (C), Warm (W), Overheated (O/terminal). Step through iteration by iteration. Uses <strong style="color:#56CFE1">out-of-place</strong> (synchronous) updates — previous V for all s'.
+  </p>
+  <div class="vi-states-display" id="viStatesDisplay"></div>
+  <div style="display:flex;gap:8px;margin:12px 0;flex-wrap:wrap;">
+    <button class="btn sm primary" onclick="viStep()" id="viBtnStep">▶ Next Iteration</button>
+    <button class="btn sm" onclick="viRun()">⏩ Run to convergence</button>
+    <button class="btn sm" onclick="viReset()">↺ Reset</button>
+  </div>
+  <div class="vi-workings" id="viWorkings"></div>
+  <div class="vi-policy-display" id="viPolicyDisplay" style="display:none;margin-top:12px;"></div>
+</div>
+
+<!-- POLICY ITERATION -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">Policy Iteration — Eval + Improve Cycle</div></div>
+  <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6;">
+    PI alternates: fully evaluate current policy → improve greedily → repeat until stable.
+  </p>
+  <div class="pi-cycle" id="piCycle">
+    <div class="pi-phase" id="pi-init" style="border-color:#56CFE144;">
+      <div class="pi-ph-title" style="color:#56CFE1">Init</div>
+      <div class="pi-ph-body">π₀: Cool→Slow, Warm→Slow<br>V = [0, 0, 0]</div>
+    </div>
+    <div class="pi-arrow">↓</div>
+    <div class="pi-phase" id="pi-eval" style="opacity:.4;">
+      <div class="pi-ph-title" style="color:#00C9FF">Policy Evaluation</div>
+      <div class="pi-ph-body">Compute v<sub>π</sub>(s) using Bellman expectation<br>(NO max — follow current policy action)<br>Iterate until Δ &lt; θ<br><em style="color:#56CFE1">~225 iterations for Slow-everywhere</em></div>
+    </div>
+    <div class="pi-arrow">↓</div>
+    <div class="pi-phase" id="pi-improve" style="opacity:.4;">
+      <div class="pi-ph-title" style="color:#FFB347">Policy Improvement</div>
+      <div class="pi-ph-body">π'(s) = argmax<sub>a</sub> Σp(…)[r+γV(s')]<br>(ONE max step using converged V)<br>Check: if π' = π → stop (optimal!)</div>
+    </div>
+    <div class="pi-arrow">↓</div>
+    <div class="pi-phase" id="pi-done" style="opacity:.4;border-color:#64FFDA44;">
+      <div class="pi-ph-title" style="color:#64FFDA">Converged</div>
+      <div class="pi-ph-body">π*: Cool→Fast, Warm→Slow<br>V(C)≈20, V(W)≈15</div>
+    </div>
+    <button class="btn sm primary" onclick="piAnimate()" id="piBtnAnimate" style="margin-top:10px;">▶ Animate PI Cycle</button>
+  </div>
+  <div class="pi-numerical" id="piNumerical" style="margin-top:12px;display:none;"></div>
+</div>
+
+<!-- VI vs PI COMPARISON -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">VI vs PI — When to Use Which</div></div>
+  <div class="vipi-table">
+    <div class="vipi-hdr"><div></div><div style="color:#56CFE1">Value Iteration</div><div style="color:#FFB347">Policy Iteration</div></div>
+    <div class="vipi-row"><div class="vipi-prop">Per-iteration cost</div><div>Low (one max sweep)</div><div>High (full eval until convergence)</div></div>
+    <div class="vipi-row"><div class="vipi-prop">Value convergence</div><div style="color:#56CFE1">Faster</div><div>Slower per outer step</div></div>
+    <div class="vipi-row"><div class="vipi-prop">Policy mid-run</div><div style="color:var(--text3)">Only at end</div><div style="color:#64FFDA">After each improvement</div></div>
+    <div class="vipi-row"><div class="vipi-prop">State space</div><div>Large → prefer VI</div><div>Small → prefer PI</div></div>
+    <div class="vipi-row"><div class="vipi-prop">Real example</div><div>Google Maps routing</div><div>Warehouse robot, pricing</div></div>
+  </div>
+</div>
+
+<!-- IN-PLACE vs OUT-OF-PLACE -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">In-Place vs Out-of-Place Updates</div><span class="hot-badge">exam trap</span></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div>
+      <div style="font-size:12px;font-weight:600;color:#56CFE1;margin-bottom:6px;">Out-of-Place (Synchronous)</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6;">2 arrays: V_old and V_new. ALL updates this iteration use V_old. V(s') is always from previous iteration. Reliable, predictable convergence.</div>
+      <div class="formula-box" style="border-left-color:#56CFE1;margin-top:8px;font-size:12px;">V_new(s) = max<sub>a</sub> Σ p[r + γ <strong style="color:#56CFE1">V_old(s')</strong>]</div>
+    </div>
+    <div>
+      <div style="font-size:12px;font-weight:600;color:#FFB347;margin-bottom:6px;">In-Place (Asynchronous)</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6;">1 array: overwrite immediately. V(W) may use just-updated V(C) from same iteration. Often converges faster — uses freshest info. Order of updates matters.</div>
+      <div class="formula-box" style="border-left-color:#FFB347;margin-top:8px;font-size:12px;">V(s) = max<sub>a</sub> Σ p[r + γ <strong style="color:#FFB347">V(s')</strong>] ← overwrite now</div>
+    </div>
+  </div>
+</div>
+
+<!-- GPI UNIFIER -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="sec-hdr"><div class="sec-title">Generalised Policy Iteration (GPI)</div></div>
+  <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6;">
+    Almost all RL algorithms are instances of GPI: interleave some evaluation with some improvement.
+  </p>
+  <div class="gpi-table">
+    <div class="gpi-hdr"><div>Algorithm</div><div>Eval sweeps before improve</div><div>Character</div></div>
+    <div class="gpi-row"><div style="color:#56CFE1">Value Iteration</div><div>1 (eval+max merged)</div><div>Fastest value convergence</div></div>
+    <div class="gpi-row"><div>Modified PI (k)</div><div>k (tunable)</div><div>k=1→VI, k→∞→PI</div></div>
+    <div class="gpi-row"><div style="color:#FFB347">Policy Iteration</div><div>∞ (full convergence)</div><div>Heavy per outer step, fewer steps</div></div>
+    <div class="gpi-row"><div style="color:#00C9FF">TD / Q-learning</div><div>1 (sampled, model-free)</div><div>GPI without a model</div></div>
+    <div class="gpi-row"><div style="color:#FF6B9D">Actor-Critic</div><div>Continuous (critic)</div><div>Neural network eval + policy gradient</div></div>
+  </div>
+  <div style="margin-top:10px;padding:8px 12px;background:#56CFE111;border-radius:6px;font-size:12px;color:#56CFE1;border:1px solid #56CFE133;">
+    💡 VI → Q-learning → DQN: Q-learning = VI with sampled transitions instead of full model sum. DQN = Q-learning with neural network. Every deep RL paper = VI with function approximation.
+  </div>
+</div>
+
+<!-- EXAM ALERT -->
+<div class="exam-alert-box">
+  <div class="ea-title">⚡ Exam Alert — DP</div>
+  <div class="ea-grid">
+    <div class="ea-item"><div class="ea-lbl">VI update rule</div><div class="ea-val formula-box" style="border-left-color:#56CFE1;font-size:11px;">V<sub>k+1</sub>(s) = max<sub>a</sub> Σ p(s',r|s,a)[r + γ V<sub>k</sub>(s')]</div></div>
+    <div class="ea-item"><div class="ea-lbl">Stop condition</div><div class="ea-val" style="font-size:12px;color:var(--text2)">max<sub>s</sub> |V<sub>k+1</sub>(s)−V<sub>k</sub>(s)| &lt; θ. Extract policy: argmax at convergence.</div></div>
+    <div class="ea-item"><div class="ea-lbl">❌ VI trap</div><div class="ea-val" style="font-size:12px;color:var(--red)">Using V<sub>k+1</sub>(s') (new values) instead of V<sub>k</sub>(s') in synchronous update — that's in-place, not out-of-place.</div></div>
+    <div class="ea-item"><div class="ea-lbl">DP requires</div><div class="ea-val" style="font-size:12px;color:var(--orange)">Full model p(s',r|s,a). If model unknown → Monte Carlo or TD learning instead.</div></div>
+  </div>
+</div>
+
+</div>
+</div>
+<script>
+/* ============================================================
+   NAV
+   ============================================================ */
+function switchTab(t){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+t).classList.add('active');
+  document.querySelector('[data-tab="'+t+'"]').classList.add('active');
+}
+function toggleTheme(){
+  document.documentElement.setAttribute('data-theme',
+    document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
+}
+
+/* ============================================================
+   S1 — LADDER
+   ============================================================ */
+function toggleRung(i){
+  const body=document.getElementById('rbody'+i);
+  const arr=document.getElementById('rarrow'+i);
+  const open=body.style.display==='none';
+  body.style.display=open?'block':'none';
+  arr.style.transform=open?'rotate(180deg)':'rotate(0)';
+}
+
+/* ============================================================
+   S1 — SAR TAPE
+   ============================================================ */
+const SAR_SEQ=[
+  {type:'S',label:'S₀',explain:'Agent starts in initial state S₀. This is the board position, the battery level — whatever represents the current situation.'},
+  {type:'A',label:'A₀',explain:'Agent selects action A₀ following its policy. The action is sent to the environment.'},
+  {type:'R',label:'R₁',explain:'Environment responds at time t+1 with reward R₁. Note the index: the reward belongs to t+1, not t. This is why R is always indexed one step ahead.'},
+  {type:'S',label:'S₁',explain:'Environment also produces new state S₁ — the world has changed because of A₀. One complete (S,A,R,S\') tuple is now available for learning.'},
+  {type:'A',label:'A₁',explain:'Agent observes S₁ and selects next action A₁. The cycle continues.'},
+  {type:'R',label:'R₂',explain:'Reward R₂ arrives — again indexed t+1 relative to when A₁ was taken.'},
+  {type:'S',label:'S₂',explain:'State S₂. The trajectory continues: S₀,A₀,R₁,S₁,A₁,R₂,S₂,···'},
+];
+let sarIdx=0;
+function sarStep(){
+  if(sarIdx>=SAR_SEQ.length){sarReset();return;}
+  const tape=document.getElementById('sarTape');
+  const item=SAR_SEQ[sarIdx];
+  const cell=document.createElement('div');
+  cell.className=`sar-cell ${item.type} new`;
+  cell.innerHTML=`<span class="sar-type">${item.type}</span>${item.label}`;
+  tape.appendChild(cell);
+  document.getElementById('sarExplain').innerHTML=`<strong style="color:${item.type==='S'?'#7B61FF':item.type==='A'?'#64FFDA':'#FF6B9D'}">${item.label}</strong> — ${item.explain}`;
+  sarIdx++;
+  if(sarIdx>=SAR_SEQ.length) document.getElementById('sarStepBtn').textContent='↺ Reset';
+}
+function sarReset(){
+  sarIdx=0;
+  document.getElementById('sarTape').innerHTML='';
+  document.getElementById('sarExplain').textContent='Click "Next Step" to walk through the SAR sequence one element at a time.';
+  document.getElementById('sarStepBtn').textContent='▶ Next Step';
+}
+document.addEventListener('DOMContentLoaded',()=>{ sarReset(); });
+
+/* ============================================================
+   S1 — MARKOV
+   ============================================================ */
+const MARKOV_EX={
+  chess:{title:'♟ Chess — Markov State',body:'The current board position tells you everything. You don\'t need to know every move that led here to decide your next move. All history is encoded in the board. → Board position IS a valid Markov state.',color:'#64FFDA'},
+  robot:{title:'🤖 Robot — Markov State',body:'Battery level {High, Low} is the complete state. Whether the robot searched 3 times or 10 times to reach Low battery doesn\'t matter — the decision rule from Low battery is the same regardless. → Battery level IS a valid Markov state.',color:'#7B61FF'},
+  break:{title:'❌ When the Markov Property Breaks (POMDP)',body:'If the robot has Low battery but you omit battery level from the state (e.g. state = only position), your agent secretly solves a POMDP. The agent won\'t know it — it just silently performs poorly. This is why state engineering is the hardest part of practical RL.',color:'#F76F6F'},
+};
+function showMarkovEx(key){
+  const ex=MARKOV_EX[key];
+  const box=document.getElementById('markovExBox');
+  box.style.display='block';
+  box.style.borderLeft=`3px solid ${ex.color}`;
+  box.style.background=ex.color+'11';
+  box.innerHTML=`<strong style="color:${ex.color}">${ex.title}</strong><br><br>${ex.body}`;
+}
+
+/* ============================================================
+   S1 — QUIZ
+   ============================================================ */
+const QUIZ=[
+  {q:'A doctor gives a patient one of three pain medications. There is no follow-up — just measure immediate pain relief.',opts:['MAB','Contextual Bandit','Full MDP'],ans:0,explain:'MAB — one action, one reward, no state, no tomorrow. Classic K-armed bandit.'},
+  {q:'An e-commerce site recommends a product based on the user\'s age group. The recommendation earns a click or not. The user\'s age doesn\'t change because of the recommendation.',opts:['MAB','Contextual Bandit','Full MDP'],ans:1,explain:'Contextual Bandit — state (age group) exists but is unaffected by the action. No state transition.'},
+  {q:'A chess engine picks a move. The move changes the board position, which determines all legal future moves.',opts:['MAB','Contextual Bandit','Full MDP'],ans:2,explain:'Full MDP — the action (move) directly causes a state transition (new board position).'},
+  {q:'A warehouse robot (battery = High) decides to search for cans. Searching drains battery.',opts:['MAB','Contextual Bandit','Full MDP'],ans:2,explain:'Full MDP — action (search) causes state transition (High → possibly Low battery).'},
+  {q:'A gambler repeatedly pulls one of 5 slot machines, each with unknown fixed payout distributions.',opts:['MAB','Contextual Bandit','Full MDP'],ans:0,explain:'MAB — classic K-armed bandit. No state, no transition, just repeated pulls.'},
+];
+let quizAnswered=[];
+function buildQuiz(){
+  const wrap=document.getElementById('quizWrap');
+  if(!wrap)return;
+  wrap.innerHTML='';
+  quizAnswered=new Array(QUIZ.length).fill(false);
+  QUIZ.forEach((q,qi)=>{
+    const div=document.createElement('div');
+    div.className='quiz-item';
+    div.innerHTML=`<div class="quiz-q"><strong>Q${qi+1}.</strong> ${q.q}</div>
+      <div class="quiz-opts">${q.opts.map((o,oi)=>`<div class="quiz-opt" onclick="answerQuiz(${qi},${oi})" id="qopt-${qi}-${oi}">${o}</div>`).join('')}</div>
+      <div class="quiz-explain" id="qexp-${qi}"></div>`;
+    wrap.appendChild(div);
+  });
+}
+function answerQuiz(qi,oi){
+  if(quizAnswered[qi])return;
+  quizAnswered[qi]=true;
+  const q=QUIZ[qi];
+  const correct=oi===q.ans;
+  document.getElementById(`qopt-${qi}-${oi}`).classList.add(correct?'correct':'wrong');
+  if(!correct) document.getElementById(`qopt-${qi}-${q.ans}`).classList.add('correct');
+  const exp=document.getElementById(`qexp-${qi}`);
+  exp.style.display='block';
+  exp.style.background=correct?'#64FFDA11':'#FF444411';
+  exp.style.borderLeft=`3px solid ${correct?'#64FFDA':'#FF4444'}`;
+  exp.style.padding='8px 12px';
+  exp.style.borderRadius='6px';
+  exp.style.color='var(--text2)';
+  exp.style.fontSize='12px';
+  exp.style.lineHeight='1.6';
+  exp.innerHTML=(correct?'✅ Correct! ':'❌ Wrong. ')+q.explain;
+}
+document.addEventListener('DOMContentLoaded',buildQuiz);
+
+/* ============================================================
+   S2 — 5-TUPLE
+   ============================================================ */
+const TUPLE_DATA=[
+  {sym:'S',color:'#7B61FF',title:'State Space',body:'All possible situations the agent can be in. Must capture everything relevant to future decisions. <br><br><strong>Recycling Robot:</strong> S = {High, Low} battery charge.<br><strong>Gridworld:</strong> S = all non-wall cells (11 cells).<br><strong>Chess:</strong> S = all legal board positions (~10⁴⁴).'},
+  {sym:'A',color:'#64FFDA',title:'Action Space',body:'All choices available to the agent. May be state-dependent: A(s).<br><br><strong>Robot:</strong> A(High) = {Search, Wait} · A(Low) = {Search, Wait, Recharge}<br><strong>Gridworld:</strong> A = {North, East, South, West}<br><strong>Note:</strong> Actions can be voltages, voice commands, or high-level strategies.'},
+  {sym:'P',color:'#FF6B9D',title:'Transition Model',body:'p(s\', r | s, a) — how the environment responds to actions. Encodes all stochasticity.<br><br><strong>Robot High+Search:</strong> stay High w.p. α, drop to Low w.p. 1−α<br><strong>Gridworld:</strong> 0.8 intended, 0.1 left-perp, 0.1 right-perp<br><strong>Formula:</strong> p(s\',r|s,a) is the joint probability of (next state, reward).'},
+  {sym:'R',color:'#F7D94F',title:'Reward Function',body:'Immediate numerical feedback — specifies WHAT to achieve, not HOW.<br><br><strong>Robot:</strong> r_search &gt; r_wait &gt; 0 · −3 for emergency rescue from Low<br><strong>Gridworld:</strong> −0.1 per step · +1 at goal · −1 at trap<br><strong>Reward Hypothesis:</strong> all goals can be formalized as maximizing scalar cumulative reward.'},
+  {sym:'γ',color:'#4FF7D4',title:'Discount Factor',body:'γ ∈ [0,1). How much you value future rewards relative to immediate ones.<br><br>γ = 0 → completely myopic (only next reward)<br>γ → 1 → far-sighted (all future rewards equal weight)<br>γ = 1 → DANGEROUS in continuing tasks (sum may diverge)<br><strong>Typical:</strong> γ = 0.9–0.99 for most practical tasks'},
+];
+function selectTuple(i){
+  document.querySelectorAll('.tuple-item').forEach((el,j)=>el.classList.toggle('active',j===i));
+  const d=TUPLE_DATA[i];
+  document.getElementById('tupleDetail').innerHTML=`<div style="font-family:var(--font-m);font-size:18px;font-weight:700;color:${d.color};margin-bottom:6px;">${d.sym} — ${d.title}</div><div style="font-size:12px;color:var(--text2);line-height:1.7;">${d.body}</div>`;
+}
+document.addEventListener('DOMContentLoaded',()=>selectTuple(0));
+
+/* ============================================================
+   S2 — EQ TABS
+   ============================================================ */
+function switchEq(i){
+  [0,1,2].forEach(j=>{
+    document.getElementById('eqBody'+j).style.display=j===i?'block':'none';
+    document.getElementById('eqtab'+j).classList.toggle('active',j===i);
+  });
+}
+
+/* ============================================================
+   S2 — RECYCLING ROBOT TABLE
+   ============================================================ */
+function updateRobot(){
+  const a=parseFloat(document.getElementById('robot-alpha').value);
+  const b=parseFloat(document.getElementById('robot-beta').value);
+  document.getElementById('robot-alpha-v').textContent=a.toFixed(1);
+  document.getElementById('robot-beta-v').textContent=b.toFixed(1);
+  const rows=[
+    {s:'High',a:'Search',sp:'High',p:a.toFixed(1),r:'r_search',ok:true},
+    {s:'High',a:'Search',sp:'Low',p:(1-a).toFixed(1),r:'r_search',ok:true},
+    {s:'High',a:'Wait',sp:'High',p:'1.0',r:'r_wait',ok:true},
+    {s:'Low',a:'Search',sp:'High',p:(1-b).toFixed(1),r:'−3',ok:true},
+    {s:'Low',a:'Search',sp:'Low',p:b.toFixed(1),r:'r_search',ok:true},
+    {s:'Low',a:'Wait',sp:'Low',p:'1.0',r:'r_wait',ok:true},
+    {s:'Low',a:'Recharge',sp:'High',p:'1.0',r:'0',ok:true},
+  ];
+  const t=document.getElementById('robotTable');
+  t.innerHTML=`<thead><tr><th>s (current)</th><th>a (action)</th><th>s' (next)</th><th>P(s'|s,a)</th><th>r</th></tr></thead><tbody>${
+    rows.map(r=>`<tr><td class="state-${r.s.toLowerCase()}">${r.s}</td><td>${r.a}</td><td class="state-${r.sp.toLowerCase()}">${r.sp}</td><td class="prob">${r.p}</td><td>${r.r}</td></tr>`).join('')
+  }</tbody>`;
+  // Sum check
+  const pairs=[
+    {label:'High+Search',sum:a+(1-a)},
+    {label:'High+Wait',sum:1.0},
+    {label:'Low+Search',sum:(1-b)+b},
+    {label:'Low+Wait',sum:1.0},
+    {label:'Low+Recharge',sum:1.0},
+  ];
+  const sc=document.getElementById('robotSumCheck');
+  sc.innerHTML=pairs.map(p=>`<span style="margin-right:12px;color:${Math.abs(p.sum-1)<0.001?'var(--green)':'var(--red)'}">
+    ${Math.abs(p.sum-1)<0.001?'✅':'❌'} ${p.label}: Σ=${p.sum.toFixed(1)}</span>`).join('');
+}
+document.addEventListener('DOMContentLoaded',updateRobot);
+
+/* ============================================================
+   S2 — GRIDWORLD 3×4
+   ============================================================ */
+function buildGridworld34(){
+  const g=document.getElementById('gwGrid34');
+  if(!g)return;
+  const cells=[
+    {r:0,c:0,label:'',bg:'var(--card2)'},
+    {r:0,c:1,label:'',bg:'var(--card2)'},
+    {r:0,c:2,label:'',bg:'var(--card2)'},
+    {r:0,c:3,label:'+1',bg:'var(--green)',color:'#111'},
+    {r:1,c:0,label:'',bg:'var(--card2)'},
+    {r:1,c:1,label:'⬛',bg:'var(--text3)',color:'var(--text3)'},
+    {r:1,c:2,label:'',bg:'var(--card2)'},
+    {r:1,c:3,label:'−1',bg:'var(--red)',color:'#fff'},
+    {r:2,c:0,label:'S',bg:'#7B61FF44',color:'#7B61FF'},
+    {r:2,c:1,label:'',bg:'var(--card2)'},
+    {r:2,c:2,label:'',bg:'var(--card2)'},
+    {r:2,c:3,label:'',bg:'var(--card2)'},
+  ];
+  g.innerHTML=cells.map(c=>`<div class="gw-cell" style="background:${c.bg};color:${c.color||'var(--text2)'};">${c.label}</div>`).join('');
+}
+document.addEventListener('DOMContentLoaded',buildGridworld34);
+
+/* ============================================================
+   S3 — FORMULA CARDS
+   ============================================================ */
+function expandFml(i){
+  const body=document.getElementById('fbody'+i);
+  const arr=document.getElementById('farr'+i);
+  const open=body.style.display==='none';
+  body.style.display=open?'block':'none';
+  arr.style.transform=open?'rotate(180deg)':'rotate(0)';
+}
+
+/* ============================================================
+   S3 — GAMMA EXPLORER
+   ============================================================ */
+const GAMMA_DESCS={
+  0:'Completely myopic — ignores EVERYTHING beyond the very next reward. γ=0 agents are reckless and short-sighted.',
+  0.5:'Moderately far-sighted. Reward 4 steps away is worth 6.25% of face value.',
+  0.9:'The classic RL setting. A reward 10 steps away ≈ 35% of face value. Far-sighted but bounded.',
+  0.99:'Very far-sighted. Reward 100 steps away ≈ 37% of face value. Used in long-horizon tasks like chess.',
+  0.99:'Maximum safe value. γ=1 is ONLY allowed in episodic tasks where the sum is naturally finite.',
+};
+function updateGamma(v){
+  const gamma=parseFloat(v);
+  document.getElementById('gammaVal').textContent=gamma.toFixed(2);
+  const grid=document.getElementById('gammaGrid');
+  const steps=[1,2,5,10,20,50];
+  grid.innerHTML=steps.map(k=>{
+    const disc=Math.pow(gamma,k);
+    const pct=Math.round(disc*100);
+    const color=pct>50?'var(--green)':pct>20?'var(--gold)':'var(--red)';
+    return `<div class="gamma-cell"><div class="gc-step">t+${k}</div><div class="gc-val" style="color:${color}">${pct}%</div><div style="font-size:10px;color:var(--text3);">of face</div></div>`;
+  }).join('');
+  const desc=gamma===0?'Myopic: only next reward matters.':gamma>=0.99?'Very far-sighted. Risky for continuing tasks — use γ<1.':gamma>=0.9?'Classic setting — far-sighted, bounded sum.':gamma>=0.5?'Moderate. Balances near and far rewards.':'Short-sighted. Heavily discounts the future.';
+  document.getElementById('gammaDesc').textContent=`γ=${gamma.toFixed(2)}: ${desc}`;
+}
+document.addEventListener('DOMContentLoaded',()=>updateGamma(0.9));
+
+/* ============================================================
+   S3 — Gt CALCULATOR
+   ============================================================ */
+function computeGt(){
+  const r2=parseFloat(document.getElementById('calc-r2').value)||0;
+  const rt=parseFloat(document.getElementById('calc-r-tail').value)||0;
+  const g=parseFloat(document.getElementById('calc-gamma').value)||0.1;
+  const G2=rt/(1-g);
+  const G1=r2+g*G2;
+  document.getElementById('calcSteps').innerHTML=`
+    <div class="calc-step"><span class="cs-n">Step 1:</span> Recognize constant tail. From R₃ onward, all rewards = ${rt}. Apply G = R/(1−γ):</div>
+    <div class="formula-box" style="border-left-color:var(--c3);margin-bottom:10px;">G₂ = ${rt} / (1 − ${g}) = ${rt} / ${(1-g).toFixed(2)} = <strong style="color:var(--c3)">${G2.toFixed(4)}</strong></div>
+    <div class="calc-step"><span class="cs-n">Step 2:</span> Apply recursive form G₁ = R₂ + γ·G₂:</div>
+    <div class="formula-box" style="border-left-color:#7B61FF;margin-bottom:10px;">G₁ = ${r2} + ${g} × ${G2.toFixed(4)} = ${r2} + ${(g*G2).toFixed(4)} = <strong style="color:#7B61FF">${G1.toFixed(4)}</strong></div>
+    <div style="padding:8px 12px;background:#64FFDA11;border-radius:6px;font-size:12px;color:#64FFDA;border:1px solid #64FFDA33;">
+      ✅ Final: G₂ = ${G2.toFixed(4)} · G₁ = ${G1.toFixed(4)}<br>
+      Key: constant-tail shortcut collapses infinite sum into one fraction. Spot the tail first — always.
+    </div>`;
+}
+
+/* ============================================================
+   S4 — vπ vs qπ SELECT
+   ============================================================ */
+function selectVQ(t){
+  document.getElementById('vbox').style.borderColor=t==='v'?'#00C9FF':'var(--border)';
+  document.getElementById('qbox').style.borderColor=t==='q'?'#FF6B9D':'var(--border)';
+  const detail=document.getElementById('vqDetail');
+  if(t==='v') detail.innerHTML='<strong style="color:#00C9FF">v<sub>π</sub>(s)</strong> averages over ALL actions the policy might choose. To extract a policy from v<sub>π</sub>, you need the model: π*(s) = argmax<sub>a</sub> Σp(…)[r+γv(s\')]. If no model → use q<sub>π</sub> instead.';
+  else detail.innerHTML='<strong style="color:#FF6B9D">q<sub>π</sub>(s,a)</strong> fixes the first action then follows π. Policy extraction is model-free: π*(s) = argmax<sub>a</sub> q(s,a). This is why most deep RL uses Q-functions directly.';
+}
+
+/* ============================================================
+   S4 — BELLMAN DERIVATION REVEAL
+   ============================================================ */
+let derivStep=0;
+function revealDerivStep(){
+  derivStep++;
+  if(derivStep===1){
+    document.getElementById('ds1').style.opacity='1';
+    document.getElementById('derivBtn').textContent='Show Step 3 →';
+  } else if(derivStep===2){
+    document.getElementById('ds2').style.opacity='1';
+    document.getElementById('derivBtn').textContent='Complete ✓';
+    document.getElementById('derivBtn').disabled=true;
+  }
+}
+
+/* ============================================================
+   S4 — BTERM HIGHLIGHT
+   ============================================================ */
+function highlightBterm(t){
+  document.querySelectorAll('.bterm-row').forEach(r=>r.classList.remove('highlight'));
+  document.getElementById('btr-'+t)&&document.getElementById('btr-'+t).classList.add('highlight');
+}
+
+/* ============================================================
+   S4 — BACKUP DIAGRAM (SVG)
+   ============================================================ */
+function drawBackupVPi(){
+  const svg=document.getElementById('backupSVG');
+  if(!svg)return;
+  svg.innerHTML=`
+    <!-- Root state -->
+    <circle cx="170" cy="25" r="14" fill="none" stroke="#E8ECF4" stroke-width="2"/>
+    <text x="170" y="30" text-anchor="middle" font-size="11" fill="#E8ECF4" font-family="JetBrains Mono">s</text>
+    <!-- Agent branches (weighted by π) -->
+    <line x1="170" y1="39" x2="80" y2="95" stroke="#00C9FF" stroke-width="1.5" stroke-dasharray="4,2"/>
+    <line x1="170" y1="39" x2="170" y2="95" stroke="#00C9FF" stroke-width="1.5" stroke-dasharray="4,2"/>
+    <line x1="170" y1="39" x2="260" y2="95" stroke="#00C9FF" stroke-width="1.5" stroke-dasharray="4,2"/>
+    <text x="100" y="72" font-size="10" fill="#00C9FF" font-family="JetBrains Mono">π(a|s)</text>
+    <!-- Action nodes -->
+    <circle cx="80" cy="105" r="8" fill="#00C9FF" opacity=".8"/>
+    <circle cx="170" cy="105" r="8" fill="#00C9FF" opacity=".8"/>
+    <circle cx="260" cy="105" r="8" fill="#00C9FF" opacity=".8"/>
+    <text x="80" y="122" text-anchor="middle" font-size="9" fill="#00C9FF">a₁</text>
+    <text x="170" y="122" text-anchor="middle" font-size="9" fill="#00C9FF">a₂</text>
+    <text x="260" y="122" text-anchor="middle" font-size="9" fill="#00C9FF">a₃</text>
+    <!-- Env branches from a₁ (weighted by p) -->
+    <line x1="80" y1="113" x2="40" y2="175" stroke="#FF6B9D" stroke-width="1.5"/>
+    <line x1="80" y1="113" x2="80" y2="175" stroke="#FF6B9D" stroke-width="1.5"/>
+    <line x1="80" y1="113" x2="120" y2="175" stroke="#FF6B9D" stroke-width="1.5"/>
+    <text x="30" y="160" font-size="9" fill="#FF6B9D" font-family="JetBrains Mono">p(s'|s,a)</text>
+    <!-- Next state nodes -->
+    <circle cx="40" cy="185" r="12" fill="none" stroke="#E8ECF4" stroke-width="1.5"/>
+    <circle cx="80" cy="185" r="12" fill="none" stroke="#E8ECF4" stroke-width="1.5"/>
+    <circle cx="120" cy="185" r="12" fill="none" stroke="#E8ECF4" stroke-width="1.5"/>
+    <text x="40" y="189" text-anchor="middle" font-size="9" fill="#E8ECF4">s'₁</text>
+    <text x="80" y="189" text-anchor="middle" font-size="9" fill="#E8ECF4">s'₂</text>
+    <text x="120" y="189" text-anchor="middle" font-size="9" fill="#E8ECF4">s'₃</text>
+    <!-- Labels -->
+    <text x="170" y="225" text-anchor="middle" font-size="10" fill="#8892B0">v(s) = weighted avg of [r + γv(s')]</text>
+    <text x="170" y="240" text-anchor="middle" font-size="9" fill="#4A5480">outer: π(a|s) · inner: p(s',r|s,a)</text>
+    <!-- Dots for other action branches -->
+    <text x="170" y="155" text-anchor="middle" font-size="14" fill="#4A5480">⋯</text>
+    <text x="260" y="155" text-anchor="middle" font-size="14" fill="#4A5480">⋯</text>`;
+}
+document.addEventListener('DOMContentLoaded',drawBackupVPi);
+
+/* ============================================================
+   S4 — BELLMAN VERIFIER
+   ============================================================ */
+function verifyBellman(){
+  const N=parseFloat(document.getElementById('vg-N').value)||0;
+  const S=parseFloat(document.getElementById('vg-S').value)||0;
+  const E=parseFloat(document.getElementById('vg-E').value)||0;
+  const W=parseFloat(document.getElementById('vg-W').value)||0;
+  const gamma=parseFloat(document.getElementById('vg-gamma').value)||0.9;
+  const policy=document.getElementById('vg-policy').value;
+  const pi = policy==='det' ? 1 : 0.25;
+  const vN=pi*(0+gamma*N);
+  const vS=pi*(0+gamma*S);
+  const vE=pi*(0+gamma*E);
+  const vW=pi*(0+gamma*W);
+  const vTotal=(policy==='det'?vN:vN+vS+vE+vW);
+  const sum=N+S+E+W;
+  const res=document.getElementById('verifierResult');
+  res.innerHTML=`
+    <div style="margin-bottom:10px;font-family:var(--font-m);font-size:12px;line-height:1.8;">
+      Move N: ${pi.toFixed(2)} × [0 + ${gamma}×${N}] = <span style="color:#00C9FF">${vN.toFixed(4)}</span><br>
+      ${policy==='det'?'':`Move S: ${pi.toFixed(2)} × [0 + ${gamma}×${S}] = <span style="color:#FF6B9D">${vS.toFixed(4)}</span><br>
+      Move E: ${pi.toFixed(2)} × [0 + ${gamma}×${E}] = <span style="color:#F7D94F">${vE.toFixed(4)}</span><br>
+      Move W: ${pi.toFixed(2)} × [0 + ${gamma}×${W}] = <span style="color:#64FFDA">${vW.toFixed(4)}</span><br>`}
+      <strong>Factored: ${policy==='det'?'':'0.25 × '}${gamma} × (${N}+${S}+${E}+${W}) = ${pi*gamma} × ${sum.toFixed(2)}</strong>
+    </div>
+    <div class="formula-box" style="border-left-color:#00C9FF;font-size:14px;font-weight:700;">
+      v<sub>π</sub>(s) ≈ <span style="color:#00C9FF">${vTotal.toFixed(4)}</span>
+    </div>
+    <div style="margin-top:8px;font-size:12px;color:var(--text2);">Enter this value in the center cell above and check if it matches a tabulated value. The gridworld example from lectures: neighbours (2.3, −0.4, 0.4, 0.7), γ=0.9 → v ≈ 0.675 ≈ 0.7 ✓</div>`;
+}
+
+/* ============================================================
+   S5 — OPTIMALITY EQUATION TABS
+   ============================================================ */
+function switchOE(i){
+  [0,1].forEach(j=>{
+    document.getElementById('oeBody'+j).style.display=j===i?'block':'none';
+    document.getElementById('oetab'+j).classList.toggle('active',j===i);
+  });
+}
+
+/* ============================================================
+   S5 — BACKUP DIAGRAMS (v_π, v*, q*)
+   ============================================================ */
+const BD_DATA={
+  0:{label:'v_π(s)',color:'#00C9FF',topArc:'π(a|s) weighted avg',explain:'The top arc uses π(a|s) as weights — a fixed probability. This makes the Bellman expectation equation LINEAR. All branches below are also averaged by the environment p(s\',r|s,a). Result: a policy-weighted average of one-step lookaheads.'},
+  1:{label:'v*(s)',color:'#FFB347',topArc:'max_a — best action',explain:'The top arc is MAX_a — the agent actively picks the best action. This makes the equation NON-LINEAR (max can\'t be decomposed like a sum). The key visual difference: a "max arc" instead of a "π-weighted fan" at the top.'},
+  2:{label:'q*(s,a)',color:'#7B61FF',topArc:'Env. branches first, then max_a\' at bottom',explain:'The root is a state-ACTION node (action already committed). The environment fans out first (top). Then the max arc appears at the BOTTOM — the agent picks the best next action AFTER observing which s\' they landed in. max must be inside the Σ.'},
+};
+function switchBD(i){
+  [0,1,2].forEach(j=>{document.getElementById('bdbtn'+j).classList.toggle('active',j===i);document.getElementById('bdbtn'+j).style.borderColor=j===i?BD_DATA[j].color:'var(--border)';document.getElementById('bdbtn'+j).style.color=j===i?BD_DATA[j].color:'var(--text2)';});
+  const d=BD_DATA[i];
+  const svg=document.getElementById('bdSVG');
+  const c=d.color;
+  if(i===0||i===1){
+    svg.innerHTML=`
+      <circle cx="100" cy="22" r="14" fill="none" stroke="#E8ECF4" stroke-width="2"/>
+      <text x="100" y="27" text-anchor="middle" font-size="11" fill="#E8ECF4">s</text>
+      ${i===0?`<text x="100" y="55" text-anchor="middle" font-size="9" fill="${c}">π(a|s) weighted</text>`:`<text x="100" y="55" text-anchor="middle" font-size="11" fill="${c}" font-weight="bold">max_a</text>`}
+      <line x1="100" y1="36" x2="50" y2="85" stroke="${c}" stroke-width="1.5" ${i===0?'stroke-dasharray="4,2"':''}/>
+      <line x1="100" y1="36" x2="100" y2="85" stroke="${c}" stroke-width="1.5" ${i===0?'stroke-dasharray="4,2"':''}/>
+      <line x1="100" y1="36" x2="150" y2="85" stroke="${c}" stroke-width="1.5" ${i===0?'stroke-dasharray="4,2"':''}/>
+      <circle cx="50" cy="93" r="7" fill="${c}" opacity=".8"/>
+      <circle cx="100" cy="93" r="7" fill="${c}" opacity=".8"/>
+      <circle cx="150" cy="93" r="7" fill="${c}" opacity=".8"/>
+      <line x1="50" y1="100" x2="30" y2="145" stroke="#FF6B9D" stroke-width="1.5"/>
+      <line x1="50" y1="100" x2="50" y2="145" stroke="#FF6B9D" stroke-width="1.5"/>
+      <line x1="50" y1="100" x2="70" y2="145" stroke="#FF6B9D" stroke-width="1.5"/>
+      <text x="15" y="135" font-size="8" fill="#FF6B9D">p(s'|s,a)</text>
+      <circle cx="30" cy="155" r="10" fill="none" stroke="#E8ECF4" stroke-width="1.5"/>
+      <circle cx="50" cy="155" r="10" fill="none" stroke="#E8ECF4" stroke-width="1.5"/>
+      <circle cx="70" cy="155" r="10" fill="none" stroke="#E8ECF4" stroke-width="1.5"/>
+      <text x="150" y="130" font-size="14" fill="#4A5480" text-anchor="middle">⋯</text>
+      <text x="100" y="195" text-anchor="middle" font-size="9" fill="#8892B0">${d.topArc}</text>`;
+  } else {
+    svg.innerHTML=`
+      <rect x="82" y="8" width="36" height="26" rx="6" fill="none" stroke="#7B61FF" stroke-width="2"/>
+      <text x="100" y="26" text-anchor="middle" font-size="10" fill="#7B61FF">(s,a)</text>
+      <text x="100" y="52" text-anchor="middle" font-size="9" fill="#FF6B9D">p(s'|s,a)</text>
+      <line x1="100" y1="34" x2="50" y2="85" stroke="#FF6B9D" stroke-width="1.5"/>
+      <line x1="100" y1="34" x2="100" y2="85" stroke="#FF6B9D" stroke-width="1.5"/>
+      <line x1="100" y1="34" x2="150" y2="85" stroke="#FF6B9D" stroke-width="1.5"/>
+      <circle cx="50" cy="95" r="12" fill="none" stroke="#E8ECF4" stroke-width="1.5"/>
+      <circle cx="100" cy="95" r="12" fill="none" stroke="#E8ECF4" stroke-width="1.5"/>
+      <circle cx="150" cy="95" r="12" fill="none" stroke="#E8ECF4" stroke-width="1.5"/>
+      <text x="50" y="100" text-anchor="middle" font-size="9" fill="#E8ECF4">s'₁</text>
+      <text x="100" y="100" text-anchor="middle" font-size="9" fill="#E8ECF4">s'₂</text>
+      <text x="150" y="100" text-anchor="middle" font-size="9" fill="#E8ECF4">s'₃</text>
+      <line x1="50" y1="107" x2="50" y2="145" stroke="#7B61FF" stroke-width="1.5"/>
+      <text x="50" y="157" text-anchor="middle" font-size="9" fill="#7B61FF" font-weight="bold">max_a'</text>
+      <circle cx="50" cy="168" r="7" fill="#7B61FF" opacity=".8"/>
+      <text x="100" y="195" text-anchor="middle" font-size="9" fill="#8892B0">max INSIDE Σ — agent picks after seeing s'</text>`;
+  }
+  document.getElementById('bdExplain').innerHTML=`<strong style="color:${c}">${d.label}</strong><br><br>${d.explain}`;
+}
+document.addEventListener('DOMContentLoaded',()=>switchBD(0));
+
+/* ============================================================
+   S6 — VALUE ITERATION
+   ============================================================ */
+const RC_P={
+  C:{Slow:[[1.0,'C',1]],Fast:[[0.5,'C',2],[0.5,'W',2]]},
+  W:{Slow:[[0.5,'C',1],[0.5,'W',1]],Fast:[[1.0,'O',-10]]},
+  O:{Slow:[[1.0,'O',0]],Fast:[[1.0,'O',0]]},
+};
+let VI={V:{C:0,W:0,O:0},iter:0,done:false,gamma:0.9};
+function viQ(s,a,V){
+  return RC_P[s][a].reduce((acc,[p,ns,r])=>acc+p*(r+VI.gamma*(s==='O'?0:V[ns])),0);
+}
+function viReset(){
+  VI={V:{C:0,W:0,O:0},iter:0,done:false,gamma:0.9};
+  document.getElementById('viBtnStep').disabled=false;
+  document.getElementById('viPolicyDisplay').style.display='none';
+  document.getElementById('viWorkings').innerHTML='<span style="color:var(--text3)">Click "Next Iteration" to begin Value Iteration. Watch values update and see the workings.</span>';
+  updateVIDisplay(null);
+}
+function updateVIDisplay(sel){
+  const states=['C','W','O'];
+  const names={C:'Cool',W:'Warm',O:'Overheated'};
+  const wrap=document.getElementById('viStatesDisplay');
+  wrap.innerHTML=states.map(s=>`
+    <div class="vi-state-box${sel===s?' selected':''}">
+      <div class="vis-name">${names[s]}</div>
+      <div class="vis-v">${s==='O'?'0.000':VI.V[s].toFixed(3)}</div>
+      <div class="vis-action">${VI.iter===0?'—':viQ(s,'Fast',VI.V)>viQ(s,'Slow',VI.V)?'→ Fast':'→ Slow'}</div>
+    </div>`).join('');
+}
+function viStep(){
+  if(VI.done)return;
+  VI.iter++;
+  const Vold={...VI.V};
+  const states=['C','W'];
+  let delta=0;
+  let html=`<div style="font-family:var(--font-d);font-size:11px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;">Iteration ${VI.iter} — using V_old: C=${Vold.C.toFixed(3)}, W=${Vold.W.toFixed(3)}</div>`;
+  states.forEach(s=>{
+    const qS=RC_P[s].Slow.reduce((acc,[p,ns,r])=>acc+p*(r+VI.gamma*(Vold[ns]||0)),0);
+    const qF=RC_P[s].Fast.reduce((acc,[p,ns,r])=>acc+p*(r+VI.gamma*(Vold[ns]||0)),0);
+    const Vnew=Math.max(qS,qF);
+    const win=Vnew===qS?'Slow':'Fast';
+    html+=`<div class="vi-step-row">
+      <div class="vi-state-hdr">${s==='C'?'Cool':'Warm'} state:</div>
+      <div class="vi-calc">Slow: ${RC_P[s].Slow.map(([p,ns,r])=>`${p}×[${r}+${VI.gamma}×${(Vold[ns]||0).toFixed(3)}]`).join(' + ')} = <span style="color:var(--text)">${qS.toFixed(4)}</span><br>
+      Fast: ${RC_P[s].Fast.map(([p,ns,r])=>`${p}×[${r}+${VI.gamma}×${(Vold[ns]||0).toFixed(3)}]`).join(' + ')} = <span style="color:var(--text)">${qF.toFixed(4)}</span></div>
+      <div class="vi-result">V(${s}) = max(${qS.toFixed(4)}, ${qF.toFixed(4)}) = ${Vnew.toFixed(4)} → ${win}</div>`;
+    delta=Math.max(delta,Math.abs(Vnew-Vold[s]));
+    VI.V[s]=Vnew;
+  });
+  html+=`<div style="margin-top:8px;font-size:12px;color:${delta<0.01?'var(--green)':'var(--orange)'};">Δ = ${delta.toFixed(5)} ${delta<0.01?'< 0.01 → CONVERGED ✅':'≥ 0.01 → continue'}</div>`;
+  document.getElementById('viWorkings').innerHTML=html;
+  updateVIDisplay(null);
+  if(delta<0.01){
+    VI.done=true;
+    document.getElementById('viBtnStep').disabled=true;
+    const pd=document.getElementById('viPolicyDisplay');
+    pd.style.display='block';
+    pd.innerHTML=`<div style="font-family:var(--font-d);font-size:13px;font-weight:700;color:#64FFDA;margin-bottom:8px;">✅ Converged in ${VI.iter} iterations</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8;">π*(Cool) = <strong style="color:#56CFE1">Fast</strong> (V≈${VI.V.C.toFixed(1)}) &nbsp;|&nbsp; π*(Warm) = <strong style="color:#56CFE1">Slow</strong> (V≈${VI.V.W.toFixed(1)}) &nbsp;|&nbsp; π*(Overheated) = terminal</div>`;
+  }
+}
+function viRun(){while(!VI.done)viStep();}
+document.addEventListener('DOMContentLoaded',()=>{viReset();});
+
+/* ============================================================
+   S6 — PI ANIMATE
+   ============================================================ */
+let piPhase=0;
+function piAnimate(){
+  piPhase++;
+  const phases=['pi-init','pi-eval','pi-improve','pi-done'];
+  phases.forEach((id,i)=>{
+    document.getElementById(id).classList.toggle('active-phase',i===piPhase-1);
+    document.getElementById(id).style.opacity=i<piPhase?'1':'0.4';
+  });
+  const btn=document.getElementById('piBtnAnimate');
+  const nums=document.getElementById('piNumerical');
+  if(piPhase===2){
+    btn.textContent='▶ Policy Improvement →';
+    nums.style.display='block';
+    nums.innerHTML=`<div style="font-family:var(--font-d);font-size:12px;font-weight:600;margin-bottom:6px;color:#00C9FF;">Policy Evaluation (π₀: all Slow)</div>
+      <div style="font-family:var(--font-m);font-size:11px;line-height:1.8;color:var(--text2);">
+      V(Cool) follows: Slow→ p=1, r=1, stays Cool<br>
+      V(C) = 1 + 0.9×V(C) → V(C)×(1−0.9)=1 → <strong style="color:#00C9FF">V(C) = 10</strong><br><br>
+      V(Warm) follows: Slow→ 0.5 to C, 0.5 stay W, r=1<br>
+      V(W) = 0.5×[1+0.9×V(C)] + 0.5×[1+0.9×V(W)]<br>
+      → V(W) = 0.5×10.9 + 0.5×1 + 0.45×V(W)<br>
+      → <strong style="color:#00C9FF">V(W) ≈ 10</strong> (converged ~225 iterations)</div>`;
+  } else if(piPhase===3){
+    btn.textContent='▶ Check Stability →';
+    nums.innerHTML+=`<div style="font-family:var(--font-d);font-size:12px;font-weight:600;margin:10px 0 6px;color:#FFB347;">Policy Improvement (one greedy step)</div>
+      <div style="font-family:var(--font-m);font-size:11px;line-height:1.8;color:var(--text2);">
+      Cool: q(C,Fast) = 0.5×[2+0.9×10]+0.5×[2+0.9×10] = 0.5×11+0.5×11 = <strong style="color:#FFB347">11</strong> > q(C,Slow)=10 → <strong>Switch to Fast</strong><br>
+      Warm: q(W,Fast) = 1×[−10+0] = <strong style="color:var(--red)">−10</strong> < q(W,Slow)=10 → <strong>Keep Slow</strong></div>`;
+  } else if(piPhase===4){
+    btn.textContent='↺ Reset';
+    nums.innerHTML+=`<div style="margin-top:10px;padding:8px 12px;background:#64FFDA11;border-radius:6px;font-size:12px;color:#64FFDA;border:1px solid #64FFDA33;">
+      ✅ π₁ = π* (converged in 1 outer PI step!): Cool→Fast, Warm→Slow</div>`;
+  } else if(piPhase>4){
+    piPhase=0;
+    document.getElementById('piBtnAnimate').textContent='▶ Animate PI Cycle';
+    phases.forEach((id,i)=>{document.getElementById(id).style.opacity=i===0?'1':'0.4';document.getElementById(id).classList.remove('active-phase');});
+    nums.style.display='none';
+  }
+}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+document.addEventListener('DOMContentLoaded',()=>{
+  sarReset();
+  buildQuiz();
+  updateRobot();
+  buildGridworld34();
+  selectTuple(0);
+  updateGamma(0.9);
+  viReset();
+  switchBD(0);
+});
+</script>
+</body>
+</html>
