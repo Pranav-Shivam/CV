@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>DM4ML — Revision Console</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --bg:#0b0d12;
+  --panel:#13161f;
+  --panel2:#1a1f2e;
+  --panel3:#20263a;
+  --border:#262c3d;
+  --border-soft:#1c2130;
+  --text:#eef0f5;
+  --muted:#838ba3;
+  --muted2:#5b6478;
+  --accent:#2dd4a8;
+  --accent-dim:rgba(45,212,168,0.12);
+  --amber:#f0a857;
+  --amber-dim:rgba(240,168,87,0.12);
+  --red:#ef6f6f;
+  --red-dim:rgba(239,111,111,0.1);
+  --blue:#6fa8f5;
+  --blue-dim:rgba(111,168,245,0.1);
+  --radius:10px;
+  --font-display:'Space Grotesk',sans-serif;
+  --font-body:'Inter',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;}
+html,body{margin:0; padding:0; min-width:0;}
+body{
+  background:var(--bg); color:var(--text); font-family:var(--font-body);
+  line-height:1.55; -webkit-font-smoothing:antialiased; overflow-wrap:break-word;
+}
+::selection{background:var(--accent-dim); color:var(--accent);}
+::-webkit-scrollbar{width:8px; height:8px;}
+::-webkit-scrollbar-thumb{background:var(--panel3); border-radius:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+
+a{color:var(--blue);}
+strong{color:#fff; font-weight:600;}
+code{font-family:var(--font-mono); background:var(--panel3); padding:1px 6px; border-radius:5px; font-size:.85em; color:var(--accent);}
+
+/* ============ APP SHELL ============ */
+.app{
+  display:grid; grid-template-columns:248px minmax(0,1fr); grid-template-rows:auto minmax(0,1fr);
+  height:100dvh; min-height:0; overflow:hidden;
+}
+
+/* ---- Header ---- */
+header{
+  grid-column:1 / -1; display:flex; align-items:center; gap:16px; min-width:0;
+  padding:14px max(22px, env(safe-area-inset-right)) 14px max(22px, env(safe-area-inset-left));
+  border-bottom:1px solid var(--border); background:var(--panel);
+  z-index:30;
+}
+.brand{display:flex; align-items:center; gap:10px; flex:0 0 auto;}
+.brand .mark{
+  width:30px; height:30px; border-radius:8px; background:linear-gradient(135deg,var(--accent),#1a9879);
+  display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:700;
+  color:#04140f; font-size:13px; flex:0 0 auto;
+}
+.brand .name{font-family:var(--font-display); font-weight:700; font-size:15px; letter-spacing:.01em;}
+.brand .name span{color:var(--muted); font-weight:500; font-size:12px; display:block; margin-top:-2px; letter-spacing:.02em;}
+
+.search-wrap{flex:1; max-width:420px; position:relative;}
+.search-wrap input{
+  width:100%; background:var(--panel2); border:1px solid var(--border); color:var(--text);
+  padding:9px 14px 9px 36px; border-radius:8px; font-size:13.5px; font-family:var(--font-body);
+  outline:none; transition:border-color .15s, background .15s;
+}
+.search-wrap input:focus{border-color:var(--accent); background:var(--panel3);}
+.search-wrap input::placeholder{color:var(--muted2);}
+.search-wrap .icon{
+  position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--muted2);
+  font-size:14px; pointer-events:none;
+}
+.search-wrap kbd{
+  position:absolute; right:8px; top:50%; transform:translateY(-50%);
+  font-family:var(--font-mono); font-size:10px; color:var(--muted2);
+  background:var(--panel3); border:1px solid var(--border); border-radius:4px; padding:2px 5px;
+}
+
+.global-progress{flex:0 0 auto; display:flex; align-items:center; gap:10px; margin-left:auto;}
+.global-progress .label{font-size:11px; color:var(--muted); font-family:var(--font-mono); text-transform:uppercase; letter-spacing:.06em;}
+.global-progress .ring{width:34px; height:34px; position:relative;}
+.global-progress .ring svg{transform:rotate(-90deg);}
+.global-progress .ring .pct{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-mono); font-size:9px; color:var(--accent); font-weight:600;
+}
+
+/* ---- Desktop vertical navigation ---- */
+.tab-rail{
+  display:flex; flex-direction:column; gap:4px; width:100%; height:100%; min-height:0;
+  padding:14px 10px; background:var(--panel); border-right:1px solid var(--border);
+  overflow-x:hidden; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--panel3) transparent;
+  overscroll-behavior-y:contain; position:relative;
+}
+.tab-rail::-webkit-scrollbar{display:block; width:8px;}
+.tab{
+  flex:0 0 auto; display:flex; align-items:center; gap:10px; width:100%; min-height:44px; padding:9px 11px;
+  border-radius:8px; cursor:pointer; border:1px solid transparent; background:transparent;
+  transition:background .15s, border-color .15s; user-select:none; position:relative;
+}
+.tab:hover{background:var(--panel2);}
+.tab.active{background:var(--panel2); border-color:var(--border);}
+.tab .tab-ring{width:22px; height:22px; flex:0 0 auto; position:relative;}
+.tab .tab-ring svg{transform:rotate(-90deg);}
+.tab .tab-id{font-family:var(--font-mono); font-size:11px; font-weight:600; color:var(--muted);}
+.tab.active .tab-id{color:var(--accent);}
+.tab .tab-name{min-width:0; font-size:12.5px; line-height:1.35; color:var(--muted);}
+.tab.active .tab-name{color:var(--text); font-weight:500;}
+.tab-divider{width:auto; height:1px; background:var(--border); margin:6px 4px; flex:0 0 auto;}
+
+/* The scrollbar remains visible so long session lists are discoverable. */
+.rail-wrap{grid-column:1; grid-row:2; min-width:0; min-height:0; overflow:hidden;}
+.rail-fade{
+  display:none;
+}
+
+/* ---- Compact session switcher (replaces sidebar under 900px) ---- */
+.mobile-switcher{display:none;}
+.mobile-switcher-trigger{
+  width:100%; display:flex; align-items:center; gap:10px; padding:12px 16px;
+  background:var(--panel); border:none; border-bottom:1px solid var(--border);
+  color:var(--text); font-family:var(--font-body); cursor:pointer; text-align:left;
+}
+.mobile-switcher-trigger .msq-ring{flex:0 0 auto; width:24px; height:24px;}
+.mobile-switcher-trigger .msq-ring svg{transform:rotate(-90deg);}
+.mobile-switcher-trigger .msq-label{flex:1; font-size:14px; font-weight:600;}
+.mobile-switcher-trigger .msq-label small{display:block; font-size:10.5px; color:var(--muted); font-weight:400; margin-top:1px;}
+.mobile-switcher-trigger .msq-chevron{color:var(--muted2); font-size:13px; transform:rotate(90deg);}
+
+.sheet-backdrop{
+  position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:90; opacity:0; pointer-events:none;
+  transition:opacity .2s;
+}
+.sheet-backdrop.show{opacity:1; pointer-events:auto;}
+.sheet{
+  position:fixed; left:0; right:0; bottom:0; background:var(--panel); z-index:95;
+  border-radius:18px 18px 0 0; border-top:1px solid var(--border);
+  transform:translateY(100%); transition:transform .25s ease; max-height:75vh; overflow-y:auto;
+  padding:8px 0 max(16px, env(safe-area-inset-bottom));
+}
+.sheet.show{transform:translateY(0);}
+.sheet-handle{width:36px; height:4px; background:var(--border); border-radius:4px; margin:8px auto 6px;}
+.sheet-title{font-family:var(--font-display); font-size:13px; color:var(--muted); padding:6px 18px 10px; text-transform:uppercase; letter-spacing:.06em;}
+.sheet-item{
+  display:flex; align-items:center; gap:12px; padding:13px 18px; cursor:pointer;
+  border-bottom:1px solid var(--border-soft);
+}
+.sheet-item:last-child{border-bottom:none;}
+.sheet-item:active{background:var(--panel2);}
+.sheet-item.active{background:var(--accent-dim);}
+.sheet-item .si-ring{flex:0 0 auto; width:26px; height:26px;}
+.sheet-item .si-ring svg{transform:rotate(-90deg);}
+.sheet-item .si-icon{flex:0 0 auto; font-size:16px; width:26px; text-align:center;}
+.sheet-item .si-text{flex:1;}
+.sheet-item .si-name{font-size:14px; font-weight:600; color:var(--text);}
+.sheet-item .si-meta{font-size:11px; color:var(--muted); margin-top:1px;}
+.sheet-item.active .si-name{color:var(--accent);}
+.sheet-divider{height:8px;}
+
+/* ---- Main content area ---- */
+main{
+  grid-column:2; grid-row:2; min-height:0; min-width:0; overflow-y:auto; overflow-x:hidden;
+  padding:26px 0 max(80px, calc(48px + env(safe-area-inset-bottom)));
+  scroll-behavior:smooth; overscroll-behavior-y:contain;
+}
+.content-inner{width:100%; max-width:880px; min-width:0; margin:0 auto; padding:0 28px;}
+
+.session-head{margin-bottom:22px;}
+.session-head .eyebrow{
+  font-family:var(--font-mono); font-size:11px; color:var(--accent); text-transform:uppercase;
+  letter-spacing:.08em; margin-bottom:6px; display:flex; align-items:center; gap:8px;
+}
+.session-head h1{font-family:var(--font-display); font-size:25px; margin:0 0 6px; font-weight:700;}
+.session-head .desc{color:var(--muted); font-size:13.5px; margin:0;}
+.session-tools{display:flex; gap:8px; margin-top:14px;}
+.btn-sm{
+  font-family:var(--font-body); font-size:12px; padding:6px 12px; border-radius:7px;
+  border:1px solid var(--border); background:var(--panel2); color:var(--muted); cursor:pointer;
+  transition:all .15s; display:flex; align-items:center; gap:5px;
+}
+.btn-sm:hover{border-color:var(--accent); color:var(--accent);}
+
+/* ---- Accordion Cards ---- */
+.card-list{display:flex; flex-direction:column; gap:8px;}
+.card{
+  background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
+  overflow:hidden; transition:border-color .15s;
+}
+.card.open{border-color:var(--border-soft); background:var(--panel);}
+.card-head{
+  display:flex; align-items:center; gap:12px; padding:14px 16px; cursor:pointer;
+  user-select:none;
+}
+.card-head:hover .card-title{color:var(--accent);}
+.checkbox{
+  width:19px; height:19px; border-radius:6px; border:1.5px solid var(--muted2); flex:0 0 auto;
+  display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .15s;
+  background:var(--panel2);
+}
+.checkbox.checked{background:var(--accent); border-color:var(--accent);}
+.checkbox svg{width:11px; height:11px; opacity:0; transition:opacity .1s;}
+.checkbox.checked svg{opacity:1;}
+.card-title{
+  flex:1; min-width:0; font-family:var(--font-display); font-size:14.5px; font-weight:600;
+  color:var(--text); transition:color .15s;
+}
+.card.done .card-title{color:var(--muted);}
+.card-tags{display:flex; gap:5px; flex:0 0 auto;}
+.mini-tag{
+  font-size:9.5px; font-family:var(--font-mono); padding:2px 6px; border-radius:4px;
+  text-transform:uppercase; letter-spacing:.04em;
+}
+.mini-tag.trap{background:var(--red-dim); color:var(--red);}
+.mini-tag.high{background:var(--amber-dim); color:var(--amber);}
+.chevron{color:var(--muted2); transition:transform .2s; flex:0 0 auto;}
+.card.open .chevron{transform:rotate(90deg); color:var(--accent);}
+
+.card-body{
+  max-height:0; overflow:hidden; transition:max-height .25s ease;
+}
+.card-body-inner{padding:0 16px 18px 47px; font-size:13.5px;}
+.card-body-inner p{margin:6px 0;}
+.card-body-inner ul,.card-body-inner ol{margin:6px 0 10px; padding-left:20px;}
+.card-body-inner li{margin-bottom:5px;}
+
+table.mini{
+  display:block; width:100%; max-width:100%; border-collapse:collapse; margin:10px 0;
+  font-size:12.5px; overflow-x:auto; overscroll-behavior-x:contain;
+  -webkit-overflow-scrolling:touch;
+}
+table.mini th,table.mini td{padding:6px 9px; border:1px solid var(--border); text-align:left; vertical-align:top;}
+table.mini th{background:var(--panel2); color:var(--amber); font-weight:600; font-size:11.5px;}
+table.mini tr:nth-child(even) td{background:rgba(255,255,255,0.012);}
+
+.callout{border-radius:8px; padding:11px 13px; margin:10px 0; font-size:13px; border-left:3px solid;}
+.callout.trap{background:var(--red-dim); border-color:var(--red);}
+.callout.trap .ctitle{color:var(--red);}
+.callout.tip{background:var(--accent-dim); border-color:var(--accent);}
+.callout.tip .ctitle{color:var(--accent);}
+.callout.def{background:var(--blue-dim); border-color:var(--blue);}
+.callout.def .ctitle{color:var(--blue);}
+.ctitle{font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; display:block;}
+
+.flow-mini{display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:10px 0; font-family:var(--font-mono); font-size:12px;}
+.flow-mini .node{background:var(--panel3); border:1px solid var(--border); padding:5px 10px; border-radius:6px;}
+.flow-mini .arrow{color:var(--accent);}
+
+.mnemonic{font-family:var(--font-mono); color:var(--amber); letter-spacing:.03em;}
+
+/* ---- Cheatsheet grid view ---- */
+.cheat-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:12px;}
+@media(max-width:700px){.cheat-grid{grid-template-columns:1fr;}}
+.cheat-card{
+  background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px;
+}
+.cheat-card h4{margin:0 0 8px; font-family:var(--font-display); font-size:13px; color:var(--amber); display:flex; align-items:center; gap:6px;}
+.cheat-card ul{margin:0; padding-left:17px; font-size:12.8px;}
+.cheat-card li{margin-bottom:5px;}
+.jump-pill{font-size:9.5px; font-family:var(--font-mono); color:var(--muted2); background:var(--panel2); padding:1px 6px; border-radius:10px; margin-left:auto; cursor:pointer; border:1px solid var(--border);}
+.jump-pill:hover{color:var(--accent); border-color:var(--accent);}
+
+/* ---- Glossary ---- */
+.glossary-search{margin-bottom:14px;}
+.glossary-search input{
+  width:100%; background:var(--panel2); border:1px solid var(--border); color:var(--text);
+  padding:10px 14px; border-radius:8px; font-size:13.5px; outline:none;
+}
+.glossary-search input:focus{border-color:var(--accent);}
+.gloss-grid{display:grid; grid-template-columns:1fr; gap:6px;}
+.gloss-item{
+  display:flex; gap:14px; padding:10px 14px; background:var(--panel); border:1px solid var(--border);
+  border-radius:8px; font-size:13px;
+}
+.gloss-term{font-family:var(--font-mono); color:var(--accent); font-weight:600; flex:0 0 150px;}
+.gloss-def{color:var(--muted); flex:1;}
+.gloss-item.hidden{display:none;}
+
+/* ---- Empty search state ---- */
+.empty-state{text-align:center; padding:60px 20px; color:var(--muted);}
+.empty-state .big{font-size:32px; margin-bottom:10px;}
+
+/* ---- Search results overlay ---- */
+.search-results{
+  position:absolute; top:calc(100% + 6px); left:0; right:0; background:var(--panel2);
+  border:1px solid var(--border); border-radius:10px; max-height:380px; overflow-y:auto;
+  box-shadow:0 12px 30px rgba(0,0,0,0.5); z-index:50; display:none;
+}
+.search-results.show{display:block;}
+.sr-item{padding:10px 14px; border-bottom:1px solid var(--border); cursor:pointer; transition:background .1s;}
+.sr-item:last-child{border-bottom:none;}
+.sr-item:hover{background:var(--panel3);}
+.sr-item .sr-session{font-family:var(--font-mono); font-size:10px; color:var(--accent); text-transform:uppercase; margin-bottom:2px;}
+.sr-item .sr-title{font-size:13px; font-weight:600; color:var(--text);}
+.sr-item .sr-snippet{font-size:11.5px; color:var(--muted); margin-top:2px;}
+.sr-empty{padding:16px; text-align:center; color:var(--muted); font-size:13px;}
+mark{background:var(--amber-dim); color:var(--amber); padding:0 2px; border-radius:2px;}
+
+/* ---- Tablet ---- */
+@media(max-width:980px){
+  header{gap:12px;}
+  .brand .name span{display:none;}
+  .search-wrap{max-width:none;}
+  .global-progress .label{display:none;}
+  .content-inner{max-width:820px; padding-inline:22px;}
+}
+
+@media(max-width:900px){
+  .app{display:flex; flex-direction:column;}
+  .rail-wrap{display:none;}
+  .mobile-switcher{display:block; flex:0 0 auto;}
+  main{flex:1; min-height:0;}
+}
+
+/* ---- Mobile ---- */
+@media(max-width:760px){
+  header{
+    flex-wrap:wrap; padding:10px max(14px, env(safe-area-inset-right)) 10px max(14px, env(safe-area-inset-left));
+    gap:9px 10px;
+  }
+  .brand .name{font-size:14px;}
+  .brand .name span{display:none;}
+  .search-wrap{order:3; flex:1 0 100%; width:100%; max-width:none;}
+  .search-wrap input{min-height:44px; padding-block:10px; font-size:16px;}
+  .search-wrap kbd{display:none;}
+  .search-results{max-height:min(52dvh,380px);}
+  .global-progress .label{display:none;}
+
+  .mobile-switcher-trigger{
+    min-height:52px; padding-inline:max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right));
+  }
+
+  main{padding-top:20px;}
+  .content-inner{padding-inline:max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right));}
+  .session-head{margin-bottom:18px;}
+  .session-head h1{font-size:21px;}
+  .session-head .desc{font-size:14px;}
+  .cheat-grid{grid-template-columns:1fr;}
+  .session-tools{flex-wrap:wrap;}
+  .btn-sm{min-height:40px; justify-content:center;}
+
+  .card-head{
+    display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:start;
+    gap:8px 10px; padding:14px;
+  }
+  .checkbox{grid-column:1; grid-row:1;}
+  .card-title{grid-column:2; grid-row:1; font-size:15px; line-height:1.4;}
+  .chevron{grid-column:3; grid-row:1; padding:1px 2px;}
+  .card-tags{grid-column:2 / 4; grid-row:2; flex-wrap:wrap;}
+  .card-body-inner{padding:0 14px 17px; font-size:14px;}
+
+  .gloss-item{flex-direction:column; gap:4px; padding:12px 14px;}
+  .gloss-term{flex:0 0 auto;}
+  .flow-mini{align-items:stretch;}
+  .flow-mini .node{text-align:center;}
+  .toast{
+    bottom:max(16px, env(safe-area-inset-bottom)); width:max-content; max-width:calc(100vw - 32px);
+    padding:9px 14px; text-align:center;
+  }
+}
+
+@media(max-width:480px){
+  .brand{min-width:0;}
+  .brand .mark{width:28px; height:28px;}
+  .brand .name{font-size:13px;}
+  .global-progress{gap:0;}
+  .global-progress .ring{width:32px; height:32px;}
+  .session-tools{display:grid; grid-template-columns:repeat(2,minmax(0,1fr));}
+  .btn-sm{width:100%; padding-inline:8px;}
+  .cheat-card{padding:13px 14px;}
+  .cheat-card h4{flex-wrap:wrap;}
+  .jump-pill{margin-left:0;}
+  table.mini th,table.mini td{min-width:120px;}
+}
+@media(min-width:901px){
+  .mobile-switcher{display:none;}
+}
+
+/* ---- Accessibility: focus + motion ---- */
+a:focus-visible,button:focus-visible,.tab:focus-visible,.card-head:focus-visible,
+.checkbox:focus-visible,input:focus-visible,.btn-sm:focus-visible,.jump-pill:focus-visible{
+  outline:2px solid var(--accent); outline-offset:2px; border-radius:6px;
+}
+@media (prefers-reduced-motion: reduce){
+  *{transition-duration:0.001ms !important; animation-duration:0.001ms !important; scroll-behavior:auto !important;}
+}
+
+/* Toast */
+.toast{
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(10px);
+  background:var(--panel3); border:1px solid var(--accent); color:var(--accent);
+  padding:10px 18px; border-radius:8px; font-size:13px; font-family:var(--font-mono);
+  opacity:0; pointer-events:none; transition:opacity .25s, transform .25s; z-index:100;
+}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header>
+    <div class="brand">
+      <div class="mark">DM</div>
+      <div class="name">Revision Console<span>DM4ML · Sessions 1–8</span></div>
+    </div>
+
+    <div class="search-wrap">
+      <span class="icon">⌕</span>
+      <input type="text" id="searchInput" placeholder="Search any concept across all sessions…" autocomplete="off">
+      <kbd>/</kbd>
+      <div class="search-results" id="searchResults"></div>
+    </div>
+
+    <div class="global-progress">
+      <span class="label">Mastery</span>
+      <div class="ring" id="globalRing">
+        <svg width="34" height="34" viewBox="0 0 34 34">
+          <circle cx="17" cy="17" r="14" fill="none" stroke="#262c3d" stroke-width="3.5"/>
+          <circle id="globalRingFg" cx="17" cy="17" r="14" fill="none" stroke="#2dd4a8" stroke-width="3.5" stroke-dasharray="88" stroke-dashoffset="88" stroke-linecap="round"/>
+        </svg>
+        <span class="pct" id="globalPct">0%</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="rail-wrap">
+    <nav class="tab-rail" id="tabRail" aria-label="Study sessions"><!-- injected by JS --></nav>
+    <div class="rail-fade left" id="railFadeLeft"></div>
+    <div class="rail-fade right" id="railFadeRight"></div>
+  </div>
+
+  <div class="mobile-switcher">
+    <button class="mobile-switcher-trigger" id="mobileSwitcherTrigger">
+      <span class="msq-ring" id="msqRing"></span>
+      <span class="msq-label" id="msqLabel"></span>
+      <span class="msq-chevron">▸</span>
+    </button>
+  </div>
+
+  <main id="mainArea">
+    <div class="content-inner" id="contentInner"><!-- injected by JS --></div>
+  </main>
+
+</div>
+
+<div class="sheet-backdrop" id="sheetBackdrop"></div>
+<div class="sheet" id="sessionSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">Jump to session</div>
+  <div id="sheetList"><!-- injected by JS --></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   DATA MODEL — all sessions, cards, callouts
+   ============================================================ */
+const STORAGE_KEY = 'dm4ml_progress_v1';
+
+// Helper builders so card content stays readable below
+const T = (rows, headerRow) => {
+  let h = '<table class="mini">';
+  if(headerRow) h += '<tr>' + headerRow.map(c=>`<th>${c}</th>`).join('') + '</tr>';
+  rows.forEach(r => h += '<tr>' + r.map(c=>`<td>${c}</td>`).join('') + '</tr>');
+  return h + '</table>';
+};
+const callout = (type, title, body) => `<div class="callout ${type}"><span class="ctitle">${title}</span>${body}</div>`;
+const flow = (...nodes) => '<div class="flow-mini">' + nodes.map((n,i)=> (i>0?'<span class="arrow">→</span>':'') + `<span class="node">${n}</span>`).join('') + '</div>';
+
+const SESSIONS = [
+{
+  id:'cheatsheet', kind:'cheatsheet', tabName:'Cheat Sheet', icon:'🔥',
+  title:'60-Minute Cheat Sheet',
+  desc:'Every exam trap and key fact across all 8 sessions, grouped by theme. Start here if time is short.',
+  groups:[
+    {h:'DIKW & Foundations', items:[
+      'DIKW = Data → Information → Knowledge → Wisdom. Each level <strong>filters noise</strong> from the one below.',
+      '<strong>TAVI</strong> = Text, Audio, Video, Image — the 4 unstructured modalities.',
+      '<strong>GIGO</strong>: bad input data permanently degrades ML output, regardless of model quality.',
+      'Schema-on-<strong>write</strong> = structured/warehouse. Schema-on-<strong>read</strong> = lake/ELT.'
+    ]},
+    {h:'5 Data Models', items:[
+      '<strong>Relational</strong> (SQL) — tuples, unordered, PK/FK.',
+      '<strong>Hierarchical</strong> (NoSQL) — tree, one parent only. Registry, XML.',
+      '<strong>Graph</strong> (NoSQL) — nodes+edges, Cypher/Gremlin.',
+      '<strong>Document</strong> (NoSQL) — JSON/XML docs, unique key.',
+      '<strong>Key-Value</strong> (NoSQL) — simplest, caching. Redis.'
+    ]},
+    {h:'Normalization', items:[
+      '3 anomalies fixed: <strong>Insertion, Update, Deletion</strong>.',
+      '1NF=atomic · 2NF=full PK dependency · 3NF=no transitive dependency · BCNF=every determinant is a candidate key.',
+      'Invented by <strong>Edgar Codd</strong>, 1970.'
+    ]},
+    {h:'Row vs Column Storage', items:[
+      '<strong>Row-major</strong> = CSV, OLTP, fast writes.',
+      '<strong>Column-major</strong> = Parquet, OLAP, fast reads — wins for ML feature columns.'
+    ]},
+    {h:'ETL vs ELT', items:[
+      'ETL = transform <em>before</em> load → Warehouse, schema-on-write.',
+      'ELT = load raw <em>then</em> transform → Lake, schema-on-read.',
+      'Driven by <strong>5 V\'s</strong>: Volume, Velocity, Variety, Veracity, Value.',
+      '<strong>Reverse ETL</strong> = warehouse → back into Salesforce/HubSpot.'
+    ]},
+    {h:'Warehouse / Lake / Lakehouse', items:[
+      'Lake failure modes: <strong>Data Swamp, Dark Data, WORN</strong>.',
+      'Lakehouse = Lake + ACID via Delta Lake / Iceberg / Hudi.',
+      'Data Mart = department-scoped subset of a warehouse.'
+    ]},
+    {h:'Lambda vs Kappa', items:[
+      'Lambda = batch (cold) + speed (hot) + serving. Two codebases = pain.',
+      'Kappa (Jay Kreps) = single stream, replay log for "batch."',
+      '<strong>Exam trick:</strong> cricket live broadcast = Kappa. Highlights reel = Lambda batch path.'
+    ]},
+    {h:'CDC — Change Data Capture', items:[
+      '4 mechanisms: Triggers, <strong>Transaction Log</strong> (gold standard), Stored Procedures, Message Queues.',
+      'Incremental <code>WHERE updated_at &gt; checkpoint</code> misses hard deletes — CDC catches them.'
+    ]},
+    {h:'HDFS', items:[
+      'NameNode = metadata only (RAM). DataNode = actual blocks.',
+      'Secondary NameNode ≠ backup — merges edit logs.',
+      'Block size 128MB. Replication factor 3 → survive ~33% cluster loss.'
+    ]},
+    {h:'CRISP-DM (6 Stages)', items:[
+      'Business Understanding → Data Understanding → Prep → Modeling → Evaluation → Deployment. <strong>Iterative.</strong>',
+      'Data Prep = 60–80% of project time.',
+      'Modeling = technical fit. Evaluation = business value fit.'
+    ]},
+    {h:'Confusion Matrix', items:[
+      'Type I = False Positive ("I falsely accuse"). Type II = False Negative ("missed it").',
+      '<strong>Accuracy lies on imbalanced data</strong> — always check class balance first.'
+    ]},
+    {h:'Drift Types', items:[
+      '<strong>Data drift</strong>: P(X) changes. <strong>Concept drift</strong>: P(Y|X) changes.',
+      '<strong>Training-serving skew</strong>: feature computed differently train vs serve — fix with a feature store.'
+    ]},
+    {h:'Drift Detection Metrics', items:[
+      '<strong>PSI</strong>: &lt;0.1 stable · 0.1–0.25 investigate · ≥0.25 act.',
+      '<strong>KL Divergence</strong>: asymmetric, undefined at Q(x)=0. JS Divergence = symmetric fix.'
+    ]},
+    {h:'Pre-processing Order', items:[
+      '<span class="mnemonic">Impute → Outliers → Dedupe → Conform → Split → Normalize</span>',
+      'Dedup <em>before</em> split. Fit scaler on training data only.'
+    ]},
+    {h:'Data Leakage — 3 Causes', items:[
+      '1) Target = function of a feature. 2) Feature hides target. 3) Feature from the future.',
+      'CV does NOT catch feature leakage — only train/test contamination.'
+    ]},
+    {h:'10 Data Quality Dimensions', items:[
+      'Accuracy, Completeness, Consistency, Timeliness, Validity, Uniqueness, Integrity, Lineage, Reliability, Accessibility.',
+      '<strong>Accuracy ≠ Validity</strong>: "2025-02-30" is valid format, inaccurate date.'
+    ]},
+    {h:'Bias — Know 5 By Name', items:[
+      'Prejudice/Stereotype, Selection (3 subtypes), Reporting, Automation, Confirmation.',
+      'Removing protected attributes does NOT remove bias — proxies leak it back.'
+    ]},
+    {h:'CT/CD vs CI/CD', items:[
+      'DataOps → ModelOps → DevOps = MLOps.',
+      '<strong>CT/CD ≠ CI/CD</strong> — Continuous Training + Continuous Deployment. Explicitly tested.'
+    ]},
+    {h:'Model Serialization', items:[
+      '<strong>ONNX</strong> = cross-framework standard — the answer for "interoperability."',
+      'Pickle = Python-only + security risk.'
+    ]}
+  ]
+},
+{
+  id:'crosscut', kind:'crosscut', tabName:'Repeats', icon:'🔁',
+  title:'Concepts That Repeat Across Sessions',
+  desc:'Same idea, different framing in different sessions — know which one an exam question is likely drawing from.',
+  rows:[
+    ['ETL vs ELT','S1, S2, S4, S5','S2=conceptual; S4/S5=tooling per layer'],
+    ['Data/Concept Drift','S2, S6, S7, S8','S7=fraud case study; S8=PSI/KL formulas'],
+    ['Lambda vs Kappa','S3, S4','S4 frames as solved-by Beam/Flink unification'],
+    ['Star vs Snowflake','S3, S5','S5 ties it to the dbt transform step'],
+    ['CDC','S4, S5, S7','S7=push/pull framing; S4=e-commerce exam scenario'],
+    ['Warehouse/Lake/Lakehouse','S2, S3, S4, S5','Nearly identical table each time — very safe to over-prepare'],
+    ['Feature Store','S5, S6, S8','S5=latency table; S8=why it exists (skew fix)'],
+    ['CT/CD vs CI/CD','S5, S6','S6 has the full PR → canary → promote workflow']
+  ]
+},
+{
+  id:'s1', kind:'session', tabName:'Data Representations', icon:'',
+  title:'S1 · Data Representations',
+  desc:'DIKW · Data Formats · 5 Data Models · Normalization · Storage Layouts · Serialization · OLTP/OLAP',
+  cards:[
+    {title:'DIKW Hierarchy', tags:[], body:`
+      <p>Data → Information → Knowledge → Wisdom. Each level is more refined/abstract than the one below; the body-temperature chain: <code>98.6°F readings</code> → <code>hourly temp trend</code> → <code>fever rule</code> → <code>"see a doctor"</code>.</p>
+      ${callout('def','Explicit vs Tacit Knowledge','Explicit is codified (manuals, formulas); tacit is hard to document (a DBA\'s query-tuning instinct). Organizations lose tacit knowledge when people leave.')}
+      ${callout('tip','Exam Angle','Show the <em>transformation</em> between levels, not just definitions — that\'s what gets marked.')}
+    `},
+    {title:'Data Formats — Structured / Semi / Unstructured', tags:[], body:`
+      ${T([
+        ['Structured','Fixed, schema-on-write','Excel, RDBMS','Easy analysis, accurate','Rigid, hard to change'],
+        ['Unstructured','None','Audio, video, images, text','Flexible','Hard to analyze'],
+        ['Semi-structured','Evolving','Emails, JSON, XML','Interoperable','Tricky validation']
+      ],['Type','Schema','Examples','Pros','Cons'])}
+    `},
+    {title:'5 Data Models', tags:['high'], body:`
+      ${T([
+        ['Relational','SQL','SQL','MySQL, PostgreSQL, Oracle'],
+        ['Hierarchical','Navigational','NoSQL','IBM IMS, Windows Registry'],
+        ['Graph','Cypher, Gremlin','NoSQL','Neo4j, Neptune'],
+        ['Document','JSONPath','NoSQL','MongoDB, CouchDB'],
+        ['Key-Value','By key only','NoSQL','Redis, DynamoDB']
+      ],['Model','Query Lang','SQL/NoSQL','Example DB'])}
+      ${callout('tip','ACID vs BASE','ACID (SQL) = Atomicity, Consistency, Isolation, Durability — banking/e-commerce. BASE (NoSQL) = Basically Available, Soft state, Eventual consistency — social media/web-scale.')}
+    `},
+    {title:'Normalization', tags:['trap'], body:`
+      <p>Fixes 3 anomalies in flat tables: <strong>Insertion</strong> (can\'t add subject without a student), <strong>Update</strong> (must fix every duplicate row), <strong>Deletion</strong> (deleting last student loses course info).</p>
+      ${T([
+        ['1NF','Atomic values, no repeating groups'],
+        ['2NF','1NF + every non-key attribute fully depends on whole PK'],
+        ['3NF','2NF + no transitive dependencies'],
+        ['BCNF','Every determinant is a candidate key']
+      ],['Form','Rule'])}
+    `},
+    {title:'Query Languages — Declarative vs Imperative', tags:[], body:`
+      <p><strong>Declarative</strong> (SQL — say WHAT) vs <strong>Imperative</strong> (loops — say HOW). The DB optimizer picks the execution plan in declarative queries.</p>
+    `},
+    {title:'Storage Layouts — Row vs Column', tags:['high'], body:`
+      <p><strong>Row-major</strong> (CSV, OLTP, fast writes, MS SQL Server) vs <strong>Column-major</strong> (Parquet, OLAP, fast reads, Redshift/Snowflake — ideal for ML feature columns).</p>
+    `},
+    {title:'Serialization Formats', tags:[], body:`
+      ${T([
+        ['JSON / CSV / XML','Text','Human-readable'],
+        ['Parquet / Avro / Protobuf / BSON / Pickle','Binary','Parquet=columnar; Avro=Kafka/Hadoop; Protobuf=gRPC/TensorFlow; Pickle=Python-only']
+      ],['Format','Type','Notes'])}
+    `},
+    {title:'OLTP vs OLAP', tags:['high'], body:`
+      ${T([
+        ['Purpose','Save transactions','Analytical insight'],
+        ['Storage','Row','Column'],
+        ['Model','RDBMS','Data Warehouse'],
+        ['Example','GPay transaction','GPay spend analysis']
+      ],['','OLTP','OLAP'])}
+      <p>OLAP ops: <strong>Roll-up</strong> (summarize up) · <strong>Drill-down</strong> (detail down) · <strong>Pivot</strong> (rotate axes) · <strong>Slice</strong> (one dimension) · <strong>Dice</strong> (multi-dimension).</p>
+    `}
+  ]
+},
+{
+  id:'s2', kind:'session', tabName:'DM Fundamentals', icon:'',
+  title:'S2 (CS-2) · Data Management Fundamentals',
+  desc:'Asset vs Liability · Sensitivity · Reliability · ETL/ELT · Data Platform · DM Roles',
+  cards:[
+    {title:'Data as Asset vs Liability', tags:['trap'], body:`
+      <p>Model error rate ↓ as data volume ↑ — but likelihood of data problems ↑ too. <strong>Optimal point = intersection</strong> ("sweet spot"). Beyond it: GIGO, storage cost, privacy risk outweigh accuracy gains.</p>
+      ${callout('trap','Common Misconception','"More data = always better" is FALSE beyond the optimal volume. Always qualify with "up to an optimal volume."')}
+      <p><strong>Collect → Store → Delete</strong> lifecycle. Recommended approach to sensitive data in the Store phase: <strong>Connection Removal</strong> — not access restriction, not pseudonymization (that\'s the exam trap).</p>
+    `},
+    {title:'Data Sensitivity of ML Pipelines', tags:['high'], body:`
+      <p>Normal pipelines care about volume + correctness. <strong>ML pipelines additionally care about distribution shift</strong> — this is the key differentiator tested.</p>
+    `},
+    {title:'Data Reliability — 5 Characteristics', tags:['trap'], body:`
+      <p>Durability, Consistency, Version Control, Performance, Availability.</p>
+      ${callout('trap','Why Integrity Isn\'t a 6th Item','Integrity is NOT a separate characteristic — it\'s the emergent result of the other 5 working together. Classic homework-turned-exam question.')}
+    `},
+    {title:'7-Component DM Framework', tags:[], body:`
+      <p class="mnemonic">G-A-M-Q-L-A-P: Governance, Architecture, Metadata, Quality, Lifecycle, Analytics, Privacy.</p>
+    `},
+    {title:'4 Phases of Data Lifecycle', tags:[], body:`
+      ${flow('Creation','Ingestion','Processing','Post-Processing')}
+      ${callout('def','Extraction vs Ingestion','Extraction = PULL (one-time, e.g. Kaggle download). Ingestion = ARRIVAL (continuous, via API/streaming). Ingestion is the end-to-end process; extraction is one part of it.')}
+    `},
+    {title:'DM Roles', tags:[], body:`
+      ${T([
+        ['Data Analyst','Excel, SQL, Tableau'],
+        ['Data Engineer','Spark, Kafka, Airflow, dbt'],
+        ['Data Scientist','Python, scikit-learn, TensorFlow'],
+        ['Data Architect','ERD tools, cloud architecture'],
+        ['DBA','MySQL/PostgreSQL/Oracle admin tools']
+      ],['Role','Tools'])}
+      ${callout('tip','Scenario-Answer Framework','Any "design a data system" question → structure as (1) Data Engineering → (2) Data Architecture → (3) Governance.')}
+    `}
+  ]
+},
+{
+  id:'s3', kind:'session', tabName:'Data Architectures', icon:'',
+  title:'S3 · Data Architectures for ML',
+  desc:'TOGAF/DAMA · Centralization · Star/Snowflake · Data Mesh/Fabric · Lambda/Kappa',
+  cards:[
+    {title:'Foundations — TOGAF, DAMA, Operational vs Technical', tags:[], body:`
+      <p><strong>Data Architecture</strong> = design via "flexible and reversible decisions." <strong>TOGAF</strong> = structure/sources of enterprise data. <strong>DAMA-DMBOK</strong> = identifying needs + blueprints + business alignment.</p>
+      <p><strong>Operational</strong> (what — governance, ownership) vs <strong>Technical</strong> (how — Kafka vs Kinesis tooling) aspects.</p>
+    `},
+    {title:'By Centralization', tags:[], body:`
+      ${T([
+        ['Centralized','Banking, healthcare (regulated)','Single point of failure'],
+        ['Decentralized','Insurance (diverse business lines)','Data silos'],
+        ['Hybrid','Telecom (Jio: central subscriber + federated network data)','Coordination complexity']
+      ],['Type','Best For','Risk'])}
+    `},
+    {title:'By Storage — Warehouse / Lake / Lakehouse / Mart', tags:['high'], body:`
+      ${T([
+        ['Schema','On-write','On-read','Both','On-write'],
+        ['ACID','Yes','No','Yes (Delta/Iceberg)','Yes'],
+        ['Scope','Enterprise','Enterprise','Enterprise','Single department']
+      ],['','Warehouse','Lake','Lakehouse','Mart'])}
+      <p>Lake failure modes: <strong>Data Swamp</strong> (disorganized), <strong>Dark Data</strong> (never used), <strong>WORN</strong> (Write Once Read Never).</p>
+    `},
+    {title:'Star vs Snowflake Schema', tags:['high'], body:`
+      ${flow('DIM: Date','FACT: Sales','DIM: Product')}
+      <p>Star = denormalized, faster (fewer joins), more storage. Snowflake = normalized, slower (more joins), less storage. Kimball recommends Star for most BI.</p>
+    `},
+    {title:'Data Mesh vs Data Fabric', tags:[], body:`
+      <p><strong>Mesh</strong> (Zhamak Dehghani) — 4 principles: Domain ownership, Data-as-Product, Self-serve infra, Federated governance.</p>
+      <p><strong>Fabric</strong> — unified virtual layer via CDC/APIs/virtualization; data stays in place.</p>
+    `},
+    {title:'Big Data — 5 V\'s', tags:[], body:`
+      <p>Volume, Velocity, Variety, Veracity, Value. Boeing 737 = 20TB engine data/hour, 300,000 sensor params.</p>
+    `},
+    {title:'Lambda vs Kappa', tags:['trap'], body:`
+      ${T([
+        ['Paths','Batch (cold) + Speed (hot)','Stream only (unified log)'],
+        ['Proposed by','—','Jay Kreps (LinkedIn)'],
+        ['Historical recompute','Batch layer reprocess','Replay the stream'],
+        ['Key challenge','2 codebases, reconciliation','Streaming complexity + cost at scale']
+      ],['','Lambda','Kappa'])}
+      ${callout('trap','Exam Trick','Cricket live broadcast = Kappa (stream-first). Highlights reel later = Lambda\'s batch element.')}
+    `}
+  ]
+},
+{
+  id:'s4', kind:'session', tabName:'Pipelines & MDS', icon:'',
+  title:'S4 · Data Pipelines & Modern Data Stack',
+  desc:'3 Flow Modes · MDS 7 Layers · Batch/Stream · CDC · DataOps Tooling',
+  cards:[
+    {title:'3 Modes of Data Flow', tags:[], body:`
+      ${T([
+        ['Through Databases','Backward compat (new code reads old data) vs Forward compat (old code reads new data) — both needed in rolling upgrades'],
+        ['Through Services','SOA (ESB, shared DB) vs Microservices (REST/gRPC, own DB). REST &gt; SOAP trend. RPC is "fundamentally flawed" — don\'t make remote calls look local'],
+        ['Message Passing','Async, sender doesn\'t wait. Kafka = durable replayable log, not just a queue']
+      ],['Mode','Key Point'])}
+    `},
+    {title:'Modern Data Stack — 7 Layers', tags:['high'], body:`
+      <ol>
+        <li>Ingestion — Fivetran, Kafka, Sqoop</li>
+        <li>Warehouse/Lake/Lakehouse — Snowflake, S3+Delta</li>
+        <li>Transformation — dbt, Airflow+Python</li>
+        <li>BI & Data Science — Looker, SageMaker</li>
+        <li>Data Catalog — Atlan, DataHub</li>
+        <li>Privacy Governance — Immuta, Ranger</li>
+        <li>Security & Compliance — GDPR, HIPAA, PCI-DSS</li>
+      </ol>
+    `},
+    {title:'Batch vs Stream vs CDC', tags:['high'], body:`
+      ${T([['Batch','Hours','High'],['Stream','Milliseconds','Moderate (drops possible)']],['','Latency','Reliability'])}
+      <p>CDC 4 methods: <strong>Triggers, Transaction Log</strong> (gold standard — Debezium reads binlog/WAL), <strong>Stored Procedures, Message Queues</strong>.</p>
+      ${callout('tip','Dataflow Model','Google/Apache Beam: batch = bounded stream. "Batch is just a special case of streaming" — Flink/Beam unify both.')}
+    `},
+    {title:'Tool Categories', tags:[], body:`
+      <p>Ingestion tools (Fivetran/Airbyte) → basic transforms only, rebuild on drift. Integration platforms (dbt/Airflow) → more complex, still break on drift. DataOps platforms (Prefect/Dagster) → built for change, self-healing.</p>
+    `}
+  ]
+},
+{
+  id:'s5', kind:'session', tabName:'Infra & DataOps', icon:'',
+  title:'S5 · Modern Data Infrastructure & DataOps',
+  desc:'Reverse ETL · Storage Types · HDFS · Redis · Orchestration · CT/CD · DoorDash Case Study',
+  cards:[
+    {title:'Reverse ETL', tags:[], body:`
+      <p>ETL = apps → warehouse (users: analysts). <strong>Reverse ETL</strong> = warehouse → apps like Salesforce/HubSpot (users: sales/marketing). Tools: Census, Hightouch. Key word: "activation," not backup/replication.</p>
+    `},
+    {title:'Storage Types — Block / Object / File', tags:[], body:`
+      ${T([
+        ['Block','Fixed-size blocks, no hierarchy','AWS EBS, SAN'],
+        ['Object','Key-value, immutable, metadata attached','AWS S3 (11 nines durability)'],
+        ['File','Hierarchical directories','NAS, AWS EFS']
+      ],['Type','Structure','Example'])}
+      <p>RAM (~50,000 MB/s) &gt; SSD (~3,500 MB/s) &gt; HDD (~120 MB/s). "People buy SSDs now, not more RAM."</p>
+    `},
+    {title:'HDFS', tags:['trap'], body:`
+      <p><strong>NameNode</strong> = metadata only (in RAM). <strong>DataNode</strong> = actual blocks, heartbeat every 3s. <strong>Secondary NameNode ≠ backup</strong> — merges edit log + FS image.</p>
+      <p>128MB block size (reduce seeks + NameNode RAM load). Replication factor 3 → survive ~33% node loss. <strong>Data locality</strong>: move compute to data, not vice versa.</p>
+      ${callout('trap','Is Hadoop Dead?','Partially true. MapReduce/Pig mostly legacy, but HDFS still underlies many Spark clusters (60% of cloud workloads use HDFS-compatible APIs).')}
+    `},
+    {title:'Caching — Redis vs Memcached', tags:[], body:`
+      ${T([['Data structures','Strings/ints only','Strings, lists, sets, hashes, sorted sets'],['Persistence','None','Optional (disk every ~2s)']],['','Memcached','Redis'])}
+      <p>Cache cycle: Check cache → HIT (return) / MISS (query DB → prime cache for next time).</p>
+    `},
+    {title:'Workflow Orchestration', tags:[], body:`
+      <p>DAG = Directed Acyclic Graph. Orchestrator = "project manager for data" — dependency mgmt, retries, alerting, backfill (cron has none of this).</p>
+      <p>General: Airflow, Luigi, AWS Glue. ML-specific: Kubeflow Pipelines.</p>
+    `},
+    {title:'DataOps — 4 Pillars', tags:['trap'], body:`
+      <ol>
+        <li>Automation / CI-CD</li>
+        <li>Version Control — code + <strong>data</strong> + <strong>schemas</strong> (DevOps only versions code)</li>
+        <li>Automated Testing — on <strong>values</strong>, not just logic (Great Expectations, dbt tests)</li>
+        <li>Monitoring — Freshness, Volume, Schema, Quality</li>
+      </ol>
+      ${callout('trap','CT/CD, Not CI/CD','It\'s not CI/CD — it\'s CT/CD: Continuous Training and Continuous Deployment. Professor said this explicitly. Will be on the exam.')}
+    `},
+    {title:'Data Security — 3 States', tags:[], body:`<p>At Rest (encryption) · In Transit (TLS) · In Use (RBAC).</p>`},
+    {title:'ML Infrastructure Stack (8 layers)', tags:[], body:`
+      <p>Bottom→top: Data Warehouse → Compute → Job Scheduler → Architecture → Versioning → Model Operations → Feature Engineering → Model Development. "Data scientist cares most about the top; infra need is highest at the bottom" (inverted triangles).</p>
+    `},
+    {title:'Case Study — DoorDash', tags:['high'], body:`
+      ${callout('def','DoorDash ML Platform','Feature Store (Redis) + Realtime Aggregator (Kafka) + Historical Aggregator (batch) + Feature Warehouse (Snowflake) + Model Training Pipeline (= their CT/CD system) + Prediction Service. Only the training pipeline can write to Model Store — least privilege in action.')}
+    `}
+  ]
+},
+{
+  id:'s6', kind:'session', tabName:'ML Lifecycle', icon:'',
+  title:'S6 · ML Lifecycle & Workflow',
+  desc:'3 Levels · Data Pipeline · Model Dev · Drift · Serialization · Serving Patterns',
+  cards:[
+    {title:'3 Levels of ML Software', tags:[], body:`
+      <p>Data Layer (acquire/clean/feature-engineer) → Model Layer (train/tune/evaluate) → Code Layer (containerize/deploy/CI-CD). Maps to DataOps + ModelOps + DevOps = MLOps.</p>
+      ${callout('tip','Lifecycle Is Cyclic','Not linear — feedback loops cross phases. 8–90 days to deploy a model is typical; lack of expertise is the #1 cited failure cause.')}
+    `},
+    {title:'Data Engineering Pipeline (4 Steps)', tags:['trap'], body:`
+      ${flow('Ingestion','Exploration & Validation','Wrangling','Splitting')}
+      ${callout('trap','Data Snooping Bias','Selecting a model using the test set. Set the test set aside at the start, never look at it until final eval.')}
+      <p>Split: <strong>80/10/10</strong> typical (train/val/test). <strong>Data leakage</strong> = test info leaks into training — remove duplicates before splitting.</p>
+    `},
+    {title:'ML Lifecycle Phases', tags:[], body:`
+      ${flow('Business Goal','Problem Framing','Data Processing','Model Dev','Deployment','Monitoring ⟲')}
+    `},
+    {title:'Preprocessing — 5 Operations', tags:[], body:`
+      <p>Clean → Partition → Scale → Unbias → Augment. <strong>Normalization</strong> = [0,1] range (neural nets, KNN). <strong>Standardization</strong> = mean 0, std 1 (outliers, linear models, PCA).</p>
+    `},
+    {title:'Model Development', tags:[], body:`
+      <p><strong>HPO</strong>: random search preferred over grid search. Data parallelism (split data across nodes) vs Model parallelism (split model itself — GPT-scale).</p>
+      ${T([
+        ['Classification','Accuracy, Precision, Recall, F1, AUC-ROC'],
+        ['Regression','RMSE, MAE, R²'],
+        ['Clustering','Silhouette, Inertia'],
+        ['Ranking','NDCG, MAP']
+      ],['Task','Metrics'])}
+    `},
+    {title:'Deployment', tags:[], body:`
+      <p>Containerization (Docker/Kubernetes) is the de-facto standard — stateless, lightweight, idempotent inference fits containers well. Serverless constraint: AWS Lambda 250MB unzipped limit (TensorFlow can exceed this).</p>
+      <p>4 failure patterns: <strong>Abstraction boundary erosion, Correction cascades, Pipeline jungles, Integration/reuse overhead</strong> (Pinterest: 3 models, same embeddings, 3x maintenance).</p>
+    `},
+    {title:'Drift & Monitoring', tags:[], body:`
+      <p>Data drift, Concept drift, Feature drift. 4 things monitored: <strong>data quality, model quality, bias drift, feature attribution drift</strong> (SHAP).</p>
+    `},
+    {title:'Serialization Formats', tags:['high'], body:`
+      <p><strong>ONNX</strong> = cross-framework standard (the answer for interoperability questions). PMML (XML, older). PFA (JSON, PMML successor). Vendor-specific: <code>.pkl</code> (sklearn), <code>.pb</code> (TensorFlow), <code>.pt</code> (PyTorch), <code>.h5</code> (Keras).</p>
+    `},
+    {title:'Workflow & Serving Patterns', tags:['trap'], body:`
+      ${T([
+        ['Forecast','Academic/Kaggle — no feedback loop, not production-grade'],
+        ['Web-Service','Most common in industry — offline train, real-time predict'],
+        ['Online/Incremental','Most dynamic — model retrains on the fly'],
+        ['AutoML','Minimal-expertise model selection — black-box trade-off']
+      ],['Pattern','Description'])}
+      ${T([
+        ['Model-as-a-Service','REST/gRPC API (Gemini, Copilot)'],
+        ['Model-as-Dependency','Bundled SDK/library (Core ML on iOS)'],
+        ['Precompute Serving','Nightly batch predictions stored in DB, fetched at request time'],
+        ['Federated Learning','Local on-device training, only weights shared centrally — privacy-preserving']
+      ],['Serving','Idea'])}
+      ${callout('trap','Federated ≠ Reinforcement Learning','Federated = distributed privacy-preserving training. RL = trial-and-error reward signals. Classic exam trap.')}
+    `}
+  ]
+},
+{
+  id:'s7', kind:'session', tabName:'CRISP-DM & Drift', icon:'',
+  title:'S7 · CRISP-DM, Drift & Data Ingestion',
+  desc:'CRISP-DM · Confusion Matrix · Model Registry · Drift · Pre-processing · Ingestion',
+  cards:[
+    {title:'CRISP-DM — 6 Stages', tags:['high'], body:`
+      ${flow('Business Understanding','Data Understanding','Data Prep','Modeling','Evaluation','Deployment ⟲')}
+      <p>Data Prep = 60–80% of project time, most time-consuming. Evaluation checks <em>business</em> criteria, not just technical metrics (Modeling assessment = technical fit only).</p>
+    `},
+    {title:'Problem Framing', tags:[], body:`
+      <p>4 questions: Goal? Data cost? Wrong-prediction cost? Quantitative metric? Type I (FP) vs Type II (FN) cost asymmetry drives metric choice.</p>
+      ${callout('trap','Accuracy Trap','99% accuracy on 99%-Class-A data is worthless — always check class balance before trusting accuracy.')}
+    `},
+    {title:'Confusion Matrix — Worked Example', tags:['high'], body:`
+      <p>10,000 patients, 100 sick (1%). 95% sensitivity, 90% specificity → Accuracy 90% looks great, but <strong>Precision = 8.8%</strong> (91% of positive predictions wrong). This is THE example to reproduce on the exam.</p>
+    `},
+    {title:'ML Data Pipeline — 5 Stages', tags:[], body:`
+      ${flow('Collect/Engineer','Feature Store','Train/Tune','Deploy','Monitor ⟲')}
+      <p>Drop feature pairs at ≥0.95 correlation. Online feature store &lt;5ms (Redis); Offline = minutes+ (S3/Parquet). 3 cardinal mistakes: no feature store, correlated features kept, no feedback loop.</p>
+    `},
+    {title:'Model Registry', tags:[], body:`
+      <p>Stores: artifact, metrics, hyperparams, training data ref, author/timestamp, version/stage. Stage flow: <strong>Staging → Production → Archived</strong>. Mistake: saving only weights, no metadata.</p>
+    `},
+    {title:'Drift Types (S7 Framing)', tags:[], body:`
+      ${T([
+        ['Data Drift','P(X)','KS-test, PSI, JS divergence'],
+        ['Concept Drift','P(Y|X)','Monitor prediction error over time'],
+        ['Label Drift','P(Y)','Monitor prediction distribution'],
+        ['Upstream Drift','Schema/pipeline','Schema validation, data contracts']
+      ],['Type','What Changes','Detection'])}
+      <p>4 feedback loop components: <strong>Alarm Manager, Lineage Tracker, Retraining Scheduler, Model Update Pipeline</strong>.</p>
+    `},
+    {title:'Pre-processing — Exact Order', tags:['trap'], body:`
+      <p class="mnemonic">Impute → Remove outliers → Remove duplicates → Conform formats → Split (stratified) → Normalize (fit on train only)</p>
+      ${callout('trap','Most Emphatic Warning','Deduplicate BEFORE splitting. A duplicate in both train+test = leakage, inflates eval metrics.')}
+      <p>Stratified split preserves class proportions — always use for imbalanced data.</p>
+    `},
+    {title:'Data Ingestion', tags:[], body:`
+      ${T([['First-party','Highest, full control'],['Second-party','Medium, negotiated'],['Third-party','Lowest, GDPR/CCPA risk']],['By Ownership','Trust'])}
+      <p><strong>Pull</strong> (you fetch, e.g. API polling) vs <strong>Push</strong> (source sends, e.g. webhooks/Kafka). CDC reads transaction logs (WAL/binlog) — catches deletes that simple incremental queries miss.</p>
+      ${callout('tip','Validate at the Loading Dock','Data contracts catch schema breaks immediately (1 hour) vs after training (3 days).')}
+    `}
+  ]
+},
+{
+  id:'s8', kind:'session', tabName:'Profiling & Validation', icon:'',
+  title:'S8 (CS8) · Data Profiling & Validation',
+  desc:'10 Quality Dims · Bias (12 types) · Leakage · PSI/KL · GX/Soda/Deequ',
+  cards:[
+    {title:'10 Core Data Quality Dimensions', tags:['high'], body:`
+      ${T([
+        ['Accuracy','Wrong decisions (matches real world)'],
+        ['Completeness','Unreliable analytics (all required values present)'],
+        ['Consistency','Audit failures (same across systems)'],
+        ['Timeliness','Missed opportunities (available when needed)'],
+        ['Validity','Process failures (conforms to format rules)'],
+        ['Uniqueness','Inflated metrics (no duplicates)'],
+        ['Integrity','Decision decay (healthy over time)'],
+        ['Lineage/Traceability','Compliance risk (origin + audit trail)'],
+        ['Reliability','Lost confidence (trustworthy + available)'],
+        ['Accessibility','Delayed decisions (findable, retrievable)']
+      ],['Dimension','Key Risk'])}
+      ${callout('trap','Accuracy ≠ Validity','"2025-02-30" is valid format (matches YYYY-MM-DD), but inaccurate (Feb has no 30th).')}
+      <p>Quality = ratio vs threshold. E.g. Completeness = non-null/total ≥ 98%.</p>
+    `},
+    {title:'ML-Specific Quality Extensions', tags:[], body:`
+      <p>Informative, Coverage, Real Inputs (match production distribution), Unbiased, <strong>No Feedback Loop</strong> (don\'t train on your own model\'s predictions), Consistent Labels, Big Enough.</p>
+    `},
+    {title:'Common Data Problems', tags:[], body:`
+      ${flow('Cost','Noise','Low Predictive Power','Outliers','Bias','Leakage','Outdated')}
+      <p>Small datasets: noise causes overfitting. Big data: noise averages out.</p>
+    `},
+    {title:'Bias — 12 Types (Know ~5 Well)', tags:['trap'], body:`
+      ${T([
+        ['Omitted Variable','Missing key feature'],
+        ['Prejudice/Stereotype','Amazon hiring tool penalized "women\'s" in resumes'],
+        ['Selection (3 subtypes)','Coverage / Non-response / Sampling bias'],
+        ['Reporting','Only extreme reviews get submitted'],
+        ['Automation','Trusting automated output over better human judgment'],
+        ['Confirmation','Discarding evidence against pre-existing belief']
+      ],['Type','Example'])}
+      ${callout('trap','Proxy Variables','Removing protected attributes (race/gender) does NOT remove bias — proxy variables (zip code, name) leak it back. "Fairness through unawareness" is insufficient.')}
+      <p>COMPAS case: FP rate for Black defendants ~2x white defendants (45% vs 24%) — illustrates the fairness impossibility theorem.</p>
+    `},
+    {title:'Data Leakage — 3 Causes', tags:['trap'], body:`
+      <ol>
+        <li><strong>Target = function of feature</strong> (Population × GDP/capita = GDP)</li>
+        <li><strong>Feature hides target</strong> ("Group" column encodes gender)</li>
+        <li><strong>Feature from the future</strong> (late-payment-reminders predicting default before loan exists) — hardest to catch</li>
+      </ol>
+      ${callout('trap','CV Doesn\'t Catch This','CV does NOT prevent feature leakage — only train/test contamination. Preprocessing before the CV split also leaks info.')}
+    `},
+    {title:'Drift Detection — PSI & KL Divergence', tags:['high'], body:`
+      <p><strong>PSI</strong> = Σ(Actual%−Expected%)×ln(Actual%/Expected%). &lt;0.1 stable · 0.1–0.25 investigate · ≥0.25 act.</p>
+      <p><strong>KL Divergence</strong> — asymmetric (KL(P‖Q) ≠ KL(Q‖P)), undefined at Q(x)=0. JS Divergence = symmetric fix, often preferred.</p>
+    `},
+    {title:'Validation Frameworks — GX / Soda / Deequ', tags:[], body:`
+      ${T([
+        ['Language','Python','Python+YAML','Scala/Spark'],
+        ['Best for','Custom validations','Quick analyst setup','Billion-row Spark scale']
+      ],['','Great Expectations','Soda Core','Deequ'])}
+    `},
+    {title:'Pre-Ingestion vs Pre-Training Validation', tags:[], body:`
+      ${T([['Presence, Range, Format, Data Type','Consistency, Business Rules, Statistical']],['Pre-Ingestion (4 checks)','Post-Ingestion (3 checks)'])}
+      ${callout('tip','Quality Gate Pattern','Validate every batch → Pass → training / Fail → quarantine + alert. "Shift-left" = catch errors at ingestion, not after training.')}
+    `}
+  ]
+}
+];
+
+const GLOSSARY = [
+  ['DIKW','Data-Information-Knowledge-Wisdom'],
+  ['TAVI','Text-Audio-Video-Image (unstructured modalities)'],
+  ['GIGO','Garbage In, Garbage Out'],
+  ['ACID / BASE','Strong consistency (SQL) / Eventually consistent, highly available (NoSQL)'],
+  ['OLTP / OLAP','Transactional row-store / Analytical column-store'],
+  ['ETL / ELT','Transform-before-load (warehouse) / Load-then-transform (lake)'],
+  ['Reverse ETL','Pushing modeled warehouse data back into operational tools (Salesforce, HubSpot)'],
+  ['CDC','Change Data Capture — stream DB row changes downstream'],
+  ['Kafka','Apache Kafka — distributed streaming platform; durable, replayable log backbone of Kappa architecture'],
+  ['WORN','Write Once Read Never (dead lake data)'],
+  ['Data Mesh / Fabric','Domain-owned data products / Unified virtual access layer'],
+  ['Lambda / Kappa','Batch+Stream dual path / Stream-only unified log'],
+  ['HDFS','Hadoop Distributed File System — NameNode (metadata) + DataNode (blocks)'],
+  ['DAG','Directed Acyclic Graph — pipeline task dependency structure'],
+  ['CRISP-DM','Cross Industry Standard Process for Data Mining (6 stages)'],
+  ['PSI / KL Divergence','Population Stability Index / Kullback-Leibler — drift detection metrics'],
+  ['CT/CD','Continuous Training / Continuous Deployment (ML-specific CI/CD)'],
+  ['ONNX','Open Neural Network eXchange — cross-framework model format'],
+  ['MLOps','DataOps + ModelOps + DevOps combined'],
+  ['PII','Personally Identifiable Information'],
+  ['RBAC','Role-Based Access Control'],
+  ['SHAP','SHapley Additive exPlanations — feature attribution / explainability'],
+  ['GX / Soda / Deequ','Data validation frameworks (Python / YAML / Spark)'],
+  ['Feature Store','Online (low-latency, Redis) + Offline (batch, S3/Parquet) store for ML features'],
+  ['Star / Snowflake Schema','Denormalized fact+dim (fast, more storage) / Normalized sub-dims (slow, less storage)'],
+  ['Data Drift / Concept Drift','Input distribution P(X) changes / Input-output relationship P(Y|X) changes'],
+  ['Training-Serving Skew','Feature computed differently at train time vs serve time']
+];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let progress = {};
+try { progress = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch(e){ progress = {}; }
+let activeId = 'cheatsheet';
+
+function saveProgress(){
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); } catch(e){}
+}
+function cardKey(sessionId, cardIdx){ return sessionId + ':' + cardIdx; }
+
+/* ============================================================
+   PROGRESS CALCULATIONS
+   ============================================================ */
+function sessionProgress(s){
+  if(s.kind !== 'session') return null;
+  const total = s.cards.length;
+  let done = 0;
+  s.cards.forEach((c,i)=>{ if(progress[cardKey(s.id,i)]) done++; });
+  return {done, total, pct: total ? Math.round(done/total*100) : 0};
+}
+function globalProgress(){
+  let done=0, total=0;
+  SESSIONS.filter(s=>s.kind==='session').forEach(s=>{
+    total += s.cards.length;
+    s.cards.forEach((c,i)=>{ if(progress[cardKey(s.id,i)]) done++; });
+  });
+  return {done, total, pct: total ? Math.round(done/total*100) : 0};
+}
+
+/* ============================================================
+   RENDER: TAB RAIL
+   ============================================================ */
+function ringSvg(pct, size, strokeW, idSuffix){
+  const r = (size - strokeW) / 2;
+  const circumference = 2 * Math.PI * r;
+  const offset = circumference - (pct/100) * circumference;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#262c3d" stroke-width="${strokeW}"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#2dd4a8" stroke-width="${strokeW}"
+      stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" stroke-linecap="round"
+      style="transition:stroke-dashoffset .3s ease"/>
+  </svg>`;
+}
+
+function renderTabRail(){
+  const rail = document.getElementById('tabRail');
+  rail.innerHTML = '';
+
+  SESSIONS.forEach((s, idx) => {
+    if(s.kind === 'session' && idx === 2){
+      const div = document.createElement('div');
+      div.className = 'tab-divider';
+      rail.appendChild(div);
+    }
+    const tab = document.createElement('div');
+    tab.className = 'tab' + (s.id === activeId ? ' active' : '');
+    tab.dataset.id = s.id;
+
+    let ringHtml = '';
+    let label = s.tabName;
+    if(s.kind === 'session'){
+      const p = sessionProgress(s);
+      ringHtml = `<div class="tab-ring">${ringSvg(p.pct, 22, 3, s.id)}</div>`;
+      label = s.id.toUpperCase() + ' · ' + s.tabName;
+    } else {
+      ringHtml = `<span style="font-size:14px">${s.icon}</span>`;
+    }
+
+    tab.innerHTML = `${ringHtml}<span class="tab-name">${label}</span>`;
+    tab.setAttribute('tabindex', '0');
+    tab.setAttribute('role', 'tab');
+    tab.setAttribute('aria-selected', s.id === activeId ? 'true' : 'false');
+    tab.addEventListener('click', () => selectSession(s.id));
+    tab.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); selectSession(s.id); }
+    });
+    rail.appendChild(tab);
+  });
+
+  // glossary tab (synthetic, not in SESSIONS array)
+  const gdiv = document.createElement('div');
+  gdiv.className = 'tab-divider';
+  rail.appendChild(gdiv);
+  const gtab = document.createElement('div');
+  gtab.className = 'tab' + (activeId === 'glossary' ? ' active' : '');
+  gtab.dataset.id = 'glossary';
+  gtab.innerHTML = `<span style="font-size:14px">📖</span><span class="tab-name">Glossary</span>`;
+  gtab.setAttribute('tabindex', '0');
+  gtab.setAttribute('role', 'tab');
+  gtab.addEventListener('click', () => selectSession('glossary'));
+  gtab.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); selectSession('glossary'); }
+  });
+  rail.appendChild(gtab);
+
+  requestAnimationFrame(() => {
+    const activeTab = rail.querySelector('.tab.active');
+    if(activeTab) activeTab.scrollIntoView({block:'nearest', inline:'nearest'});
+  });
+}
+
+function renderGlobalProgress(){
+  const g = globalProgress();
+  document.getElementById('globalPct').textContent = g.pct + '%';
+  const circumference = 2 * Math.PI * 14;
+  const offset = circumference - (g.pct/100) * circumference;
+  document.getElementById('globalRingFg').style.strokeDasharray = circumference;
+  document.getElementById('globalRingFg').style.strokeDashoffset = offset;
+}
+
+/* ============================================================
+   UNIFIED ITEM LIST (sessions + glossary) — single source of
+   truth shared by the desktop rail and the mobile sheet/trigger
+   ============================================================ */
+function getAllItems(){
+  const items = SESSIONS.map(s => ({
+    id: s.id, kind: s.kind, icon: s.icon || '',
+    shortLabel: s.kind === 'session' ? s.id.toUpperCase() : s.tabName,
+    fullLabel: s.kind === 'session' ? (s.id.toUpperCase() + ' · ' + s.tabName) : s.tabName,
+    progress: s.kind === 'session' ? sessionProgress(s) : null
+  }));
+  items.push({id:'glossary', kind:'glossary', icon:'📖', shortLabel:'Glossary', fullLabel:'Glossary', progress:null});
+  return items;
+}
+
+/* ============================================================
+   MOBILE: compact trigger + bottom sheet picker
+   ============================================================ */
+function renderMobileSwitcher(){
+  const items = getAllItems();
+  const current = items.find(i => i.id === activeId) || items[0];
+
+  const ringEl = document.getElementById('msqRing');
+  const labelEl = document.getElementById('msqLabel');
+
+  if(current.kind === 'session'){
+    ringEl.innerHTML = ringSvg(current.progress.pct, 24, 3);
+    labelEl.innerHTML = `${current.fullLabel}<small>${current.progress.done}/${current.progress.total} mastered</small>`;
+  } else {
+    ringEl.innerHTML = `<span style="font-size:16px">${current.icon}</span>`;
+    labelEl.innerHTML = `${current.fullLabel}<small>Tap to switch session</small>`;
+  }
+
+  const sheetList = document.getElementById('sheetList');
+  sheetList.innerHTML = '';
+  items.forEach((item, idx) => {
+    if(item.kind === 'session' && idx === 2){
+      const div = document.createElement('div');
+      div.className = 'sheet-divider';
+      sheetList.appendChild(div);
+    }
+    const row = document.createElement('div');
+    row.className = 'sheet-item' + (item.id === activeId ? ' active' : '');
+    row.setAttribute('role','button');
+    row.setAttribute('tabindex','0');
+
+    let ringHtml;
+    if(item.kind === 'session'){
+      ringHtml = `<span class="si-ring">${ringSvg(item.progress.pct, 26, 3)}</span>`;
+    } else {
+      ringHtml = `<span class="si-icon">${item.icon}</span>`;
+    }
+    const meta = item.kind === 'session' ? `${item.progress.done}/${item.progress.total} mastered` : 'Reference';
+
+    row.innerHTML = `${ringHtml}<span class="si-text"><span class="si-name">${item.fullLabel}</span><span class="si-meta">${meta}</span></span>`;
+    const activate = () => { selectSession(item.id); closeSheet(); };
+    row.addEventListener('click', activate);
+    row.addEventListener('keydown', (e) => { if(e.key==='Enter'||e.key===' '){ e.preventDefault(); activate(); } });
+    sheetList.appendChild(row);
+  });
+}
+
+function openSheet(){
+  document.getElementById('sheetBackdrop').classList.add('show');
+  document.getElementById('sessionSheet').classList.add('show');
+}
+function closeSheet(){
+  document.getElementById('sheetBackdrop').classList.remove('show');
+  document.getElementById('sessionSheet').classList.remove('show');
+}
+
+/* ============================================================
+   DESKTOP: keep the active item visible in the vertical sidebar.
+   ============================================================ */
+function updateRailFades(){
+  const rail = document.getElementById('tabRail');
+  if(!rail || window.innerWidth <= 900) return;
+  const activeTab = rail.querySelector('.tab.active');
+  if(activeTab) activeTab.scrollIntoView({block:'nearest', inline:'nearest'});
+}
+
+/* ============================================================
+   RENDER: CONTENT PANELS
+   ============================================================ */
+function selectSession(id){
+  activeId = id;
+  renderTabRail();
+  renderMobileSwitcher();
+  renderContent();
+  const mainArea = document.getElementById('mainArea');
+  if(typeof mainArea.scrollTo === 'function'){
+    mainArea.scrollTo({top:0, behavior:'instant'});
+  } else {
+    mainArea.scrollTop = 0;
+  }
+  updateRailFades();
+}
+
+function renderContent(){
+  const root = document.getElementById('contentInner');
+
+  if(activeId === 'glossary'){
+    root.innerHTML = renderGlossaryView();
+    attachGlossarySearch();
+    return;
+  }
+
+  const s = SESSIONS.find(x => x.id === activeId);
+  if(!s) { root.innerHTML = '<div class="empty-state"><div class="big">🤷</div>Session not found.</div>'; return; }
+
+  if(s.kind === 'cheatsheet'){
+    root.innerHTML = renderCheatsheetView(s);
+    return;
+  }
+  if(s.kind === 'crosscut'){
+    root.innerHTML = renderCrosscutView(s);
+    return;
+  }
+  // kind === 'session'
+  root.innerHTML = renderSessionView(s);
+  attachAccordionHandlers(s);
+}
+
+function renderCheatsheetView(s){
+  let html = `
+    <div class="session-head">
+      <div class="eyebrow">${s.icon} Quick Reference</div>
+      <h1>${s.title}</h1>
+      <p class="desc">${s.desc}</p>
+    </div>
+    <div class="cheat-grid">`;
+  s.groups.forEach(g => {
+    html += `<div class="cheat-card"><h4>${g.h}</h4><ul>${g.items.map(i=>`<li>${i}</li>`).join('')}</ul></div>`;
+  });
+  html += `</div>`;
+  return html;
+}
+
+function renderCrosscutView(s){
+  let html = `
+    <div class="session-head">
+      <div class="eyebrow">${s.icon} Cross-Reference</div>
+      <h1>${s.title}</h1>
+      <p class="desc">${s.desc}</p>
+    </div>
+    <table class="mini" style="font-size:13px">
+      <tr><th>Concept</th><th>Appears In</th><th>What Changes</th></tr>
+      ${s.rows.map(r => `<tr><td><strong>${r[0]}</strong></td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}
+    </table>`;
+  return html;
+}
+
+function renderSessionView(s){
+  const p = sessionProgress(s);
+  let html = `
+    <div class="session-head">
+      <div class="eyebrow">${s.id.toUpperCase()} · ${p.done}/${p.total} mastered</div>
+      <h1>${s.title}</h1>
+      <p class="desc">${s.desc}</p>
+      <div class="session-tools">
+        <button class="btn-sm" id="expandAllBtn">⤢ Expand all</button>
+        <button class="btn-sm" id="collapseAllBtn">⤡ Collapse all</button>
+        <button class="btn-sm" id="checkAllBtn">✓ Mark all done</button>
+        <button class="btn-sm" id="resetBtn">↺ Reset progress</button>
+      </div>
+    </div>
+    <div class="card-list" id="cardList">`;
+
+  s.cards.forEach((c, i) => {
+    const key = cardKey(s.id, i);
+    const isDone = !!progress[key];
+    const tagsHtml = (c.tags||[]).map(t => `<span class="mini-tag ${t}">${t === 'trap' ? 'Trap' : 'High-Yield'}</span>`).join('');
+    html += `
+      <div class="card ${isDone ? 'done' : ''}" data-idx="${i}">
+        <div class="card-head">
+          <div class="checkbox ${isDone ? 'checked' : ''}" data-action="toggle-check" data-idx="${i}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#04140f" stroke-width="3"><path d="M4 12l5 5L20 6"/></svg>
+          </div>
+          <div class="card-title" data-action="toggle-open" data-idx="${i}">${c.title}</div>
+          <div class="card-tags">${tagsHtml}</div>
+          <div class="chevron" data-action="toggle-open" data-idx="${i}">▸</div>
+        </div>
+        <div class="card-body" data-idx="${i}">
+          <div class="card-body-inner">${c.body}</div>
+        </div>
+      </div>`;
+  });
+
+  html += `</div>`;
+  return html;
+}
+
+function attachAccordionHandlers(s){
+  const list = document.getElementById('cardList');
+
+  list.querySelectorAll('[data-action="toggle-open"]').forEach(el => {
+    el.setAttribute('tabindex', '0');
+    el.setAttribute('role', 'button');
+    const openHandler = () => {
+      const idx = el.dataset.idx;
+      const card = list.querySelector(`.card[data-idx="${idx}"]`);
+      const body = card.querySelector('.card-body');
+      const isOpen = card.classList.contains('open');
+      if(isOpen){
+        body.style.maxHeight = '0px';
+        card.classList.remove('open');
+      } else {
+        card.classList.add('open');
+        body.style.maxHeight = body.scrollHeight + 'px';
+      }
+    };
+    el.addEventListener('click', openHandler);
+    el.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openHandler(); }
+    });
+  });
+
+  list.querySelectorAll('[data-action="toggle-check"]').forEach(el => {
+    el.setAttribute('tabindex', '0');
+    el.setAttribute('role', 'checkbox');
+    const checkHandler = (e) => {
+      e.stopPropagation();
+      const idx = el.dataset.idx;
+      const key = cardKey(s.id, idx);
+      progress[key] = !progress[key];
+      saveProgress();
+      el.classList.toggle('checked');
+      el.setAttribute('aria-checked', progress[key] ? 'true' : 'false');
+      const card = list.querySelector(`.card[data-idx="${idx}"]`);
+      card.classList.toggle('done', !!progress[key]);
+      renderTabRail();
+      renderMobileSwitcher();
+      renderGlobalProgress();
+      showToast(progress[key] ? 'Marked as mastered' : 'Unmarked');
+    };
+    el.addEventListener('click', checkHandler);
+    el.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' || e.key === ' '){ checkHandler(e); }
+    });
+  });
+
+  document.getElementById('expandAllBtn').addEventListener('click', () => {
+    list.querySelectorAll('.card').forEach(card => {
+      card.classList.add('open');
+      const body = card.querySelector('.card-body');
+      body.style.maxHeight = body.scrollHeight + 'px';
+    });
+  });
+  document.getElementById('collapseAllBtn').addEventListener('click', () => {
+    list.querySelectorAll('.card').forEach(card => {
+      card.classList.remove('open');
+      card.querySelector('.card-body').style.maxHeight = '0px';
+    });
+  });
+  document.getElementById('checkAllBtn').addEventListener('click', () => {
+    s.cards.forEach((c,i) => progress[cardKey(s.id,i)] = true);
+    saveProgress();
+    renderContent();
+    renderTabRail();
+    renderMobileSwitcher();
+    renderGlobalProgress();
+    showToast('Session marked complete');
+  });
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    s.cards.forEach((c,i) => delete progress[cardKey(s.id,i)]);
+    saveProgress();
+    renderContent();
+    renderTabRail();
+    renderMobileSwitcher();
+    renderGlobalProgress();
+    showToast('Progress reset for this session');
+  });
+}
+
+/* ============================================================
+   GLOSSARY VIEW
+   ============================================================ */
+function renderGlossaryView(){
+  let html = `
+    <div class="session-head">
+      <div class="eyebrow">📖 Reference</div>
+      <h1>Master Glossary</h1>
+      <p class="desc">High-frequency terms across all 8 sessions. Type to filter.</p>
+    </div>
+    <div class="glossary-search"><input type="text" id="glossFilter" placeholder="Filter terms…" autocomplete="off"></div>
+    <div class="gloss-grid" id="glossGrid">
+      ${GLOSSARY.map(([term,def]) => `
+        <div class="gloss-item" data-term="${term.toLowerCase()}" data-def="${def.toLowerCase()}">
+          <div class="gloss-term">${term}</div>
+          <div class="gloss-def">${def}</div>
+        </div>`).join('')}
+    </div>`;
+  return html;
+}
+function attachGlossarySearch(){
+  const input = document.getElementById('glossFilter');
+  input.addEventListener('input', () => {
+    const q = input.value.toLowerCase().trim();
+    document.querySelectorAll('#glossGrid .gloss-item').forEach(item => {
+      const match = !q || item.dataset.term.includes(q) || item.dataset.def.includes(q);
+      item.classList.toggle('hidden', !match);
+    });
+  });
+}
+
+/* ============================================================
+   GLOBAL SEARCH
+   ============================================================ */
+function buildSearchIndex(){
+  const index = [];
+  SESSIONS.filter(s=>s.kind==='session').forEach(s => {
+    s.cards.forEach((c,i) => {
+      const plain = c.body.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+      index.push({sessionId:s.id, sessionName:s.tabName, cardIdx:i, title:c.title, snippet:plain.slice(0,140)});
+    });
+  });
+  return index;
+}
+const SEARCH_INDEX = buildSearchIndex();
+
+function highlightMatch(text, q){
+  if(!q) return text;
+  const re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'ig');
+  return text.replace(re, '<mark>$1</mark>');
+}
+
+function attachGlobalSearch(){
+  const input = document.getElementById('searchInput');
+  const results = document.getElementById('searchResults');
+
+  function runSearch(){
+    const q = input.value.trim().toLowerCase();
+    if(!q){ results.classList.remove('show'); results.innerHTML=''; return; }
+    const matches = SEARCH_INDEX.filter(item =>
+      item.title.toLowerCase().includes(q) || item.snippet.toLowerCase().includes(q)
+    ).slice(0, 8);
+
+    if(matches.length === 0){
+      results.innerHTML = `<div class="sr-empty">No matches for "${q}"</div>`;
+    } else {
+      results.innerHTML = matches.map(m => `
+        <div class="sr-item" data-session="${m.sessionId}" data-idx="${m.cardIdx}">
+          <div class="sr-session">${m.sessionId.toUpperCase()} · ${m.sessionName}</div>
+          <div class="sr-title">${highlightMatch(m.title, q)}</div>
+          <div class="sr-snippet">${highlightMatch(m.snippet, q)}…</div>
+        </div>`).join('');
+    }
+    results.classList.add('show');
+  }
+
+  input.addEventListener('input', runSearch);
+  input.addEventListener('focus', () => { if(input.value.trim()) runSearch(); });
+
+  results.addEventListener('click', (e) => {
+    const item = e.target.closest('.sr-item');
+    if(!item) return;
+    const sessionId = item.dataset.session;
+    const idx = parseInt(item.dataset.idx, 10);
+    selectSession(sessionId);
+    results.classList.remove('show');
+    input.value = '';
+    // open + scroll to the matched card after render
+    setTimeout(() => {
+      const card = document.querySelector(`.card[data-idx="${idx}"]`);
+      if(card){
+        card.classList.add('open');
+        const body = card.querySelector('.card-body');
+        body.style.maxHeight = body.scrollHeight + 'px';
+        card.scrollIntoView({behavior:'smooth', block:'center'});
+        card.style.borderColor = 'var(--accent)';
+        setTimeout(()=> card.style.borderColor='', 1500);
+      }
+    }, 60);
+  });
+
+  document.addEventListener('click', (e) => {
+    if(!e.target.closest('.search-wrap')) results.classList.remove('show');
+  });
+
+  // keyboard shortcut: "/" focuses search
+  document.addEventListener('keydown', (e) => {
+    if(e.key === '/' && document.activeElement !== input){
+      e.preventDefault();
+      input.focus();
+    }
+    if(e.key === 'Escape'){
+      input.blur();
+      results.classList.remove('show');
+      closeSheet();
+    }
+  });
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+let toastTimer = null;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function init(){
+  renderTabRail();
+  renderMobileSwitcher();
+  renderGlobalProgress();
+  renderContent();
+  attachGlobalSearch();
+
+  // mobile switcher trigger opens the sheet
+  document.getElementById('mobileSwitcherTrigger').addEventListener('click', openSheet);
+  document.getElementById('sheetBackdrop').addEventListener('click', closeSheet);
+
+  // desktop rail scroll-fade affordance
+  const rail = document.getElementById('tabRail');
+  rail.addEventListener('scroll', updateRailFades);
+  window.addEventListener('resize', updateRailFades);
+  updateRailFades();
+}
+init();
+</script>
+</body>
+</html>
