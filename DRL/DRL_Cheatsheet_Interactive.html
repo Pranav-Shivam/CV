@@ -1,0 +1,2275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deep RL — Exam Cheat Sheet</title>
+<style>
+:root{
+  --bg:#0f1115;
+  --panel:#161922;
+  --panel-2:#1b1f2a;
+  --border:#272c38;
+  --text:#e7e9ee;
+  --text-dim:#9aa1b2;
+  --text-faint:#6b7280;
+  --accent:#5ee0c0;
+  --accent-dim:#2d6b5e;
+  --accent-soft:rgba(94,224,192,0.1);
+  --ch1:#7aa2ff;
+  --ch2:#ffb454;
+  --ch3:#ff7a9e;
+  --ch4:#5ee0c0;
+  --warn:#ff6b6b;
+  --warn-bg:rgba(255,107,107,0.08);
+  --mono: "SF Mono", "JetBrains Mono", Consolas, monospace;
+  --serif: "Source Serif 4", Georgia, serif;
+  --sans: "Inter", -apple-system, system-ui, sans-serif;
+}
+
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--sans);
+  font-size:15px;
+  line-height:1.6;
+}
+
+/* ===== Layout shell ===== */
+.shell{
+  display:grid;
+  grid-template-columns: 290px 1fr;
+  min-height:100vh;
+}
+
+/* ===== Sidebar ===== */
+.sidebar{
+  position:sticky;
+  top:0;
+  height:100vh;
+  overflow-y:auto;
+  background:var(--panel);
+  border-right:1px solid var(--border);
+  padding:20px 16px 40px;
+}
+.sidebar::-webkit-scrollbar{width:6px;}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+.brand{
+  display:flex;
+  align-items:baseline;
+  gap:8px;
+  margin-bottom:4px;
+  padding:0 4px;
+}
+.brand .mark{
+  font-family:var(--serif);
+  font-weight:700;
+  font-size:20px;
+  color:var(--accent);
+}
+.brand .sub{
+  font-size:11px;
+  color:var(--text-faint);
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+}
+.course-tag{
+  font-size:11px;
+  color:var(--text-faint);
+  padding:0 4px;
+  margin-bottom:18px;
+}
+
+.search-wrap{
+  position:relative;
+  margin-bottom:8px;
+}
+#search{
+  width:100%;
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:8px;
+  color:var(--text);
+  font-size:13px;
+  padding:9px 32px 9px 32px;
+  font-family:var(--sans);
+}
+#search:focus{outline:none;border-color:var(--accent-dim);box-shadow:0 0 0 3px var(--accent-soft);}
+#search::placeholder{color:var(--text-faint);}
+.search-wrap::before{
+  content:"⌕";
+  position:absolute;
+  left:11px; top:50%;
+  transform:translateY(-50%);
+  color:var(--text-faint);
+  font-size:14px;
+  pointer-events:none;
+}
+#search-clear{
+  position:absolute;
+  right:6px; top:50%;
+  transform:translateY(-50%);
+  background:none;
+  border:none;
+  color:var(--text-faint);
+  font-size:15px;
+  line-height:1;
+  cursor:pointer;
+  padding:4px 6px;
+  border-radius:5px;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .12s, color .12s, background .12s;
+}
+#search-clear.show{opacity:1;pointer-events:auto;}
+#search-clear:hover{color:var(--text);background:var(--panel-2);}
+#search-clear:focus-visible{outline:2px solid var(--accent);}
+
+#search-count{
+  font-size:11px;
+  color:var(--text-faint);
+  margin:0 4px 14px;
+  min-height:14px;
+}
+
+.toc-toolbar{
+  display:flex;
+  gap:6px;
+  margin-bottom:6px;
+}
+.toc-toolbar button{
+  flex:1;
+  background:var(--panel-2);
+  border:1px solid var(--border);
+  color:var(--text-dim);
+  font-size:11px;
+  font-family:var(--sans);
+  padding:6px 4px;
+  border-radius:6px;
+  cursor:pointer;
+  transition:background .12s, color .12s, border-color .12s;
+}
+.toc-toolbar button:hover{background:var(--border);color:var(--text);}
+.toc-toolbar button:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+
+nav.toc{display:flex;flex-direction:column;gap:2px;}
+.toc-chapter{margin-top:14px;}
+.toc-chapter:first-child{margin-top:0;}
+.toc-chapter-label{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  color:var(--text-faint);
+  padding:4px 8px;
+}
+.dot{width:7px;height:7px;border-radius:50%;flex:none;}
+.dot.c1{background:var(--ch1);}
+.dot.c2{background:var(--ch2);}
+.dot.c3{background:var(--ch3);}
+.dot.c4{background:var(--ch4);}
+
+.toc-link{
+  display:block;
+  padding:6px 10px 6px 22px;
+  border-radius:6px;
+  color:var(--text-dim);
+  text-decoration:none;
+  font-size:13px;
+  border-left:2px solid transparent;
+  transition:background .12s, color .12s, border-color .12s;
+  position:relative;
+}
+.toc-link:hover{background:var(--panel-2);color:var(--text);}
+.toc-link:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:1px;
+}
+.toc-link.active{
+  background:var(--accent-soft);
+  color:var(--accent);
+  border-left-color:var(--accent);
+  font-weight:600;
+}
+
+.sidebar-foot{
+  margin-top:22px;
+  padding:12px 10px;
+  border-top:1px solid var(--border);
+  font-size:11.5px;
+  color:var(--text-faint);
+  line-height:1.5;
+}
+.sidebar-foot kbd{
+  background:var(--panel-2);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:1px 5px;
+  font-family:var(--mono);
+  font-size:10.5px;
+}
+
+/* ===== Main content ===== */
+main{
+  padding:36px 48px 120px;
+  max-width:920px;
+}
+.page-head{
+  margin-bottom:36px;
+}
+.page-head h1{
+  font-family:var(--serif);
+  font-size:36px;
+  font-weight:700;
+  margin:0 0 8px;
+  letter-spacing:-0.01em;
+}
+.page-head p{
+  color:var(--text-dim);
+  font-size:14.5px;
+  margin:0;
+  max-width:640px;
+}
+.chips{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;}
+.chip{
+  font-size:11.5px;
+  padding:5px 11px;
+  border-radius:999px;
+  border:1px solid var(--border);
+  color:var(--text-dim);
+  display:flex;align-items:center;gap:6px;
+}
+
+.map-box{
+  margin:28px 0 40px;
+  padding:20px 22px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+}
+.map-box h3{margin:0 0 14px;font-size:13px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.06em;font-weight:700;}
+.map-flow{
+  font-family:var(--mono);
+  font-size:12.5px;
+  color:var(--text-dim);
+  white-space:pre;
+  overflow-x:auto;
+  line-height:1.7;
+}
+.map-flow .lbl{font-weight:700;}
+.map-flow .l1{color:var(--ch1);}
+.map-flow .l2{color:var(--ch2);}
+.map-flow .l3{color:var(--ch3);}
+.map-flow .l4{color:var(--ch4);}
+.map-test{
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px solid var(--border);
+  font-size:13px;
+  color:var(--text-dim);
+}
+.map-test b{color:var(--accent);}
+
+/* ===== Chapter sections ===== */
+.chapter{
+  margin-bottom:8px;
+  padding-top:24px;
+  border-top:1px solid var(--border);
+}
+.chapter:first-of-type{border-top:none;}
+.chapter-head{
+  display:flex;
+  align-items:baseline;
+  gap:14px;
+  margin-bottom:6px;
+}
+.chapter-head .num{
+  font-family:var(--serif);
+  font-size:13px;
+  font-weight:700;
+  color:var(--text-faint);
+}
+.chapter-head h2{
+  font-family:var(--serif);
+  font-size:26px;
+  margin:0;
+  font-weight:700;
+}
+.chapter[data-ch="1"] h2{color:var(--ch1);}
+.chapter[data-ch="2"] h2{color:var(--ch2);}
+.chapter[data-ch="3"] h2{color:var(--ch3);}
+.chapter[data-ch="4"] h2{color:var(--ch4);}
+.chapter-sub{color:var(--text-faint);font-size:13px;margin:0 0 22px;}
+
+/* Topic = collapsible card */
+.topic{
+  border:1px solid var(--border);
+  border-radius:10px;
+  margin-bottom:10px;
+  background:var(--panel);
+  overflow:hidden;
+}
+.topic-head{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:13px 18px;
+  cursor:pointer;
+  user-select:none;
+  width:100%;
+  background:none;
+  border:none;
+  text-align:left;
+  font-family:var(--sans);
+  color:var(--text);
+}
+.topic-head:hover{background:var(--panel-2);}
+.topic-head:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:-2px;
+  background:var(--panel-2);
+}
+.topic-head .chevron{
+  font-size:11px;
+  color:var(--text-faint);
+  transition:transform .18s ease;
+  flex:none;
+}
+.topic.open .chevron{transform:rotate(90deg);}
+.topic-head h3{
+  margin:0;
+  font-size:15px;
+  font-weight:600;
+  flex:1;
+  color:var(--text);
+}
+.tag{
+  font-size:10px;
+  font-weight:700;
+  padding:2px 8px;
+  border-radius:5px;
+  letter-spacing:0.03em;
+  flex:none;
+}
+.tag.hot{background:rgba(255,107,107,0.15);color:#ff8d8d;}
+.tag.calc{background:rgba(94,224,192,0.15);color:var(--accent);}
+
+.topic-body{
+  display:none;
+  height:0;
+  overflow:hidden;
+  border-top:1px solid var(--border);
+  transition:height .22s cubic-bezier(0.4,0,0.2,1);
+}
+.topic-body-inner{
+  padding:4px 22px 20px;
+}
+.topic:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+  border-radius:10px;
+}
+.topic:target{
+  animation:topic-flash 1.6s ease-out;
+}
+@keyframes topic-flash{
+  0%{box-shadow:0 0 0 2px var(--accent);}
+  100%{box-shadow:0 0 0 0px transparent;}
+}
+
+.topic-body h4{
+  font-size:13px;
+  text-transform:uppercase;
+  letter-spacing:0.04em;
+  color:var(--text-faint);
+  margin:18px 0 8px;
+  font-weight:700;
+}
+.topic-body h4:first-child{margin-top:16px;}
+.topic-body p{margin:0 0 10px;color:var(--text);}
+.topic-body ul, .topic-body ol{margin:0 0 10px;padding-left:22px;}
+.topic-body li{margin-bottom:5px;}
+
+.formula{
+  font-family:var(--mono);
+  background:#0b0d12;
+  border:1px solid var(--border);
+  border-left:3px solid var(--accent-dim);
+  border-radius:8px;
+  padding:13px 16px;
+  margin:10px 0 14px;
+  font-size:13.5px;
+  overflow-x:auto;
+  white-space:pre;
+  color:#cdeee4;
+}
+.chapter[data-ch="1"] .formula{border-left-color:var(--ch1);}
+.chapter[data-ch="2"] .formula{border-left-color:var(--ch2);}
+.chapter[data-ch="3"] .formula{border-left-color:var(--ch3);}
+.chapter[data-ch="4"] .formula{border-left-color:var(--ch4);}
+
+.callout{
+  display:flex;
+  gap:10px;
+  padding:11px 14px;
+  border-radius:8px;
+  margin:10px 0 14px;
+  font-size:13.5px;
+}
+.callout.warn{background:var(--warn-bg);border:1px solid rgba(255,107,107,0.25);}
+.callout.warn .ic{color:var(--warn);flex:none;font-weight:700;}
+.callout.note{background:var(--accent-soft);border:1px solid rgba(94,224,192,0.25);}
+.callout.note .ic{color:var(--accent);flex:none;font-weight:700;}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin:10px 0 16px;
+  font-size:13px;
+}
+th, td{
+  border:1px solid var(--border);
+  padding:8px 11px;
+  text-align:left;
+}
+th{
+  background:var(--panel-2);
+  color:var(--text-dim);
+  font-weight:600;
+  font-size:12px;
+}
+td{color:var(--text);}
+tr:nth-child(even) td{background:rgba(255,255,255,0.015);}
+
+.worked{
+  background:var(--panel-2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:12px 15px;
+  margin:8px 0;
+  font-size:13.5px;
+}
+.worked b{color:var(--accent);}
+.worked .ans{
+  font-family:var(--mono);
+  color:#cdeee4;
+  background:#0b0d12;
+  padding:1px 6px;
+  border-radius:4px;
+  font-size:13px;
+}
+
+mark.hl{
+  background:rgba(255,200,87,0.35);
+  color:#fff;
+  border-radius:3px;
+  padding:0 2px;
+}
+
+/* ===== Interactive widgets ===== */
+.widget{
+  background:#0b0d12;
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:16px 18px;
+  margin:14px 0;
+}
+.widget-title{
+  font-size:12px;
+  font-weight:700;
+  color:var(--accent);
+  text-transform:uppercase;
+  letter-spacing:0.04em;
+  margin-bottom:12px;
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+.widget-title::before{content:"▸";font-size:11px;}
+
+.controls{
+  display:flex;
+  flex-wrap:wrap;
+  gap:14px;
+  margin-bottom:12px;
+  align-items:flex-end;
+}
+.field{display:flex;flex-direction:column;gap:5px;min-width:88px;}
+.field label{font-size:11px;color:var(--text-faint);}
+.field input{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:6px;
+  color:var(--text);
+  font-family:var(--mono);
+  font-size:13px;
+  padding:7px 9px;
+  width:100%;
+}
+.field input:focus{outline:none;border-color:var(--accent-dim);}
+.btn{
+  background:var(--accent);
+  color:#08130f;
+  border:none;
+  border-radius:6px;
+  padding:8px 16px;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+  font-family:var(--sans);
+  height:34px;
+}
+.btn:hover{background:#7ce9cf;}
+.btn.secondary{
+  background:transparent;
+  border:1px solid var(--border);
+  color:var(--text-dim);
+}
+.btn.secondary:hover{border-color:var(--text-faint);color:var(--text);}
+
+.widget-out{
+  font-family:var(--mono);
+  font-size:13.5px;
+  background:var(--panel);
+  border-radius:8px;
+  padding:12px 14px;
+  margin-top:4px;
+  white-space:pre-wrap;
+  color:#cdeee4;
+  line-height:1.7;
+}
+.widget-out .big{font-size:17px;font-weight:700;color:var(--accent);}
+.widget-out .dim{color:var(--text-faint);}
+
+.bar-row{display:flex;align-items:center;gap:10px;margin:4px 0;font-family:var(--mono);font-size:12.5px;}
+.bar-label{width:90px;flex:none;color:var(--text-dim);}
+.bar-track{flex:1;height:16px;background:var(--panel);border-radius:4px;overflow:hidden;}
+.bar-fill{height:100%;background:var(--accent);border-radius:4px;transition:width .3s ease;}
+.bar-val{width:60px;flex:none;text-align:right;color:var(--accent);}
+
+/* mini step trace table */
+.trace-table td, .trace-table th{font-family:var(--mono);font-size:12.5px;}
+
+/* quick ref / traps */
+.quickref-grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:0;
+}
+.quickref-grid table{margin:0;}
+
+.traps-list{display:flex;flex-direction:column;gap:10px;}
+.trap{
+  display:flex;
+  gap:12px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:12px 16px;
+}
+.trap .n{
+  font-family:var(--serif);
+  font-weight:700;
+  color:var(--warn);
+  font-size:15px;
+  flex:none;
+  width:22px;
+}
+.trap .t{font-size:13.5px;color:var(--text);}
+.trap .t b{color:#ff8d8d;}
+
+footer.endnote{
+  margin-top:50px;
+  padding-top:20px;
+  border-top:1px solid var(--border);
+  color:var(--text-faint);
+  font-size:12.5px;
+  text-align:center;
+}
+
+/* search highlight + filtering */
+.topic.search-hide, .chapter.search-hide{display:none !important;}
+
+::selection{background:rgba(94,224,192,0.3);}
+
+@media (max-width: 880px){
+  .shell{grid-template-columns:1fr;}
+  .sidebar{
+    position:relative;
+    height:auto;
+    max-height:none;
+  }
+  main{padding:24px 18px 100px;}
+  .page-head h1{font-size:28px;}
+}
+
+.back-to-top{
+  position:fixed;
+  bottom:24px;
+  right:28px;
+  background:var(--accent);
+  color:#08130f;
+  border:none;
+  border-radius:50%;
+  width:42px;height:42px;
+  font-size:16px;
+  cursor:pointer;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .2s;
+  box-shadow:0 4px 14px rgba(0,0,0,0.4);
+  z-index:50;
+}
+.back-to-top.show{opacity:1;pointer-events:auto;}
+.back-to-top:focus-visible{outline:2px solid #fff;outline-offset:2px;}
+
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto;}
+  *{transition-duration:0.01ms !important; animation-duration:0.01ms !important;}
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="sidebar">
+    <div class="brand"><span class="mark">DRL</span><span class="sub">Cheat Sheet</span></div>
+    <div class="course-tag">AIMLCZG512 · BITS Pilani WILP</div>
+
+    <div class="search-wrap">
+      <input type="text" id="search" placeholder="Search formulas, topics…" aria-label="Search cheat sheet">
+      <button id="search-clear" type="button" aria-label="Clear search">✕</button>
+    </div>
+    <div id="search-count" role="status" aria-live="polite"></div>
+
+    <div class="toc-toolbar">
+      <button id="expand-all" type="button">Expand all</button>
+      <button id="collapse-all" type="button">Collapse all</button>
+    </div>
+
+    <nav class="toc" id="toc" aria-label="Chapter navigation">
+      <div class="toc-chapter">
+        <div class="toc-chapter-label"><span class="dot c1"></span>Ch.1 — Foundations</div>
+        <a class="toc-link" href="#ch1-rl">What is RL?</a>
+        <a class="toc-link" href="#ch1-compare">RL vs Sup. vs Unsup.</a>
+        <a class="toc-link" href="#ch1-loop">Agent-Environment Loop</a>
+        <a class="toc-link" href="#ch1-elements">4 Sub-Elements</a>
+        <a class="toc-link" href="#ch1-taxonomy">Algorithm Taxonomy</a>
+        <a class="toc-link" href="#ch1-td">TD Learning (Tic-Tac-Toe)</a>
+        <a class="toc-link" href="#ch1-reward">Reward Design</a>
+      </div>
+      <div class="toc-chapter">
+        <div class="toc-chapter-label"><span class="dot c2"></span>Ch.2 — Bandits</div>
+        <a class="toc-link" href="#ch2-rewardvalue">Reward vs Value</a>
+        <a class="toc-link" href="#ch2-explore">Explore vs Exploit</a>
+        <a class="toc-link" href="#ch2-kbandit">K-Armed Bandit</a>
+        <a class="toc-link" href="#ch2-greedy">Greedy Selection</a>
+        <a class="toc-link" href="#ch2-egreedy">ε-Greedy</a>
+        <a class="toc-link" href="#ch2-ucb">UCB</a>
+        <a class="toc-link" href="#ch2-optimistic">Optimistic Init</a>
+        <a class="toc-link" href="#ch2-softmax">Softmax / Gradient Bandit</a>
+        <a class="toc-link" href="#ch2-trajectory">Random-Step Analysis</a>
+      </div>
+      <div class="toc-chapter">
+        <div class="toc-chapter-label"><span class="dot c3"></span>Ch.3 — MDP & DP</div>
+        <a class="toc-link" href="#ch3-markov">Markov Property</a>
+        <a class="toc-link" href="#ch3-tuple">MDP 5-Tuple</a>
+        <a class="toc-link" href="#ch3-dynamics">Three Dynamics Eqns</a>
+        <a class="toc-link" href="#ch3-recycling">Recycling Robot</a>
+        <a class="toc-link" href="#ch3-returns">Returns & Discounting</a>
+        <a class="toc-link" href="#ch3-bellmanexp">Bellman Expectation</a>
+        <a class="toc-link" href="#ch3-bellmanopt">Bellman Optimality</a>
+        <a class="toc-link" href="#ch3-vi">Value Iteration</a>
+        <a class="toc-link" href="#ch3-pi">Policy Iteration & GPI</a>
+        <a class="toc-link" href="#ch3-limits">DP Limits & Reward Hyp.</a>
+      </div>
+      <div class="toc-chapter">
+        <div class="toc-chapter-label"><span class="dot c4"></span>Ch.4 — Monte Carlo</div>
+        <a class="toc-link" href="#ch4-why">Why MC? DP vs MC</a>
+        <a class="toc-link" href="#ch4-prediction">First/Every-Visit MC</a>
+        <a class="toc-link" href="#ch4-qest">MC Estimation of Q</a>
+        <a class="toc-link" href="#ch4-trap">The Local-Optimum Trap</a>
+        <a class="toc-link" href="#ch4-esoft">ε-soft Control & GLIE</a>
+        <a class="toc-link" href="#ch4-offpolicy">Off-Policy & IS (appendix)</a>
+      </div>
+      <div class="toc-chapter">
+        <div class="toc-chapter-label">⚡ Reference</div>
+        <a class="toc-link" href="#quickref">Formula Quick-Ref</a>
+        <a class="toc-link" href="#traps">Top Exam Traps</a>
+      </div>
+    </nav>
+
+    <div class="sidebar-foot">
+      Click any card to expand. Use <kbd>Ctrl/Cmd+F</kbd>-style search above to jump straight to a formula. Widgets marked <span class="tag calc" style="display:inline;padding:1px 6px;">CALC</span> let you check your own numbers.
+    </div>
+  </aside>
+
+  <!-- ================= MAIN ================= -->
+  <main>
+    <div class="page-head">
+      <h1>Deep RL — Complete Exam Cheat Sheet</h1>
+      <p>Chapters 1–4: Foundations · Multi-Armed Bandits · MDP &amp; Dynamic Programming · Monte Carlo Methods. Every formula, worked example, and exam trap from your study guides — plus calculators so you can check your own work.</p>
+      <div class="chips">
+        <span class="chip"><span class="dot c1"></span>Ch.1 Foundations</span>
+        <span class="chip"><span class="dot c2"></span>Ch.2 Bandits</span>
+        <span class="chip"><span class="dot c3"></span>Ch.3 MDP &amp; DP</span>
+        <span class="chip"><span class="dot c4"></span>Ch.4 Monte Carlo</span>
+      </div>
+    </div>
+
+    <div class="map-box">
+      <h3>How the whole course fits together</h3>
+      <div class="map-flow"><span class="l1"><span class="lbl">Ch.1</span> What is RL? Agent–env loop. Policy / Value / Model. TD seed (Tic-Tac-Toe).</span>
+   ↓
+<span class="l2"><span class="lbl">Ch.2</span> Bandits — strip away STATE. Pure explore/exploit.
+       Q(a), ε-greedy, UCB, optimistic init, gradient bandit / softmax.</span>
+   ↓
+<span class="l3"><span class="lbl">Ch.3</span> Add STATE + transitions → MDP. Bellman Expectation (predict) →
+       Bellman Optimality (control) → Dynamic Programming — needs a MODEL.</span>
+   ↓
+<span class="l4"><span class="lbl">Ch.4</span> Model unknown → Monte Carlo. Learn V/Q from sampled EPISODES.
+       First-visit MC. Q(s,a) needed for control. ε-soft fixes the
+       greedy local-optimum trap. (Off-policy/IS = beyond mid-sem.)</span>
+   ↓
+   [Next: TD learning — bootstraps like DP, samples like MC]</div>
+      <div class="map-test">The one-line test that recurs everywhere → <b>Does my action change the state I'm in next?</b><br>
+      No state at all → <b>MAB</b>. State exists but action doesn't change it → <b>Contextual Bandit</b>. Action changes state → <b>Full MDP</b>.</div>
+    </div>
+
+    <!-- ============ CHAPTER 1 ============ -->
+    <section class="chapter" data-ch="1" id="chapter-1">
+      <div class="chapter-head"><span class="num">01</span><h2>Course Introduction &amp; RL Foundations</h2></div>
+      <p class="chapter-sub">Vocabulary every later chapter assumes: agent, environment, state, action, reward, policy, value, model.</p>
+
+      <div id="ch1-content"></div>
+    </section>
+
+    <!-- ============ CHAPTER 2 ============ -->
+    <section class="chapter" data-ch="2" id="chapter-2">
+      <div class="chapter-head"><span class="num">02</span><h2>Multi-Armed Bandits</h2></div>
+      <p class="chapter-sub">One state only. No transitions. Pure "which of K actions is best?" — the explore/exploit dilemma in its purest form.</p>
+
+      <div id="ch2-content"></div>
+    </section>
+
+    <!-- ============ CHAPTER 3 ============ -->
+    <section class="chapter" data-ch="3" id="chapter-3">
+      <div class="chapter-head"><span class="num">03</span><h2>Markov Decision Processes &amp; Dynamic Programming</h2></div>
+      <p class="chapter-sub">Add state and transitions. Bellman equations. Solving the MDP exactly — but only if you have the model.</p>
+
+      <div id="ch3-content"></div>
+    </section>
+
+    <!-- ============ CHAPTER 4 ============ -->
+    <section class="chapter" data-ch="4" id="chapter-4">
+      <div class="chapter-head"><span class="num">04</span><h2>Monte Carlo Methods</h2></div>
+      <p class="chapter-sub">No model? Learn from sampled episodes instead. First-visit prediction, Q-estimation, and why greedy control needs exploration.</p>
+
+      <div id="ch4-content"></div>
+    </section>
+
+    <!-- ============ QUICK REF ============ -->
+    <section class="chapter" id="quickref" data-ch="ref">
+      <div class="chapter-head"><span class="num">⚡</span><h2 style="color:var(--text);">Formula Quick-Reference</h2></div>
+      <p class="chapter-sub">Every core formula across all 4 chapters, one table.</p>
+      <div id="quickref-content"></div>
+    </section>
+
+    <!-- ============ TRAPS ============ -->
+    <section class="chapter" id="traps" data-ch="ref">
+      <div class="chapter-head"><span class="num">🚨</span><h2 style="color:var(--text);">Top Exam Traps</h2></div>
+      <p class="chapter-sub">The mistakes called out repeatedly across all four study guides.</p>
+      <div class="traps-list" id="traps-content"></div>
+    </section>
+
+    <footer class="endnote">Built from your Session 1–4 DRL study guides · Good luck tomorrow 🎯</footer>
+  </main>
+</div>
+
+<button class="back-to-top" id="backTop" title="Back to top">↑</button>
+
+<script>
+// ============================================================
+// CONTENT DATA — Chapters 1 & 2
+// Each topic: { id, title, tag (optional 'hot'/'calc'), html }
+// ============================================================
+
+const CH1_TOPICS = [
+{
+  id:"ch1-rl", title:"What is RL?",
+  html:`
+  <p>RL = reward-based / feedback-based learning. <b>RL is NOT a type of neural network</b> — it's a learning paradigm (an agent maximizing cumulative reward via interaction); neural nets are just one way to implement the function approximators inside it (→ "Deep" RL).</p>
+  <h4>Formal definition (Sutton &amp; Barto)</h4>
+  <p>RL is the area of ML concerned with how agents ought to take actions in an environment to maximize cumulative reward.</p>
+  <h4>Use RL when (large environments)</h4>
+  <ol>
+    <li>A model of the environment is known, but no closed-form solution exists</li>
+    <li>Only a simulation model is available</li>
+    <li>The only way to learn about the environment is to interact with it (no dataset to fall back on)</li>
+  </ol>
+  `
+},
+{
+  id:"ch1-compare", title:"RL vs Supervised vs Unsupervised",
+  html:`
+  <table>
+    <tr><th>Criteria</th><th>Supervised</th><th>Unsupervised</th><th>RL</th></tr>
+    <tr><td>Data</td><td>Labelled</td><td>Unlabelled</td><td>No predefined data</td></tr>
+    <tr><td>Problem type</td><td>Regression / classification</td><td>Clustering / association</td><td>Exploration / exploitation</td></tr>
+    <tr><td>Supervision</td><td>Extra supervision</td><td>None</td><td>None</td></tr>
+    <tr><td>Algorithms</td><td>Linear/Logistic Reg, SVM, KNN</td><td>K-Means, Apriori</td><td>Q-Learning, SARSA</td></tr>
+    <tr><td>Aim</td><td>Calculate outcome</td><td>Discover patterns</td><td>Learn sequence of actions</td></tr>
+    <tr><td>Distribution view</td><td>p<sub>θ</sub>(y|x)</td><td>p<sub>θ</sub>(x)</td><td>π<sub>θ</sub>(a|s)</td></tr>
+  </table>
+  <h4>4 characteristics that make RL hard</h4>
+  <ul>
+    <li>No supervision (only scalar reward)</li>
+    <li>Sequential decision-making (today's action shapes tomorrow)</li>
+    <li>Time matters (order is central, unlike i.i.d. samples)</li>
+    <li>Delayed feedback (consequences arrive many steps later)</li>
+  </ul>
+  <div class="callout note"><span class="ic">i</span><span><b>Why RL can't borrow supervised theory directly:</b> i.i.d. breaks (policy changes → data distribution changes = moving target) + credit assignment over delayed rewards is unsolved by supervised methods.</span></div>
+  `
+},
+{
+  id:"ch1-loop", title:"Agent-Environment Loop", tag:"hot",
+  html:`
+  <div class="formula">Agent observes S<sub>t</sub> ∈ S
+Agent selects A<sub>t</sub> ∈ A
+Environment transitions → S<sub>t+1</sub> ∈ S
+Agent receives reward R<sub>t+1</sub> ∈ R</div>
+  <div class="callout warn"><span class="ic">⚠</span><span><b>Critical notation:</b> Action A<sub>t</sub> taken <i>from</i> S<sub>t</sub> produces reward <b>R<sub>t+1</sub></b> and next state <b>S<sub>t+1</sub></b> — indices are t+1, NOT t. (Reward belongs to the <i>transition</i>, not the moment of action.)</span></div>
+  `
+},
+{
+  id:"ch1-elements", title:"Four Sub-Elements of RL",
+  html:`
+  <table>
+    <tr><th>Element</th><th>Role</th></tr>
+    <tr><td><b>Policy π(a|s)</b></td><td>Probability agent selects action a given state s — "what to do"</td></tr>
+    <tr><td><b>Reward R</b></td><td>Immediate scalar feedback defining the goal</td></tr>
+    <tr><td><b>Value function V(s)/Q(s,a)</b></td><td>"How good" — expected cumulative future reward; used to <i>derive</i> a good policy</td></tr>
+    <tr><td><b>Model</b> (optional)</td><td>Predicts next state &amp; reward given (s,a); used for planning</td></tr>
+  </table>
+  <div class="callout warn"><span class="ic">⚠</span><span><b>Policy ≠ Value function</b> (classic mix-up): Policy = what to do; Value = how good it is. Value derives policy, doesn't equal it.</span></div>
+  `
+},
+{
+  id:"ch1-taxonomy", title:"Algorithm Taxonomy",
+  html:`
+  <div class="formula">RL Algorithms
+├── Model-Free — learn policy/value directly from experience
+│     ├── Policy Optimization: Policy Gradient, A2C/A3C, PPO, TRPO
+│     └── Q-Learning: DQN, C51, QR-DQN, HER
+│            (DDPG/TD3/SAC bridge both — actor-critic)
+└── Model-Based — learn or given a model, used for planning
+      ├── Learn the Model: World Models, I2A, MBMF, MBVE
+      └── Given the Model: AlphaZero</div>
+  <p><b>Classify:</b> DQN → Model-Free/Q-Learning. PPO → Model-Free/Policy Optimization. AlphaZero → Model-Based/Given-the-Model (uses game rules + search).</p>
+  `
+},
+{
+  id:"ch1-td", title:"TD Learning — Tic-Tac-Toe (the seed of everything)", tag:"hot",
+  html:`
+  <ul>
+    <li>Value table: win = 1.0, loss = 0, balanced opening ≈ 0.5</li>
+    <li><b>Greedy move</b>: pick action → highest-value next state</li>
+  </ul>
+  <h4>TD Update Rule (memorize)</h4>
+  <div class="formula">V(S<sub>t</sub>) ← V(S<sub>t</sub>) + α[V(S<sub>t+1</sub>) − V(S<sub>t</sub>)]</div>
+  <p>Read as: new estimate = old estimate + step-size × error, where error = V(S<sub>t+1</sub>) − V(S<sub>t</sub>) (difference between successive predictions → "Temporal Difference"). <b>Bootstrapping</b>: V(S<sub>t+1</sub>) is itself just an estimate, not ground truth.</p>
+
+  <h4>α behavior (3 cases — classic exam Q)</h4>
+  <ul>
+    <li><b>α→0 gradually:</b> converges/freezes — good for stationary, well-estimated opponent</li>
+    <li><b>α reduced but never 0:</b> keeps slowly adapting</li>
+    <li><b>α constant forever:</b> max responsiveness to non-stationary opponent, never fully settles</li>
+  </ul>
+
+  <div class="widget" id="w-td-stepper"></div>
+
+  <h4>Worked calculations</h4>
+  <div class="worked">V(S<sub>t</sub>)=0.5, V(S<sub>t+1</sub>)=0.6, α=0.1 → V(S<sub>t</sub>)=0.5+0.1(0.1)=<span class="ans">0.51</span></div>
+  <div class="worked">V(S<sub>t</sub>)=4.5, V(S<sub>t+1</sub>)=2.7, α=0.9 → 4.5+0.9(−1.8)=<span class="ans">2.88</span></div>
+
+  <h4>TD vs Minimax vs Genetic Algorithms</h4>
+  <ul>
+    <li><b>Minimax:</b> assumes optimal adversarial opponent, full tree search, needs model</li>
+    <li><b>GA:</b> evolves population of policies, no per-state value function</li>
+    <li><b>TD:</b> online incremental per-state learning from one agent's experience, exploits imperfect opponents, bootstraps — no tree search, no population</li>
+  </ul>
+  `
+},
+{
+  id:"ch1-reward", title:"Reward Design (Autonomous Driving Example)", tag:"calc",
+  html:`
+  <table>
+    <tr><th>Element</th><th>Definition</th></tr>
+    <tr><td>Objective</td><td>Reach destination safely</td></tr>
+    <tr><td>State</td><td>Camera image</td></tr>
+    <tr><td>Action</td><td>Steer, accelerate, brake</td></tr>
+    <tr><td>Reward</td><td>Forward speed (base) + shaping</td></tr>
+  </table>
+  <p>Reward table: off-road=−10, hit person=−1000, speed limit=+2, lane align=+4, run stop sign=−5, erratic=−3</p>
+  <div class="callout note"><span class="ic">i</span><span><b>Key principle:</b> catastrophic outcomes must dominate by orders of magnitude (−1000 ≫ any achievable positive sum) so the agent never trades safety for small gains. Relative <i>magnitude</i>, not just sign, encodes intent. Badly-scaled rewards → reward hacking (agent optimizes literal reward, finds loopholes).</span></div>
+
+  <div class="widget" id="w-reward-calc"></div>
+  `
+}
+];
+
+const CH2_TOPICS = [
+{
+  id:"ch2-rewardvalue", title:"Reward vs Value Function",
+  html:`
+  <ul>
+    <li><b>Reward</b> = immediate signal, right now</li>
+    <li><b>Value function</b> = long-term decision signal, captures future</li>
+  </ul>
+  <p>Chess example: win=+1, loss=−1, else 0 → mid-game both candidate moves give reward 0 (uninformative!) but V(S2)=7 (leads to checkmate) vs V(S3)=3 (loses queen) — value breaks the tie reward can't.</p>
+  <div class="formula">State value:   V_π(s) = E_π[Σ γᵗR<sub>t</sub> | S₀=s]
+Action value:  Q_π(s,a) = E_π[Σ γᵗR<sub>t</sub> | S₀=s, A₀=a]
+Link:          V*(s) = max<sub>a</sub> Q*(s,a)</div>
+  <div class="callout note"><span class="ic">i</span><span><b>Model-free justification:</b> When environment can't be modeled (e.g., autonomous driving), use Q(s,a) directly — greedy policy = argmax<sub>a</sub> Q(s,a), no model needed. Using V(s) requires knowing transitions (= a model).</span></div>
+  `
+},
+{
+  id:"ch2-explore", title:"Explore vs Exploit — the central dilemma",
+  html:`
+  <ul>
+    <li><b>Exploitation</b> = cash in on known-good option</li>
+    <li><b>Exploration</b> = try unproven option to learn more</li>
+  </ul>
+  <p>Pure greedy = locks onto first good-looking option forever (hotel story: never revisits hotels 2,3 even if day-1 was a fluke).</p>
+  <div class="formula">TD update (general form):
+V(s) ← V(s) + α[R + γV(s′) − V(s)]   ← bracket is TD error</div>
+  <p><b>α cases:</b> α=0 → never learns. α=const → fixed-fraction learning (like ML hyperparameter). α↓ slowly → adaptive.</p>
+  <div class="formula">Regret: R<sub>T</sub> = T·μ* − Σμ<sub>A_t</sub></div>
+  <p>Pure greedy can suffer <b>linear regret Θ(T)</b> (one unlucky pull → permanent abandonment). Good explorers (decaying ε-greedy, UCB) achieve <b>sublinear O(log T)</b> regret.</p>
+  `
+},
+{
+  id:"ch2-kbandit", title:"K-Armed Bandit & Action-Value Estimates", tag:"calc",
+  html:`
+  <ul>
+    <li>K levers, single state, no future. Goal: maximize expected total reward.</li>
+    <li><b>Stationary ≠ constant</b>: distribution stays fixed; the actual sampled reward still varies. (Non-stationary = casino changes payout RANGE over time.)</li>
+  </ul>
+  <h4>Sample-average estimate</h4>
+  <div class="formula">Q<sub>t</sub>(a) = (sum of rewards when a taken) / (times a taken)
+True value: q*(a) = E[R<sub>t</sub> | A<sub>t</sub>=a]</div>
+  <div class="worked"><b>Worked example:</b> A1:[2]→Q=2, A2:[3,3]→Q=3, A3:[1]→Q=1, A4:[1]→Q=1. Greedy picks <span class="ans">A2</span>.</div>
+  <div class="callout warn"><span class="ic">⚠</span><span>Always divide by count for <i>that specific action</i>, never total plays. Untried action stays at Q=0 forever (must try ≥1 each).</span></div>
+
+  <div class="widget" id="w-qestimate"></div>
+  `
+},
+{
+  id:"ch2-greedy", title:"Greedy Action Selection",
+  html:`
+  <div class="formula">A<sub>t</sub> = argmax<sub>a</sub> Q<sub>t</sub>(a)</div>
+  <p>Warm-up: try each action once first. <b>Flaw:</b> one unlucky early sample permanently buries a good action (never-ending loop on suboptimal arm). Correct <i>after</i> convergence/at deployment (set ε=0 there).</p>
+  `
+},
+{
+  id:"ch2-egreedy", title:"ε-Greedy Action Selection", tag:"hot",
+  html:`
+  <div class="formula">A<sub>t</sub> = argmax<sub>a</sub> Q<sub>t</sub>(a)    with prob (1−ε)   [exploit]
+A<sub>t</sub> = random action         with prob ε     [explore — ALL actions incl. greedy!]</div>
+  <div class="callout warn"><span class="ic">⚠</span><span><b>KEY SUBTLETY:</b> During explore, the greedy action is STILL in the random pool (not excluded).</span></div>
+  <h4>Formula (memorize)</h4>
+  <div class="formula">P(greedy) = (1 − ε) + ε/K
+P(specific non-greedy action) = ε/K</div>
+  <p><b>Derivation (K=2, ε=0.5):</b> P(greedy)=(1)(0.5)+(0.5)(0.5)=0.5+0.25=<b>0.75</b></p>
+  <p><b>Limits:</b> ε=0 → pure greedy. ε=1 → pure random uniform.</p>
+
+  <div class="widget" id="w-egreedy"></div>
+
+  <h4>More worked examples</h4>
+  <div class="worked">ε=0.2, K=4 → P(greedy)=0.8+0.05=<span class="ans">0.85</span>; each non-greedy=<span class="ans">0.05</span></div>
+  <div class="worked">ε=0.1, K=3 → P(greedy)≈<span class="ans">0.933</span>; each non-greedy≈0.033 (check: 0.933+2(0.033)=1 ✓)</div>
+  `
+},
+{
+  id:"ch2-ucb", title:"UCB (Upper Confidence Bound)", tag:"hot",
+  html:`
+  <p>Explores by <b>uncertainty</b>, not coin-flip. "Optimism in the face of uncertainty."</p>
+  <div class="formula">A<sub>t</sub> = argmax<sub>a</sub> [ Q<sub>t</sub>(a) + c·√(ln t / N<sub>t</sub>(a)) ]</div>
+  <table>
+    <tr><th>Term</th><th>Role</th></tr>
+    <tr><td>Q<sub>t</sub>(a)</td><td>Current estimate (exploit part)</td></tr>
+    <tr><td>c</td><td>Confidence level (tunable, c&gt;0). Larger c → more exploration</td></tr>
+    <tr><td>√(ln t/N<sub>t</sub>(a))</td><td>Uncertainty bonus — grows if rarely picked, shrinks if often picked</td></tr>
+  </table>
+  <ul>
+    <li>N<sub>t</sub>(a)↑ (this action picked) → bonus shrinks (denominator grows)</li>
+    <li>t↑ (other action picked) → bonus slowly grows (ln t numerator) — "stale" arms get revived</li>
+    <li><b>N<sub>t</sub>(a)=0 → division by zero → infinite bonus</b> → untried arms picked first automatically (built-in warm-up)</li>
+    <li>Provably near-optimal: <b>O(log T)</b> regret (matches Lai-Robbins lower bound)</li>
+    <li>Slide-35 result: UCB c=2 slightly beats ε-greedy ε=0.1 on 10-armed testbed, but harder to scale to full RL (needs N(a) per-state counts)</li>
+  </ul>
+
+  <div class="widget" id="w-ucb"></div>
+
+  <h4>Worked examples</h4>
+  <div class="worked">N=4, t=50, c=2 → ln50≈3.912; bonus=2√(3.912/4)=2(0.989)=<span class="ans">1.98</span></div>
+  <div class="worked">t=100,c=2,ln100≈4.605. ArmX:Q=1.0,N=10→bonus=1.357→UCB=2.357. ArmY:Q=0.8,N=1→bonus=4.292→UCB=<span class="ans">5.092</span>. UCB picks <b>Y</b> despite lower Q (huge uncertainty bonus dominates).</div>
+  `
+},
+{
+  id:"ch2-optimistic", title:"Optimistic Initial Values",
+  html:`
+  <p>Start ALL Q-estimates wildly high (e.g., Q₁=+5 when true values≈0), keep ε=0 (pure greedy). Reality always disappoints → tried action's Q drops below still-untried (still-inflated) arms → greedy switches → sweeps through all arms for free.</p>
+  <div class="formula">Q<sub>n+1</sub> = Q<sub>n</sub> + α[R<sub>n</sub> − Q<sub>n</sub>],  Q₁ = +5</div>
+  <ul>
+    <li><b>Sample-average (1/n) step</b>: bias from Q₁ vanishes completely after first pull (α₁=1 zeroes it out)</li>
+    <li><b>Constant-α step</b>: bias persists forever, only decays geometrically — (1−α)ⁿQ₁ never reaches exactly 0</li>
+    <li>Robbins-Monro: Σα<sub>n</sub>=∞ AND Σα<sub>n</sub>²&lt;∞ needed for convergence. 1/n satisfies both. Constant α violates the second (Σα²=∞) → never fully forgets</li>
+  </ul>
+  <div class="callout warn"><span class="ic">⚠</span><span><b>FAILS on non-stationary problems</b> — it's a ONE-TIME burst spent at the start; no mechanism to re-explore later when q*(a) drifts. (UCB explores forever; optimism doesn't.)</span></div>
+  <div class="worked"><b>Worked:</b> Q₁=5, α=0.5, R₁=1 → Q₂=5+0.5(1−5)=5−2=<span class="ans">3</span> (drops below untried 5s → triggers switch)</div>
+  `
+},
+{
+  id:"ch2-softmax", title:"Softmax & Gradient Bandit",
+  html:`
+  <p>Stop estimating Q(a) — learn <b>preferences H(a)</b> directly (no units, just "how much I lean toward this action").</p>
+  <p><b>Hardmax (naive, BROKEN):</b> A<sub>t</sub>=argmax<sub>a</sub> H<sub>t</sub>(a) — deterministic (no exploration) + NOT differentiable.</p>
+  <h4>Softmax (the fix)</h4>
+  <div class="formula">Pr{A<sub>t</sub>=a} = e<sup>H_t(a)</sup> / Σ<sub>a'</sub> e<sup>H_t(a')</sup>  = π<sub>t</sub>(a)</div>
+  <p>Gives exploration (every action gets nonzero prob) AND differentiability.</p>
+  <div class="worked"><b>Worked:</b> H=(6,9,2) → softmax≈(0.047, 0.952, 0.00087). 3-point lead → 20× probability ratio (exponential gap).</div>
+
+  <h4>Gradient bandit update</h4>
+  <div class="formula">H<sub>t+1</sub>(A<sub>t</sub>) = H<sub>t</sub>(A<sub>t</sub>) + α(R<sub>t</sub> − R̄<sub>t</sub>)(1 − π<sub>t</sub>(A<sub>t</sub>))     [chosen action]
+H<sub>t+1</sub>(a)  = H<sub>t</sub>(a)  − α(R<sub>t</sub> − R̄<sub>t</sub>)π<sub>t</sub>(a)             [∀ a ≠ A<sub>t</sub>]</div>
+  <p>R̄<sub>t</sub> = running mean baseline. If R<sub>t</sub>&gt;R̄<sub>t</sub>: push chosen UP, others DOWN. If R<sub>t</sub>&lt;R̄<sub>t</sub>: opposite.</p>
+  <div class="callout note"><span class="ic">i</span><span><b>Baseline matters — cuts variance</b> (doesn't introduce bias since baseline is action-independent). On 10-arm testbed: with baseline ~85% optimal vs without baseline ~48% optimal (α=0.1) — roughly DOUBLES performance.</span></div>
+  <p>This is literally REINFORCE / the seed of Actor-Critic (PPO, A2C, A3C) — baseline R̄<sub>t</sub> → advantage A(s,a)=Q−V later.</p>
+  <div class="widget" id="w-softmax"></div>
+  `
+},
+{
+  id:"ch2-trajectory", title:'"Definitely vs Possibly Random" — Trajectory Analysis', tag:"hot",
+  html:`
+  <p>High-yield exam pattern. Method: compute Q before each step → find greedy (argmax) → compare to action actually chosen.</p>
+  <ul>
+    <li>Chosen action ≠ any greedy candidate → <b>DEFINITELY random</b> (proves exploration)</li>
+    <li>Chosen action = a greedy candidate (incl. ties) → <b>POSSIBLY random</b> (can't rule out — greedy pool includes greedy action during ε-branch too)</li>
+  </ul>
+  <h4>MAB vs Contextual Bandit vs Full MDP (bridge into Ch.3)</h4>
+  <table>
+    <tr><th>Level</th><th>What changes</th><th>Example</th></tr>
+    <tr><td>MAB</td><td>Action→Reward, no state</td><td>Choosing ad variant</td></tr>
+    <tr><td>Contextual Bandit</td><td>Context+Action→Reward, state unaffected by action</td><td>Juice stall: age group ≠ changed by sale</td></tr>
+    <tr><td>Full MDP</td><td>State+Action→Reward+NewState</td><td>Chess: move changes board</td></tr>
+  </table>
+  `
+}
+];
+
+// ============================================================
+// CONTENT DATA — Chapter 3 (MDP & Dynamic Programming)
+// ============================================================
+
+const CH3_TOPICS = [
+{
+  id:"ch3-markov", title:"Why MDPs Exist & The Markov Property", tag:"hot",
+  html:`
+  <p>MAB rates one pull instantly. Chess/robots/driving: a decision's payoff ripples through every future state — <b>that gap is the whole reason MDPs exist.</b></p>
+  <h4>The Markov Property</h4>
+  <p><b>Future depends only on the current state, not full history.</b></p>
+  <div class="formula">p(S<sub>t+1</sub>,R<sub>t+1</sub> | S<sub>t</sub>,A<sub>t</sub>) = p(S<sub>t+1</sub>,R<sub>t+1</sub> | S₀,A₀,...,S<sub>t</sub>,A<sub>t</sub>)</div>
+  <p>Chess analogy: board position encodes everything needed; full move history is redundant.</p>
+  <div class="callout warn"><span class="ic">⚠</span><span><b>State must be a sufficient statistic.</b> Omitting relevant history (e.g., castling rights, battery level) breaks Markov silently — no error message, just wrong answers (this becomes a <b>POMDP</b>). State design = hardest engineering decision in RL.</span></div>
+  `
+},
+{
+  id:"ch3-tuple", title:"MDP 5-Tuple ⟨S, A, P, R, γ⟩",
+  html:`
+  <table>
+    <tr><th>Symbol</th><th>Meaning</th></tr>
+    <tr><td>S</td><td>All possible states</td></tr>
+    <tr><td>A(s)</td><td>Available actions (may depend on state)</td></tr>
+    <tr><td>P</td><td>p(s',r|s,a) — transition probabilities</td></tr>
+    <tr><td>R</td><td>Reward function</td></tr>
+    <tr><td>γ ∈ [0,1)</td><td>Discount factor</td></tr>
+  </table>
+  <div class="callout note"><span class="ic">i</span><span><b>Agent-environment boundary = a DESIGN CHOICE</b>, marks limit of agent's <i>control</i>, NOT its <i>knowledge</i>.</span></div>
+  `
+},
+{
+  id:"ch3-dynamics", title:"Three Dynamics Equations", tag:"hot",
+  html:`
+  <p>Write all three from memory:</p>
+  <ol>
+    <li><b>Full joint model:</b> p(s',r|s,a) — "lands in s' AND gets r" — the primitive, captures everything</li>
+    <li><b>Marginal transition:</b> P(s'|s,a) = Σ<sub>r</sub> p(s',r|s,a) — "lands in s' regardless of r" (sum over rewards = marginalize)</li>
+    <li><b>Expected reward:</b> E[R|s,a,s'] = Σ<sub>r</sub> r·p(s',r|s,a) / P(s'|s,a) — "average reward for this specific transition"</li>
+  </ol>
+  <div class="callout warn"><span class="ic">⚠</span><span>Common mistake: writing P(s'|s,a) = p(s',r|s,a) for one specific r — the marginal ALWAYS requires summing over all r.</span></div>
+  `
+},
+{
+  id:"ch3-recycling", title:"Anchor Example: Recycling Robot & Gridworld", tag:"calc",
+  html:`
+  <p>S={High,Low}. A(High)={Search,Wait}. A(Low)={Search,Wait,Recharge}.</p>
+  <table>
+    <tr><th>s</th><th>a</th><th>s'</th><th>P(s'|s,a)</th><th>r</th></tr>
+    <tr><td>High</td><td>Search</td><td>High</td><td>α</td><td>r_search</td></tr>
+    <tr><td>High</td><td>Search</td><td>Low</td><td>1−α</td><td>r_search</td></tr>
+    <tr><td>High</td><td>Wait</td><td>High</td><td>1</td><td>r_wait</td></tr>
+    <tr><td>Low</td><td>Search</td><td>High</td><td>1−β</td><td>−3 (emergency!)</td></tr>
+    <tr><td>Low</td><td>Search</td><td>Low</td><td>β</td><td>r_search</td></tr>
+    <tr><td>Low</td><td>Wait</td><td>Low</td><td>1</td><td>r_wait</td></tr>
+    <tr><td>Low</td><td>Recharge</td><td>High</td><td>1</td><td>0</td></tr>
+  </table>
+  <div class="callout warn"><span class="ic">⚠</span><span>Probabilities sum to 1 <b>per (s,a) pair</b>, NEVER across different actions/states.</span></div>
+  <div class="worked"><b>Worked:</b> α=0.7 → P(Low|High,Search)=1−0.7=<span class="ans">0.3</span></div>
+
+  <h4>Gridworld 3×4 ("Hello World of RL")</h4>
+  <p>Stochastic/slippery: 80% intended direction, 10% each perpendicular. Step reward −0.1, goal +1, trap −1. γ=0.9 typical.</p>
+  `
+},
+{
+  id:"ch3-returns", title:"Returns & Discounting", tag:"hot",
+  html:`
+  <div class="formula">G<sub>t</sub> = R<sub>t+1</sub> + γR<sub>t+2</sub> + γ²R<sub>t+3</sub> + ... = Σ γᵏR<sub>t+k+1</sub>     [discounted return]
+G<sub>t</sub> = R<sub>t+1</sub> + γG<sub>t+1</sub>                                       [recursive — SEED OF BELLMAN]
+G<sub>t</sub> = R/(1−γ)     if reward R constant forever          [geometric series shortcut]
+|G<sub>t</sub>| ≤ R<sub>max</sub>/(1−γ)                                       [convergence bound]</div>
+  <div class="callout warn"><span class="ic">⚠</span><span><b>#1 mistake: off-by-one.</b> G<sub>t</sub> starts at <b>R<sub>t+1</sub></b>, never R<sub>t</sub>.</span></div>
+  <div class="callout warn"><span class="ic">⚠</span><span><b>#2 mistake:</b> applying R/(1−γ) to NON-constant sequences. Only apply to the constant TAIL.</span></div>
+
+  <h4>γ behavior</h4>
+  <table>
+    <tr><th>γ</th><th>Behavior</th><th>Danger</th></tr>
+    <tr><td>0</td><td>Fully myopic</td><td>Misses long-run</td></tr>
+    <tr><td>0.9 (typical)</td><td>Far-sighted, bounded</td><td>—</td></tr>
+    <tr><td>0.99</td><td>Very far-sighted</td><td>High variance</td></tr>
+    <tr><td>1</td><td>All rewards equal</td><td><b>Diverges in continuing tasks — prohibited</b></td></tr>
+  </table>
+
+  <div class="widget" id="w-returns"></div>
+
+  <h4>🔥 The exact exam numerical</h4>
+  <p>R₂=2, R₃=R₄=...=7, γ=0.1. Find G₂, G₁.</p>
+  <div class="formula">G₂ = 7/(1−0.1) = 7/0.9 ≈ 7.78
+G₁ = R₂ + γ·G₂ = 2 + 0.1×(7/0.9) = 2 + 7/9 ≈ 2.78</div>
+
+  <h4>Episodic vs Continuing</h4>
+  <table>
+    <tr><th></th><th>Episodic</th><th>Continuing</th></tr>
+    <tr><td>Endpoint</td><td>Yes (terminal T)</td><td>No</td></tr>
+    <tr><td>Discounting</td><td>Optional</td><td><b>Mandatory</b></td></tr>
+    <tr><td>Examples</td><td>Chess, maze</td><td>Driving, process control</td></tr>
+  </table>
+  <p>Cart-pole: naturally continuing (balance forever) → made episodic via termination condition (pole tilts &gt;12°).</p>
+  `
+},
+{
+  id:"ch3-bellmanexp", title:"Value Functions & Bellman Expectation Equation", tag:"hot",
+  html:`
+  <p><b>Policy:</b> π(a|s) = Pr{A<sub>t</sub>=a | S<sub>t</sub>=s}, Σ<sub>a</sub>π(a|s)=1</p>
+  <p><b>State-value:</b> V_π(s) = E_π[G<sub>t</sub> | S<sub>t</sub>=s] — "how good is this state"<br>
+  <b>Action-value:</b> Q_π(s,a) = E_π[G<sub>t</sub> | S<sub>t</sub>=s,A<sub>t</sub>=a] — "how good is this action"</p>
+  <div class="callout note"><span class="ic">i</span><span><b>Practical rule:</b> Model available → use V. Model unavailable (most deep RL) → use Q directly, argmax Q needs no model.</span></div>
+
+  <h4>Bridge equations</h4>
+  <div class="formula">V_π(s) = Σ<sub>a</sub> π(a|s)·Q_π(s,a)                              [v in terms of q]
+Q_π(s,a) = Σ<sub>s',r</sub> p(s',r|s,a)·[r + γV_π(s')]            [q in terms of v]</div>
+
+  <h4>🔥 Bellman Expectation Equation (write from memory)</h4>
+  <div class="formula">V_π(s) = Σ<sub>a</sub> π(a|s) Σ<sub>s',r</sub> p(s',r|s,a) [r + γV_π(s')]</div>
+  <p><b>Two sums, two sources of randomness:</b> outer Σ<sub>a</sub> = agent's randomness (policy); inner Σ<sub>s',r</sub> = environment's randomness (dynamics). NEVER mix them up.</p>
+  <p><b>Backup diagram:</b> state node → branches by π(a|s) → action nodes → branches by p(s',r|s,a) → next-state leaves. Values "back up" from leaves to root.</p>
+  <p><b>Bootstrapping:</b> use V_π(s') (an estimate) to improve V_π(s) — never simulate infinite horizon, just one-step lookahead trusting current estimate.</p>
+
+  <div class="widget" id="w-bellman"></div>
+
+  <h4>🔥 Gridworld verification (the exact template)</h4>
+  <p>cell=0.7, neighbors N=2.3,S=−0.4,W=0.4,E=0.7. π=0.25 each, γ=0.9, rewards=0.</p>
+  <div class="formula">= 0.25×0.9×(2.3−0.4+0.4+0.7) = 0.225×3.0 = 0.675 ≈ 0.7 ✓</div>
+  <div class="callout warn"><span class="ic">⚠</span><span>Common mistakes: forgetting γ; mixing π(a|s) [agent] with p(s'|s,a) [environment]; confusing V_π (specific policy) with V* (optimal).</span></div>
+  `
+},
+{
+  id:"ch3-bellmanopt", title:"Optimality & Bellman Optimality Equations", tag:"hot",
+  html:`
+  <p><b>Policy ordering (partial order):</b> π≥π' ⟺ V_π(s)≥V_π'(s) for ALL s. At least one optimal π* always exists; multiple may tie; <b>at least one optimal policy is always deterministic</b> (randomizing among ties never exceeds the ceiling V*).</p>
+  <div class="formula">V*(s) = max<sub>π</sub> V_π(s)
+Q*(s,a) = max<sub>π</sub> Q_π(s,a)
+V*(s) = max<sub>a</sub> Q*(s,a)</div>
+
+  <h4>THE ONE CHANGE: Σ → max</h4>
+  <table>
+    <tr><th></th><th>Expectation</th><th>Optimality</th></tr>
+    <tr><td>Action selection</td><td>Σ<sub>a</sub>π(a|s)×[...]</td><td>max<sub>a</sub>[...]</td></tr>
+    <tr><td>Math</td><td>Linear (matrix solve OK)</td><td>Non-linear (needs iteration)</td></tr>
+    <tr><td>Solved by</td><td>Policy Evaluation</td><td>Value Iteration</td></tr>
+  </table>
+  <p>Why non-linear: max(f)+max(g) ≠ max(f+g) in general — superposition fails, so no closed-form; must iterate.</p>
+
+  <h4>🔥 Bellman Optimality (write from memory)</h4>
+  <div class="formula">V*(s) = max<sub>a</sub> Σ<sub>s',r</sub> p(s',r|s,a) [r + γV*(s')]
+Q*(s,a) = Σ<sub>s',r</sub> p(s',r|s,a) [r + γ·max<sub>a'</sub> Q*(s',a')]</div>
+  <div class="callout warn"><span class="ic">⚠</span><span>max<sub>a'</sub> must be <b>INSIDE</b> the Σ for Q* (agent picks AFTER environment reveals s'), never outside.</span></div>
+  <div class="callout warn"><span class="ic">⚠</span><span>Never write π(a|s) inside the optimality equation — once you take max, policy-weighting has no meaning.</span></div>
+
+  <h4>Policy extraction</h4>
+  <div class="formula">π*(s) = argmax<sub>a</sub> Q*(s,a)                                          [model-free, preferred]
+π*(s) = argmax<sub>a</sub> Σ<sub>s',r</sub> p(s',r|s,a)[r+γV*(s')]                  [needs model]</div>
+  <div class="callout warn"><span class="ic">⚠</span><span>Must use <b>V*</b> or <b>Q*</b> (optimal) in argmax to get π* — using V_π of an arbitrary/random policy only gives a <i>policy improvement</i> step, not the final optimal policy.</span></div>
+  `
+},
+{
+  id:"ch3-vi", title:"Value Iteration", tag:"calc",
+  html:`
+  <h4>Prediction vs Control</h4>
+  <table>
+    <tr><th>Task</th><th>Goal</th><th>Operator</th><th>Algorithm</th></tr>
+    <tr><td>Prediction</td><td>Compute V_π for given π</td><td>Σ<sub>a</sub>π(a|s)×[...]</td><td>Policy Evaluation</td></tr>
+    <tr><td>Control</td><td>Find optimal π*</td><td>max<sub>a</sub>×[...]</td><td>Value/Policy Iteration</td></tr>
+  </table>
+  <div class="formula">V<sub>k+1</sub>(s) ← max<sub>a</sub> Σ<sub>s',r</sub> p(s',r|s,a)[r + γV<sub>k</sub>(s')]</div>
+  <div class="callout warn"><span class="ic">⚠</span><span>Out-of-place (synchronous): MUST use <b>previous</b> iteration's V<sub>k</sub>(s') for ALL states — never mix old/new within one sweep. Stop when Δ&lt;θ. Extract policy via argmax at the end.</span></div>
+
+  <h4>🔥 Race car trace (memorize the numbers)</h4>
+  <p>States: Cool(C), Warm(W), Overheated(O,terminal). γ=0.9.</p>
+  <ul>
+    <li>V₀: C=0, W=0</li>
+    <li><b>Iter 1:</b> C: Slow=1, Fast=2 → V₁(C)=<b>2</b> (Fast). W: Slow=1, Fast=−10 → V₁(W)=<b>1</b> (Slow)</li>
+    <li><b>Iter 2:</b> C: Slow=1+0.9(2)=2.8, Fast=0.5[2+0.9(2)]+0.5[2+0.9(1)]=3.35 → V₂(C)=<b>3.35</b> (Fast). W: Slow=0.5[1+1.8]+0.5[1+0.9]=2.35 → V₂(W)=<b>2.35</b> (Slow)</li>
+    <li>Converged policy: <b>Cool→Fast, Warm→Slow</b> (Fast in Warm always risks −10 Overheated)</li>
+  </ul>
+
+  <div class="widget" id="w-vi"></div>
+  `
+},
+{
+  id:"ch3-pi", title:"Policy Iteration, In-place vs Out-of-place, GPI",
+  html:`
+  <h4>Policy Iteration (PI)</h4>
+  <ol>
+    <li>Init arbitrary π₀</li>
+    <li><b>Evaluate</b> (NO max — follow policy's own action): V(s) ← Σp(s',r|s,π(s))[r+γV(s')] until Δ&lt;θ</li>
+    <li><b>Improve</b> (ONE max step): π'(s) ← argmax<sub>a</sub> Σp(s',r|s,a)[r+γV(s')]</li>
+    <li>If π'=π stop; else repeat</li>
+  </ol>
+  <div class="callout warn"><span class="ic">⚠</span><span><b>#1 PI mistake:</b> using max during evaluation (that's VI, not PE!). Eval must follow the policy's OWN action only.</span></div>
+  <p><b>Race car PI:</b> π₀=Slow everywhere. Eval converges (≈225 iterations) to V(C)=V(W)=10. Improve: Cool→Fast (q=11&gt;10), Warm→Slow (q=10&gt;−10). <b>π₁ = Cool→Fast, Warm→Slow — converged in 1 outer step</b>, matches VI.</p>
+
+  <table>
+    <tr><th></th><th>VI</th><th>PI</th></tr>
+    <tr><td>Per-iteration cost</td><td>Low (one max sweep)</td><td>High (full eval)</td></tr>
+    <tr><td>Value convergence</td><td>Faster per sweep</td><td>Slower per outer step</td></tr>
+    <tr><td>Policy available</td><td>Only at end</td><td>After each improvement</td></tr>
+    <tr><td>Large state space</td><td>Prefer VI</td><td>—</td></tr>
+  </table>
+
+  <h4>In-place vs Out-of-place</h4>
+  <ul>
+    <li><b>Out-of-place (2 arrays):</b> all updates use V<sub>old</sub> — reliable, more memory</li>
+    <li><b>In-place (1 array):</b> overwrite immediately; later states in the SAME sweep see freshest values; order matters; often faster</li>
+    <li><b>Prioritized sweeping:</b> update states with largest Bellman error first (async heuristic)</li>
+  </ul>
+
+  <h4>Generalized Policy Iteration (GPI)</h4>
+  <p>"Almost all RL algorithms are instances of GPI" — interleave SOME evaluation with SOME improvement, any granularity.</p>
+  <table>
+    <tr><th>Algorithm</th><th>Eval sweeps before improve</th></tr>
+    <tr><td>VI</td><td>1 (merged with max)</td></tr>
+    <tr><td>Modified PI(k)</td><td>k (tunable)</td></tr>
+    <tr><td>PI</td><td>∞ (full convergence)</td></tr>
+    <tr><td>TD/Q-learning</td><td>1 (bootstrapped, model-free, sampled)</td></tr>
+  </table>
+  `
+},
+{
+  id:"ch3-limits", title:"DP Limitations & The Reward Hypothesis",
+  html:`
+  <h4>DP Limitations</h4>
+  <ol>
+    <li>Requires complete model p(s',r|s,a)</li>
+    <li>Requires finite, discrete S,A</li>
+    <li>Scales as O(|S|²×|A|) — Chess≈10⁴⁴ states, Go≈10¹⁷⁰ — physically impossible to tabulate</li>
+  </ol>
+  <p><b>Convergence math:</b> Bellman operator T* is a γ-contraction: ‖T*v−T*u‖∞≤γ‖v−u‖∞. Banach fixed-point theorem → unique v* exists, geometric convergence. Error bound: ‖V<sub>k</sub>−v*‖≤γᵏ‖V₀−v*‖. For γ=0.9,ε=0.01,Rmax=1 → need ≥<b>66 iterations</b>. For γ=0.9, initial error 10, target &lt;0.1 → need ≥<b>44 iterations</b>.</p>
+
+  <h4>Reward Hypothesis &amp; Reward Hacking</h4>
+  <p>"All goals can be formalized as maximizing expected cumulative scalar reward." Limit: any fixed reward can be "gamed" (Goodhart's Law). Examples: CoastRunners (spins collecting bonuses instead of racing), vacuum robot (dumps dirt to re-suck for reward). Safe fix: <b>potential-based shaping</b> R'=R+γΦ(s')−Φ(s) — only this family preserves the optimal policy.</p>
+  `
+}
+];
+
+// ============================================================
+// CONTENT DATA — Chapter 4 (Monte Carlo Methods)
+// ============================================================
+
+const CH4_TOPICS = [
+{
+  id:"ch4-why", title:"Why MC? DP vs MC Comparison", tag:"hot",
+  html:`
+  <p>DP requires p(s',r|s,a) for every pair — real environments don't hand you this. <b>Fix: stop modeling, start sampling.</b> Like estimating average height of 10,000 students by measuring a sample instead of everyone.</p>
+  <p><b>Episode/trajectory (τ):</b> complete sequence S₀,A₀,R₁,...,S_T from start to terminal. One (S,A,R,S') = one sample.</p>
+
+  <h4>Master comparison table</h4>
+  <table>
+    <tr><th>Property</th><th>DP</th><th>MC</th></tr>
+    <tr><td>Model required?</td><td>YES — full p(s',r|s,a)</td><td>NO — model-free</td></tr>
+    <tr><td>Update source</td><td>Expectation over ALL successors (full backup)</td><td>Actual observed return G<sub>t</sub> (sample backup)</td></tr>
+    <tr><td>Bootstrapping?</td><td>YES — uses current V(s') estimates</td><td>NO — uses complete actual returns</td></tr>
+    <tr><td>Bias</td><td>None if model exact</td><td><b>Unbiased</b>: E[G<sub>t</sub>|S<sub>t</sub>=s]=v_π(s) exactly</td></tr>
+    <tr><td>Variance</td><td>~None (deterministic sweep)</td><td><b>High</b> — SE ~ σ/√M</td></tr>
+    <tr><td>Episodes needed?</td><td>Never</td><td><b>Always</b>, complete, before any update</td></tr>
+  </table>
+  <p><b>Backup diagrams:</b> DP = shallow &amp; wide (BFS-like, fans across every action/outcome, uses bootstrapped V(s') leaves). MC = deep &amp; narrow (DFS-like, single path to terminal, no branching, uses real G<sub>t</sub>).</p>
+  <div class="callout warn"><span class="ic">⚠</span><span><b>"Model-free" ≠ "policy-free."</b> MC still has and improves a policy (PE-PI cycle carries over) — it just lacks the transition model.</span></div>
+  `
+},
+{
+  id:"ch4-prediction", title:"MC Prediction — First-Visit & Every-Visit", tag:"calc",
+  html:`
+  <div class="formula">G<sub>t</sub> = R<sub>t+1</sub> + γR<sub>t+2</sub> + γ²R<sub>t+3</sub> + ...</div>
+  <p><b>First-visit MC (THE EXAMINABLE FORM):</b> V(s) ≈ average of G<sub>t</sub> over all FIRST visits to s across episodes.<br>
+  <b>Every-visit MC (conceptual only):</b> average over ALL visits (within + across episodes).</p>
+  <p>Tourist (first-visit) vs Resident (every-visit) analogy: tourist visits once, gathers experience once; resident/delivery-partner gathers from every visit.</p>
+
+  <div class="widget" id="w-mcreturns"></div>
+
+  <p><b>Toy example:</b> state S visited twice in one episode, returns G=2 then G=3.</p>
+  <ul>
+    <li>First-visit: V(S) = <b>2</b> (only first occurrence counts)</li>
+    <li>Every-visit: V(S) = (2+3)/2 = <b>2.5</b></li>
+  </ul>
+  <div class="callout warn"><span class="ic">⚠</span><span><b>#1 mistake — double-counting:</b> treating a state's 2nd visit in the SAME episode as a separate first-visit sample. The first-visit return already "absorbs" everything that happens later (including that 2nd visit) — counting it again breaks i.i.d.</span></div>
+
+  <p><b>Why first-visit is "clean":</b> each episode → exactly ONE sample per state → i.i.d. (independent episodes = TV restart analogy: episode always restarts from scratch, no carryover) → LLN applies cleanly, unbiased for every finite M, SE=σ/√M (4× episodes to halve error). Every-visit's same-episode returns are CORRELATED (share trailing trajectory) → technically biased for finite M (vanishes as M→∞).</p>
+
+  <h4>Worked examples</h4>
+  <div class="worked"><b>(Easy)</b> Returns(s) from 4 episodes = [+2,+1,−5,+4] → V(s)=2/4=<span class="ans">0.5</span></div>
+  <div class="worked"><b>(5-state gridworld A-E, γ=1):</b> 4 episodes given. V(D)=+10 (always exits immediately w/ +10). V(B)=+8 (sum of rewards −1,−1,+10 from B onward = 8). V(A)=−10 (immediate exit −10 in the one episode visiting A). [V(C)=+4, V(E)=−2 by the same method]</div>
+  `
+},
+{
+  id:"ch4-qest", title:"MC Estimation of Q(s,a) — Why V Alone Can't Drive Control",
+  html:`
+  <p><b>Why V(s) insufficient for control:</b> To act greedily on V(s) you'd need to know "which action leads to which s'" — that mapping IS the transition model, unavailable in model-free setting. <b>Q(s,a) sidesteps this</b> — argmax<sub>a</sub>Q(s,a) directly gives best action, no model needed.</p>
+  <div class="formula">Q(s,a) ≈ average(G<sub>t</sub> : first visit to (s,a) pair across episodes)</div>
+
+  <h4>GPI loop (MC form)</h4>
+  <ol>
+    <li>Evaluate: run episodes under π, estimate Q via averaging</li>
+    <li>Improve: π(s) ← argmax<sub>a</sub> Q(s,a)</li>
+    <li>Repeat with new episodes under improved π</li>
+  </ol>
+  `
+},
+{
+  id:"ch4-trap", title:"The Local-Optimum Trap", tag:"hot",
+  html:`
+  <p><b>{u,w,x,y,z} gridworld:</b> u→+1(coin), z→−1(poison), y→+10(treasure, far away).</p>
+  <p>The mechanism: once Q(w,E)=−1 looks worse than Q(w,W)=+1, greedy <b>NEVER selects E from w again</b> → Returns(w,E) frozen forever → even if the TRUE long-run value of E (eventually reaching the +10 treasure) is higher, it can <b>never be discovered</b> — the very (s,a) pair that would reveal this is permanently excluded from sampling.</p>
+  <p><b>Why this happens:</b> greedy improvement is correct GIVEN accurate Q, but MC's Q is a noisy sample, especially early on. Acting greedily on noisy estimates makes low-sample-count pairs permanently unvisited — a structural exclusion, not a "wrong landscape."</p>
+
+  <div class="callout note"><span class="ic">i</span><span><b>Confirmed exam answer:</b> "Why is V_π insufficient for control even if estimated perfectly?" → <i>"Your policy's correctness is measured only by Q rather than V. Hence, during control, V_π is insufficient."</i></span></div>
+  <div class="callout note"><span class="ic">i</span><span><b>Confirmed exam answer:</b> "Why does deterministic policy + first-visit MC fail to reach optimal?" → <i>"You're not giving chance for other actions — you're not having exploration. Starting with a deterministic policy, you will never reach an optimal policy."</i></span></div>
+
+  <div class="widget" id="w-trap"></div>
+  `
+},
+{
+  id:"ch4-esoft", title:"On-Policy ε-soft MC Control & GLIE", tag:"hot",
+  html:`
+  <p><b>ε-soft policy:</b> π(a|s) ≥ ε/|A(s)| &gt; 0 for EVERY action in EVERY state — no action probability ever collapses to exactly 0 (a FLOOR, not a fixed/ceiling value).</p>
+  <h4>ε-greedy (most common ε-soft instance)</h4>
+  <div class="formula">π(a|s) = 1 − ε + ε/|A(s)|     if a = greedy action
+π(a|s) = ε/|A(s)|             otherwise</div>
+  <div class="worked"><b>Worked:</b> ε=0.2, |A|=3 → greedy=1−0.2+0.2/3≈<span class="ans">0.867</span>, each other≈<span class="ans">0.067</span> (check: 0.867+0.067+0.067=1 ✓)</div>
+
+  <p><b>Why it fixes the trap:</b> ε&gt;0 means every (s,a) pair retains probability bounded away from 0 → over infinitely many episodes, every pair sampled <b>infinitely often</b> → Q keeps updating, never permanently frozen.</p>
+
+  <h4>GLIE (Greedy in the Limit with Infinite Exploration)</h4>
+  <ul>
+    <li>Infinite exploration: ε<sub>t</sub>&gt;0 ∀t (every pair can still be sampled)</li>
+    <li>Greedy in limit: ε<sub>t</sub>→0 as t→∞ (policy converges to truly optimal/deterministic)</li>
+    <li>Classic schedule: ε<sub>t</sub>=1/t (Σε<sub>t</sub> diverges = infinite exploration; ε<sub>t</sub>→0 = greedy in limit)</li>
+  </ul>
+
+  <h4>Exploring Starts (ES) — the alternative fix</h4>
+  <table>
+    <tr><th></th><th>Exploring Starts</th><th>ε-soft</th></tr>
+    <tr><td>Policy during learning</td><td>Fully deterministic/greedy</td><td>Stochastic until ε→0</td></tr>
+    <tr><td>Exploration source</td><td>Random episode INIT (s₀,a₀)</td><td>Randomness in EVERY action choice</td></tr>
+    <tr><td>Practicality</td><td>Needs simulator reset control</td><td>Works anywhere, no special reset</td></tr>
+  </table>
+  <p>ES impractical for real robots/live systems (can't teleport environment to arbitrary state); ε-soft puts exploration burden on the <i>policy</i> instead.</p>
+  <div class="callout note"><span class="ic">i</span><span><b>Why DP never needed any of this:</b> DP recomputes EVERY (s,a) every sweep from the model — nothing is "visited" in an experiential sense, so there's no "unvisited pair" problem.</span></div>
+
+  <div class="widget" id="w-esoft"></div>
+
+  <h4>Worked MC control trace (backward G<sub>t</sub> computation pattern)</h4>
+  <p>Episode (γ=0.9): x,→,0,y,←,0,x,←,0,exit,−100 backward chain: −100→−90→−81→−72.9</p>
+  <p><b>Process:</b> compute G<sub>t</sub> <b>backward from termination</b> (last reward first), then filter to keep only FIRST visit of each (s,a) pair, then average into Q-table, then re-derive ε-soft policy from new greedy action.</p>
+  <p><b>Pattern (also Ch.3's Bellman seed):</b> G<sub>t</sub> = R<sub>t+1</sub> + γG<sub>t+1</sub> — always compute the LAST step's G first, then work backward.</p>
+  <div class="callout warn"><span class="ic">⚠</span><span>The REPEATED occurrence of an (s,a) pair later in the SAME episode is NOT a first-visit and gets discarded for first-visit MC.</span></div>
+  `
+},
+{
+  id:"ch4-offpolicy", title:"[Beyond Mid-Sem] Off-Policy MC & Importance Sampling",
+  html:`
+  <p><b>On-policy:</b> generate episodes under π, evaluate/improve that SAME π.<br>
+  <b>Off-policy:</b> behavior policy <i>b</i> generates data; target policy π is being learned. Requires <b>coverage</b>: π(a|s)&gt;0 ⟹ b(a|s)&gt;0.</p>
+
+  <h4>Importance sampling ratio</h4>
+  <div class="formula">ρ<sub>t</sub> = ∏<sub>k=t</sub><sup>T-1</sup> π(A<sub>k</sub>|S<sub>k</sub>) / b(A<sub>k</sub>|S<sub>k</sub>)</div>
+  <p>Model dynamics CANCEL OUT entirely — ρ depends only on action-selection probabilities of π and b, never on p(s',r|s,a) — this is what makes off-policy MC still model-free.</p>
+
+  <p><b>Ordinary IS</b> (divide by M, episode count) = high variance — one large ρ can swing the estimate wildly.<br>
+  <b>Weighted IS</b> (divide by Σρ<sub>m</sub> instead) = lower variance, biased while M small but bias shrinks; "almost always preferred" in practice.</p>
+
+  <div class="callout note"><span class="ic">i</span><span><b>MC→TD bridge:</b> MC must wait for episode end (G<sub>t</sub> only known then). TD (next topic) bootstraps a guess of G<sub>t</sub> from the very next step — combines MC's "learn from samples" with DP's "bootstrap off estimates" — "best of both worlds."</span></div>
+  `
+}
+];
+
+// ============================================================
+// QUICK REFERENCE TABLE + TOP EXAM TRAPS
+// ============================================================
+
+const QUICKREF_ROWS = [
+  ["TD update (Ch.1)", "V(S<sub>t</sub>)←V(S<sub>t</sub>)+α[V(S<sub>t+1</sub>)−V(S<sub>t</sub>)]"],
+  ["Sample-avg action value (Ch.2)", "Q<sub>t</sub>(a) = ΣR<sub>i</sub>𝟙(A<sub>i</sub>=a) / Σ𝟙(A<sub>i</sub>=a)"],
+  ["Constant-α update (Ch.2/3)", "Q<sub>n+1</sub> = Q<sub>n</sub> + α(R<sub>n</sub>−Q<sub>n</sub>)"],
+  ["ε-greedy P(greedy) (Ch.2)", "(1−ε) + ε/K"],
+  ["UCB (Ch.2)", "Q<sub>t</sub>(a) + c√(ln t/N<sub>t</sub>(a))"],
+  ["Softmax (Ch.2)", "e<sup>H(a)</sup> / Σe<sup>H(a')</sup>"],
+  ["Gradient bandit (Ch.2)", "H←H+α(R−R̄)(1−π) [chosen]; H←H−α(R−R̄)π [others]"],
+  ["Return, recursive (Ch.3/4)", "G<sub>t</sub> = R<sub>t+1</sub> + γG<sub>t+1</sub>"],
+  ["Return, constant tail (Ch.3)", "G<sub>t</sub> = R/(1−γ)"],
+  ["Bellman Expectation (Ch.3)", "V_π(s)=Σ<sub>a</sub>π(a|s)Σ<sub>s',r</sub>p(s',r|s,a)[r+γV_π(s')]"],
+  ["Bellman Optimality V* (Ch.3)", "V*(s)=max<sub>a</sub>Σ<sub>s',r</sub>p(s',r|s,a)[r+γV*(s')]"],
+  ["Bellman Optimality Q* (Ch.3)", "Q*(s,a)=Σ<sub>s',r</sub>p(s',r|s,a)[r+γmax<sub>a'</sub>Q*(s',a')]"],
+  ["Value Iteration (Ch.3)", "V<sub>k+1</sub>(s)←max<sub>a</sub>Σp(s',r|s,a)[r+γV<sub>k</sub>(s')]"],
+  ["First-visit MC (Ch.4)", "V(s)≈avg(G<sub>t</sub> : first visit to s per episode)"],
+  ["ε-soft floor (Ch.4)", "π(a|s) ≥ ε/|A(s)| &gt; 0"],
+  ["Importance sampling ratio (Ch.4)", "ρ<sub>t</sub> = ∏ π(A<sub>k</sub>|S<sub>k</sub>)/b(A<sub>k</sub>|S<sub>k</sub>)"],
+];
+
+const TRAPS = [
+  "<b>G<sub>t</sub> starts at R<sub>t+1</sub>, never R<sub>t</sub></b> (off-by-one, the single most common error)",
+  "<b>R/(1−γ) only applies to the constant TAIL</b>, not the whole non-constant sequence",
+  "<b>α (learning rate) ≠ ε (exploration rate)</b> — α controls update SIZE, ε controls action SELECTION. Totally independent knobs.",
+  "<b>Probabilities sum to 1 per (s,a) pair</b>, never across different actions/states",
+  "<b>max<sub>a'</sub> goes INSIDE the Σ</b> in the Bellman optimality equation for Q* (agent picks after environment reveals s')",
+  "<b>Policy Evaluation uses NO max</b> (follows the policy's own action) — using max there is accidentally doing Value Iteration",
+  "<b>VI out-of-place: use PREVIOUS iteration's V(s') for ALL states</b> in one sweep — never mix old/new",
+  '<b>"Model-free" ≠ "policy-free"</b> — MC/model-free methods still have and improve a policy',
+  "<b>A chosen action consistent with greedy is only POSSIBLY random</b>, never definitely — only a clearly non-greedy choice proves exploration occurred",
+  "<b>Optimistic initial values fail on non-stationary problems</b> (one-time burst, no ongoing exploration) — UCB/ε-soft explore forever",
+  "<b>Double-counting a state's repeat visit within one episode</b> as a separate first-visit sample (breaks i.i.d., that's every-visit, not first-visit)",
+  "<b>Using V_π (arbitrary policy) instead of V*/Q*</b> in the argmax policy-extraction formula only gives policy IMPROVEMENT, not the optimal policy",
+  "Don't forget <b>γ</b> in [r + γV(s')] — easy to drop under exam pressure",
+  "<b>Stationary ≠ constant</b> — stationary means the <i>distribution</i> is fixed; the sampled value still varies",
+];
+
+</script>
+<script>
+// ============================================================
+// INTERACTIVE WIDGETS
+// Each function renders into a container id and wires up events.
+// All widgets are pure-vanilla, no external libs, work offline.
+// ============================================================
+
+function fmt(n, d=4){
+  if (!isFinite(n)) return "—";
+  return Number(n.toFixed(d)).toString();
+}
+
+// ---------- Ch1: TD Update Stepper ----------
+function mountTDStepper(containerId){
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = `
+    <div class="widget-title">TD Update Stepper <span class="tag calc">CALC</span></div>
+    <div class="controls">
+      <div class="field"><label>V(S<sub>t</sub>)</label><input type="number" id="td-vst" value="0.5" step="0.05"></div>
+      <div class="field"><label>V(S<sub>t+1</sub>)</label><input type="number" id="td-vst1" value="1.0" step="0.05"></div>
+      <div class="field"><label>α (step size)</label><input type="number" id="td-alpha" value="0.3" step="0.05" min="0" max="1"></div>
+      <button class="btn" id="td-step-btn">Step</button>
+      <button class="btn secondary" id="td-reset-btn">Reset</button>
+    </div>
+    <div class="widget-out" id="td-out">Press Step to apply one TD update: V(S<sub>t</sub>) ← V(S<sub>t</sub>) + α[V(S<sub>t+1</sub>) − V(S<sub>t</sub>)]</div>
+  `;
+  let steps = 0;
+  const vstInput = el.querySelector("#td-vst");
+  const vst1Input = el.querySelector("#td-vst1");
+  const alphaInput = el.querySelector("#td-alpha");
+  const out = el.querySelector("#td-out");
+
+  function render(lastError=null){
+    const v = parseFloat(vstInput.value);
+    const v1 = parseFloat(vst1Input.value);
+    out.innerHTML = `Step <b>${steps}</b>: V(S<sub>t</sub>) = <span class="big">${fmt(v,4)}</span>  |  V(S<sub>t+1</sub>) = ${fmt(v1,4)}` +
+      (lastError!==null ? `\n<span class="dim">last TD error = ${fmt(lastError,4)}</span>` : "");
+  }
+  el.querySelector("#td-step-btn").addEventListener("click", ()=>{
+    const v = parseFloat(vstInput.value);
+    const v1 = parseFloat(vst1Input.value);
+    const a = parseFloat(alphaInput.value);
+    const error = v1 - v;
+    const newV = v + a*error;
+    vstInput.value = newV.toFixed(4);
+    steps++;
+    render(error);
+  });
+  el.querySelector("#td-reset-btn").addEventListener("click", ()=>{
+    vstInput.value = "0.5"; vst1Input.value = "1.0"; alphaInput.value="0.3";
+    steps = 0; render();
+  });
+  render();
+}
+
+// ---------- Ch1: Reward Episode Calculator ----------
+function mountRewardCalc(containerId){
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = `
+    <div class="widget-title">Episode Reward Calculator <span class="tag calc">CALC</span></div>
+    <div class="controls">
+      <div class="field"><label>Speed-limit steps (+2)</label><input type="number" id="rc-speed" value="3" min="0"></div>
+      <div class="field"><label>Lane-aligned steps (+4)</label><input type="number" id="rc-lane" value="2" min="0"></div>
+      <div class="field"><label>Erratic events (−3)</label><input type="number" id="rc-erratic" value="0" min="0"></div>
+      <div class="field"><label>Stop signs run (−5)</label><input type="number" id="rc-stop" value="1" min="0"></div>
+      <div class="field"><label>Off-road events (−10)</label><input type="number" id="rc-offroad" value="0" min="0"></div>
+      <div class="field"><label>Hit person? (−1000)</label><input type="number" id="rc-hit" value="0" min="0" max="1"></div>
+    </div>
+    <div class="widget-out" id="rc-out"></div>
+  `;
+  const ids = ["rc-speed","rc-lane","rc-erratic","rc-stop","rc-offroad","rc-hit"];
+  const weights = [2,4,-3,-5,-10,-1000];
+  const out = el.querySelector("#rc-out");
+  function render(){
+    let total = 0;
+    let parts = [];
+    ids.forEach((id,i)=>{
+      const v = parseFloat(el.querySelector("#"+id).value) || 0;
+      total += v*weights[i];
+      if (v !== 0) parts.push(`${v}×(${weights[i]>0?'+':''}${weights[i]})`);
+    });
+    out.innerHTML = `${parts.join(' + ').replace(/\+ -/g,'− ')} = <span class="big">${fmt(total,2)}</span> cumulative reward`;
+  }
+  ids.forEach(id => el.querySelector("#"+id).addEventListener("input", render));
+  render();
+}
+
+// ---------- Ch2: Q-value estimate from rewards ----------
+function mountQEstimate(containerId){
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = `
+    <div class="widget-title">Action-Value Estimator Q(a) <span class="tag calc">CALC</span></div>
+    <p style="font-size:12.5px;color:var(--text-faint);margin:0 0 10px;">Enter comma-separated rewards observed for each action. Leave blank for untried.</p>
+    <div class="controls">
+      <div class="field" style="min-width:140px;"><label>A1 rewards</label><input type="text" id="qe-a1" value="2"></div>
+      <div class="field" style="min-width:140px;"><label>A2 rewards</label><input type="text" id="qe-a2" value="3,3"></div>
+      <div class="field" style="min-width:140px;"><label>A3 rewards</label><input type="text" id="qe-a3" value="1"></div>
+      <div class="field" style="min-width:140px;"><label>A4 rewards</label><input type="text" id="qe-a4" value="1"></div>
+    </div>
+    <div class="widget-out" id="qe-out"></div>
+  `;
+  const ids=["qe-a1","qe-a2","qe-a3","qe-a4"];
+  const out = el.querySelector("#qe-out");
+  function render(){
+    let qs = [];
+    ids.forEach((id,i)=>{
+      const raw = el.querySelector("#"+id).value.trim();
+      if (!raw){ qs.push(null); return; }
+      const nums = raw.split(",").map(s=>parseFloat(s.trim())).filter(n=>!isNaN(n));
+      const avg = nums.reduce((a,b)=>a+b,0)/nums.length;
+      qs.push(avg);
+    });
+    let best = -Infinity, bestIdx = -1;
+    qs.forEach((q,i)=>{ if(q!==null && q>best){best=q; bestIdx=i;} });
+    let lines = qs.map((q,i)=> `Q(A${i+1}) = ${q===null?'<span class="dim">untried (0)</span>':fmt(q,3)}`);
+    out.innerHTML = lines.join("\n") + `\n\n<span class="big">Greedy action = A${bestIdx+1}</span>`;
+  }
+  ids.forEach(id => el.querySelector("#"+id).addEventListener("input", render));
+  render();
+}
+
+// ---------- Ch2: ε-greedy probability calculator ----------
+function mountEGreedy(containerId){
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = `
+    <div class="widget-title">ε-Greedy Probability Calculator <span class="tag calc">CALC</span></div>
+    <div class="controls">
+      <div class="field"><label>K (actions)</label><input type="number" id="eg-k" value="2" min="1" step="1"></div>
+      <div class="field"><label>ε (explore rate)</label><input type="number" id="eg-eps" value="0.5" min="0" max="1" step="0.05"></div>
+    </div>
+    <div class="widget-out" id="eg-out"></div>
+  `;
+  const kInput = el.querySelector("#eg-k");
+  const epsInput = el.querySelector("#eg-eps");
+  const out = el.querySelector("#eg-out");
+  function render(){
+    const K = parseFloat(kInput.value);
+    const eps = parseFloat(epsInput.value);
+    const pGreedy = (1-eps) + eps/K;
+    const pOther = eps/K;
+    const check = pGreedy + (K-1)*pOther;
+    out.innerHTML =
+`P(greedy) = (1−ε) + ε/K = (1−${eps}) + ${eps}/${K} = <span class="big">${fmt(pGreedy,4)}</span>
+P(each non-greedy) = ε/K = <span class="big">${fmt(pOther,4)}</span>
+<span class="dim">Check: P(greedy) + (K−1)×P(non-greedy) = ${fmt(check,4)} (should = 1)</span>`;
+  }
+  [kInput, epsInput].forEach(i => i.addEventListener("input", render));
+  render();
+}
+
+// ---------- Ch2: UCB score calculator ----------
+function mountUCB(containerId){
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = `
+    <div class="widget-title">UCB Score Calculator <span class="tag calc">CALC</span></div>
+    <div class="controls">
+      <div class="field"><label>Q(a)</label><input type="number" id="ucb-q" value="0.8" step="0.1"></div>
+      <div class="field"><label>N(a) — times tried</label><input type="number" id="ucb-n" value="1" min="0" step="1"></div>
+      <div class="field"><label>t — current step</label><input type="number" id="ucb-t" value="100" min="1" step="1"></div>
+      <div class="field"><label>c — confidence</label><input type="number" id="ucb-c" value="2" min="0" step="0.5"></div>
+    </div>
+    <div class="widget-out" id="ucb-out"></div>
+  `;
+  const ids=["ucb-q","ucb-n","ucb-t","ucb-c"];
+  const out = el.querySelector("#ucb-out");
+  function render(){
+    const Q = parseFloat(el.querySelector("#ucb-q").value);
+    const N = parseFloat(el.querySelector("#ucb-n").value);
+    const t = parseFloat(el.querySelector("#ucb-t").value);
+    const c = parseFloat(el.querySelector("#ucb-c").value);
+    if (N === 0){
+      out.innerHTML = `N(a)=0 → ln(t)/N(a) → division by zero → <span class="big">bonus = +∞</span>\n<span class="dim">Untried actions are always selected first (automatic warm-up).</span>`;
+      return;
+    }
+    const lnT = Math.log(t);
+    const bonus = c*Math.sqrt(lnT/N);
+    const ucbScore = Q + bonus;
+    out.innerHTML =
+`ln(t) = ln(${t}) = ${fmt(lnT,3)}
+bonus = c·√(ln t / N) = ${c}·√(${fmt(lnT,3)}/${N}) = <b>${fmt(bonus,4)}</b>
+UCB score = Q(a) + bonus = ${Q} + ${fmt(bonus,4)} = <span class="big">${fmt(ucbScore,4)}</span>`;
+  }
+  ids.forEach(id => el.querySelector("#"+id).addEventListener("input", render));
+  render();
+}
+
+// ---------- Ch2: Softmax calculator ----------
+function mountSoftmax(containerId){
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = `
+    <div class="widget-title">Softmax Preference Calculator <span class="tag calc">CALC</span></div>
+    <div class="controls">
+      <div class="field" style="min-width:220px;"><label>Preferences H (comma-separated)</label><input type="text" id="sm-h" value="6,9,2"></div>
+    </div>
+    <div class="widget-out" id="sm-out"></div>
+  `;
+  const input = el.querySelector("#sm-h");
+  const out = el.querySelector("#sm-out");
+  function render(){
+    const hs = input.value.split(",").map(s=>parseFloat(s.trim())).filter(n=>!isNaN(n));
+    if (hs.length===0){ out.innerHTML="Enter preference values."; return; }
+    const exps = hs.map(h=>Math.exp(h));
+    const sum = exps.reduce((a,b)=>a+b,0);
+    const probs = exps.map(e=>e/sum);
+    let bars = hs.map((h,i)=>{
+      const pct = (probs[i]*100).toFixed(1);
+      return `<div class="bar-row"><span class="bar-label">a${i+1} (H=${h})</span><div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div><span class="bar-val">${fmt(probs[i],4)}</span></div>`;
+    }).join("");
+    out.innerHTML = bars + `<div class="dim" style="margin-top:8px;">Σ probabilities = ${fmt(probs.reduce((a,b)=>a+b,0),4)}</div>`;
+  }
+  input.addEventListener("input", render);
+  render();
+}
+
+// ---------- Ch3: Return (Gt) calculator with constant-tail detection ----------
+function mountReturns(containerId){
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = `
+    <div class="widget-title">Return G<sub>t</sub> Calculator (constant-tail shortcut) <span class="tag calc">CALC</span></div>
+    <p style="font-size:12.5px;color:var(--text-faint);margin:0 0 10px;">Enter R₂ (one-off), then the constant reward from R₃ onward, and γ. Mirrors the "exact exam numerical".</p>
+    <div class="controls">
+      <div class="field"><label>R₂ (one-off)</label><input type="number" id="ret-r2" value="2" step="0.5"></div>
+      <div class="field"><label>Constant R (R₃, R₄, …)</label><input type="number" id="ret-rc" value="7" step="0.5"></div>
+      <div class="field"><label>γ</label><input type="number" id="ret-gamma" value="0.1" min="0" max="0.999" step="0.05"></div>
+    </div>
+    <div class="widget-out" id="ret-out"></div>
+  `;
+  const ids=["ret-r2","ret-rc","ret-gamma"];
+  const out = el.querySelector("#ret-out");
+  function render(){
+    const r2 = parseFloat(el.querySelector("#ret-r2").value);
+    const rc = parseFloat(el.querySelector("#ret-rc").value);
+    const g = parseFloat(el.querySelector("#ret-gamma").value);
+    const g2 = rc/(1-g);
+    const g1 = r2 + g*g2;
+    out.innerHTML =
+`G₂ = R/(1−γ) = ${rc}/(1−${g}) = <span class="big">${fmt(g2,4)}</span>
+G₁ = R₂ + γ·G₂ = ${r2} + ${g}×${fmt(g2,4)} = <span class="big">${fmt(g1,4)}</span>`;
+  }
+  ids.forEach(id => el.querySelector("#"+id).addEventListener("input", render));
+  render();
+}
+
+// ---------- Ch3: Bellman expectation verifier (4-neighbor gridworld) ----------
+function mountBellman(containerId){
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = `
+    <div class="widget-title">Bellman Expectation Verifier (equiprobable 4-action gridworld) <span class="tag calc">CALC</span></div>
+    <div class="controls">
+      <div class="field"><label>V(North)</label><input type="number" id="bv-n" value="2.3" step="0.1"></div>
+      <div class="field"><label>V(South)</label><input type="number" id="bv-s" value="-0.4" step="0.1"></div>
+      <div class="field"><label>V(West)</label><input type="number" id="bv-w" value="0.4" step="0.1"></div>
+      <div class="field"><label>V(East)</label><input type="number" id="bv-e" value="0.7" step="0.1"></div>
+      <div class="field"><label>γ</label><input type="number" id="bv-g" value="0.9" step="0.05" min="0" max="1"></div>
+    </div>
+    <div class="widget-out" id="bv-out"></div>
+  `;
+  const ids=["bv-n","bv-s","bv-w","bv-e","bv-g"];
+  const out = el.querySelector("#bv-out");
+  function render(){
+    const n = parseFloat(el.querySelector("#bv-n").value);
+    const s = parseFloat(el.querySelector("#bv-s").value);
+    const w = parseFloat(el.querySelector("#bv-w").value);
+    const e = parseFloat(el.querySelector("#bv-e").value);
+    const g = parseFloat(el.querySelector("#bv-g").value);
+    const sum = n+s+w+e;
+    const result = 0.25*g*sum;
+    out.innerHTML =
+`v(s) = 0.25×γ×(N+S+W+E) = 0.25×${g}×(${n}${s>=0?'+':''}${s}${w>=0?'+':''}${w}${e>=0?'+':''}${e})
+     = 0.25×${g}×${fmt(sum,3)}
+     = <span class="big">${fmt(result,4)}</span>`;
+  }
+  ids.forEach(id => el.querySelector("#"+id).addEventListener("input", render));
+  render();
+}
+
+// ---------- Ch3: Value Iteration stepper (race car) ----------
+function mountVI(containerId){
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = `
+    <div class="widget-title">Value Iteration Stepper — Race Car MDP <span class="tag calc">CALC</span></div>
+    <p style="font-size:12.5px;color:var(--text-faint);margin:0 0 10px;">Cool: Slow→Cool(r=1,p=1); Fast→Cool(r=2,p=0.5)/Warm(r=2,p=0.5). Warm: Slow→Cool(r=1,p=0.5)/Warm(r=1,p=0.5); Fast→Overheated(r=−10,p=1). γ=0.9.</p>
+    <div class="controls">
+      <button class="btn" id="vi-step-btn">Next Iteration</button>
+      <button class="btn secondary" id="vi-reset-btn">Reset</button>
+    </div>
+    <div class="widget-out" id="vi-out"></div>
+  `;
+  const gamma = 0.9;
+  let Vc = 0, Vw = 0, iter = 0;
+  const out = el.querySelector("#vi-out");
+  function render(detail=""){
+    out.innerHTML = `Iteration <b>${iter}</b>:  V(Cool) = <span class="big">${fmt(Vc,4)}</span>   V(Warm) = <span class="big">${fmt(Vw,4)}</span>\n${detail}`;
+  }
+  el.querySelector("#vi-step-btn").addEventListener("click", ()=>{
+    const slowC = 1.0*(1 + gamma*Vc);
+    const fastC = 0.5*(2 + gamma*Vc) + 0.5*(2 + gamma*Vw);
+    const newVc = Math.max(slowC, fastC);
+    const slowW = 0.5*(1 + gamma*Vc) + 0.5*(1 + gamma*Vw);
+    const fastW = 1.0*(-10 + gamma*0);
+    const newVw = Math.max(slowW, fastW);
+    iter++;
+    const detail = `Cool: Slow=${fmt(slowC,3)}, Fast=${fmt(fastC,3)} → ${fastC>slowC?'Fast':'Slow'} wins\nWarm: Slow=${fmt(slowW,3)}, Fast=${fmt(fastW,3)} → ${fastW>slowW?'Fast':'Slow'} wins`;
+    Vc = newVc; Vw = newVw;
+    render(detail);
+  });
+  el.querySelector("#vi-reset-btn").addEventListener("click", ()=>{
+    Vc=0; Vw=0; iter=0; render();
+  });
+  render();
+}
+
+// ---------- Ch4: MC return backward calculator ----------
+function mountMCReturns(containerId){
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = `
+    <div class="widget-title">Backward G<sub>t</sub> Computation <span class="tag calc">CALC</span></div>
+    <p style="font-size:12.5px;color:var(--text-faint);margin:0 0 10px;">Enter rewards in order R₁, R₂, … (comma-separated). Computes Gₜ backward from the terminal state.</p>
+    <div class="controls">
+      <div class="field" style="min-width:220px;"><label>Rewards (R₁,R₂,…)</label><input type="text" id="mcr-rewards" value="1,2,3"></div>
+      <div class="field"><label>γ</label><input type="number" id="mcr-gamma" value="0.9" min="0" max="1" step="0.05"></div>
+    </div>
+    <div class="widget-out" id="mcr-out"></div>
+  `;
+  const rInput = el.querySelector("#mcr-rewards");
+  const gInput = el.querySelector("#mcr-gamma");
+  const out = el.querySelector("#mcr-out");
+  function render(){
+    const rewards = rInput.value.split(",").map(s=>parseFloat(s.trim())).filter(n=>!isNaN(n));
+    const g = parseFloat(gInput.value);
+    if (rewards.length===0){ out.innerHTML="Enter rewards."; return; }
+    const T = rewards.length;
+    let G = new Array(T+1).fill(0); // G[T] = 0 (terminal)
+    for (let t=T-1; t>=0; t--){
+      G[t] = rewards[t] + g*G[t+1];
+    }
+    let lines = [];
+    for (let t=T-1; t>=0; t--){
+      lines.push(`G${t} = R${t+1} + γ·G${t+1} = ${rewards[t]} + ${g}×${fmt(G[t+1],3)} = <b>${fmt(G[t],4)}</b>`);
+    }
+    out.innerHTML = lines.join("\n") + `\n\n<span class="big">G₀ = ${fmt(G[0],4)}</span>`;
+  }
+  [rInput, gInput].forEach(i => i.addEventListener("input", render));
+  render();
+}
+
+// ---------- Ch4: Local-optimum trap visualizer ----------
+function mountTrapDemo(containerId){
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = `
+    <div class="widget-title">Why Greedy MC Control Gets Stuck <span class="tag calc">CALC</span></div>
+    <p style="font-size:12.5px;color:var(--text-faint);margin:0 0 10px;">Two actions from state w. True value of "toward treasure" is +10 (discovered only with exploration); the unlucky first sample was −2. Click to simulate pure-greedy vs ε-soft.</p>
+    <div class="controls">
+      <button class="btn" id="trap-greedy-btn">Run 10 episodes — Pure Greedy (ε=0)</button>
+      <button class="btn secondary" id="trap-soft-btn">Run 10 episodes — ε-soft (ε=0.2)</button>
+      <button class="btn secondary" id="trap-reset-btn">Reset</button>
+    </div>
+    <div class="widget-out" id="trap-out">Click a button to simulate.</div>
+  `;
+  const out = el.querySelector("#trap-out");
+
+  function simulate(useEsoft){
+    // Wsafe true value ~+1 (low variance), Wtreasure true value ~+10 but high variance / rarely sampled early
+    let qSafe = null, qTreasure = -2; // treasure starts with one unlucky sample of -2
+    let nSafe = 0, nTreasure = 1;
+    let log = [];
+    qSafe = 1; nSafe = 1; // first sample of safe = +1
+    log.push(`Ep1: tried Wtreasure → G=−2. Q(treasure)=−2`);
+    log.push(`Ep2: tried Wsafe → G=+1. Q(safe)=+1`);
+    for (let ep=3; ep<=12; ep++){
+      let chooseTreasure;
+      if (useEsoft){
+        chooseTreasure = Math.random() < 0.2 ? (Math.random()<0.5) : (qTreasure > qSafe);
+      } else {
+        chooseTreasure = qTreasure > qSafe; // pure greedy — never explores once behind
+      }
+      if (chooseTreasure){
+        // sample from true distribution: mean +10, std 4 (eventually reveals high value)
+        const g = 10 + (Math.random()-0.5)*8;
+        nTreasure++;
+        qTreasure = qTreasure + (g-qTreasure)/nTreasure;
+        log.push(`Ep${ep}: tried Wtreasure → G=${fmt(g,2)}. Q(treasure)=${fmt(qTreasure,3)} (n=${nTreasure})`);
+      } else {
+        const g = 1 + (Math.random()-0.5)*0.4;
+        nSafe++;
+        qSafe = qSafe + (g-qSafe)/nSafe;
+        log.push(`Ep${ep}: tried Wsafe → G=${fmt(g,2)}. Q(safe)=${fmt(qSafe,3)} (n=${nSafe})`);
+      }
+    }
+    const verdict = useEsoft
+      ? (qTreasure > qSafe ? `<span class="big">✓ Discovered: Q(treasure)=${fmt(qTreasure,3)} now beats Q(safe)=${fmt(qSafe,3)}</span>`
+                            : `Still converging — Q(treasure)=${fmt(qTreasure,3)} vs Q(safe)=${fmt(qSafe,3)} (run again, ε keeps sampling)`)
+      : `<span class="big" style="color:var(--warn);">✗ Locked on Wsafe forever — Q(treasure)=${fmt(qTreasure,3)} frozen after episode 1, never resampled (n=${nTreasure})</span>`;
+    out.innerHTML = log.join("\n") + "\n\n" + verdict;
+  }
+  el.querySelector("#trap-greedy-btn").addEventListener("click", ()=>simulate(false));
+  el.querySelector("#trap-soft-btn").addEventListener("click", ()=>simulate(true));
+  el.querySelector("#trap-reset-btn").addEventListener("click", ()=>{ out.innerHTML="Click a button to simulate."; });
+}
+
+// ---------- Ch4: ε-soft policy distribution calculator ----------
+function mountEsoft(containerId){
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = `
+    <div class="widget-title">ε-soft / ε-greedy Policy Distribution <span class="tag calc">CALC</span></div>
+    <div class="controls">
+      <div class="field"><label>|A(s)| — number of actions</label><input type="number" id="es-k" value="3" min="1" step="1"></div>
+      <div class="field"><label>ε</label><input type="number" id="es-eps" value="0.2" min="0" max="1" step="0.05"></div>
+    </div>
+    <div class="widget-out" id="es-out"></div>
+  `;
+  const ids=["es-k","es-eps"];
+  const out = el.querySelector("#es-out");
+  function render(){
+    const K = parseFloat(el.querySelector("#es-k").value);
+    const eps = parseFloat(el.querySelector("#es-eps").value);
+    const greedy = 1 - eps + eps/K;
+    const other = eps/K;
+    const check = greedy + (K-1)*other;
+    out.innerHTML =
+`Greedy action: π(a*|s) = 1−ε+ε/|A| = 1−${eps}+${eps}/${K} = <span class="big">${fmt(greedy,4)}</span>
+Each other action: π(a|s) = ε/|A| = <span class="big">${fmt(other,4)}</span>
+<span class="dim">Check: greedy + (K−1)×other = ${fmt(check,4)} (should = 1)</span>`;
+  }
+  ids.forEach(id => el.querySelector("#"+id).addEventListener("input", render));
+  render();
+}
+
+// ---------- Mount all widgets (called after content is injected) ----------
+function mountAllWidgets(){
+  mountTDStepper("w-td-stepper");
+  mountRewardCalc("w-reward-calc");
+  mountQEstimate("w-qestimate");
+  mountEGreedy("w-egreedy");
+  mountUCB("w-ucb");
+  mountSoftmax("w-softmax");
+  mountReturns("w-returns");
+  mountBellman("w-bellman");
+  mountVI("w-vi");
+  mountMCReturns("w-mcreturns");
+  mountTrapDemo("w-trap");
+  mountEsoft("w-esoft");
+}
+
+</script>
+<script>
+// ============================================================
+// APP — renders topic cards, wires collapse, search, nav, scrollspy
+// ============================================================
+
+const HEADER_OFFSET = 24; // breathing room above a scrolled-to section
+
+function renderTopics(containerId, topics){
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  topics.forEach(topic => {
+    const card = document.createElement("article");
+    card.className = "topic";
+    card.id = topic.id;
+
+    const tagHtml = topic.tag === "hot"
+      ? `<span class="tag hot">HOT</span>`
+      : topic.tag === "calc"
+        ? `<span class="tag calc">CALC</span>`
+        : "";
+
+    const bodyId = `${topic.id}-body`;
+    const headId = `${topic.id}-head`;
+
+    card.innerHTML = `
+      <button class="topic-head" id="${headId}" type="button"
+              aria-expanded="false" aria-controls="${bodyId}">
+        <span class="chevron" aria-hidden="true">▸</span>
+        <h3>${topic.title}</h3>
+        ${tagHtml}
+      </button>
+      <div class="topic-body" id="${bodyId}" role="region" aria-labelledby="${headId}">
+        <div class="topic-body-inner">${topic.html}</div>
+      </div>
+    `;
+
+    card.querySelector(".topic-head").addEventListener("click", () => {
+      toggleTopic(card);
+    });
+
+    container.appendChild(card);
+  });
+}
+
+function toggleTopic(card, forceOpen){
+  const willOpen = forceOpen !== undefined ? forceOpen : !card.classList.contains("open");
+  card.classList.toggle("open", willOpen);
+  const head = card.querySelector(".topic-head");
+  const body = card.querySelector(".topic-body");
+  head.setAttribute("aria-expanded", String(willOpen));
+
+  if (willOpen){
+    body.style.display = "block";
+    body.style.height = "0px";
+    requestAnimationFrame(() => {
+      const target = body.scrollHeight;
+      body.style.height = target + "px";
+    });
+    body.addEventListener("transitionend", function onEnd(e){
+      if (e.propertyName === "height" && card.classList.contains("open")){
+        body.style.height = "auto";
+      }
+      body.removeEventListener("transitionend", onEnd);
+    });
+  } else {
+    const current = body.scrollHeight;
+    body.style.height = current + "px";
+    requestAnimationFrame(() => { body.style.height = "0px"; });
+    body.addEventListener("transitionend", function onEnd(e){
+      if (e.propertyName === "height" && !card.classList.contains("open")){
+        body.style.display = "none";
+      }
+      body.removeEventListener("transitionend", onEnd);
+    });
+  }
+}
+
+function renderQuickref(){
+  const container = document.getElementById("quickref-content");
+  if (!container) return;
+  let rows = QUICKREF_ROWS.map(([label, formula]) =>
+    `<tr><td style="width:34%;">${label}</td><td><code style="font-family:var(--mono);color:#cdeee4;">${formula}</code></td></tr>`
+  ).join("");
+  container.innerHTML = `<table><tr><th>Concept</th><th>Formula</th></tr>${rows}</table>`;
+}
+
+function renderTraps(){
+  const container = document.getElementById("traps-content");
+  if (!container) return;
+  container.innerHTML = TRAPS.map((t, i) =>
+    `<div class="trap"><div class="n">${i+1}</div><div class="t">${t}</div></div>`
+  ).join("");
+}
+
+// ---------- Search ----------
+function setupSearch(){
+  const input = document.getElementById("search");
+  const clearBtn = document.getElementById("search-clear");
+  const countEl = document.getElementById("search-count");
+  const allTopicCards = () => document.querySelectorAll(".topic");
+  const allChapters = () => document.querySelectorAll(".chapter");
+
+  function clear(){
+    input.value = "";
+    allTopicCards().forEach(c => c.classList.remove("search-hide"));
+    allChapters().forEach(c => c.classList.remove("search-hide"));
+    countEl.textContent = "";
+    clearBtn.classList.remove("show");
+    input.focus();
+  }
+
+  function runSearch(){
+    const q = input.value.trim().toLowerCase();
+    clearBtn.classList.toggle("show", q.length > 0);
+
+    if (!q){
+      allTopicCards().forEach(c => c.classList.remove("search-hide"));
+      allChapters().forEach(c => c.classList.remove("search-hide"));
+      countEl.textContent = "";
+      return;
+    }
+    let matchCount = 0;
+    allChapters().forEach(chapter => {
+      let anyVisible = false;
+      const topics = chapter.querySelectorAll(".topic");
+      topics.forEach(topic => {
+        const text = topic.textContent.toLowerCase();
+        const isMatch = text.includes(q);
+        topic.classList.toggle("search-hide", !isMatch);
+        if (isMatch){
+          anyVisible = true;
+          matchCount++;
+          if (!topic.classList.contains("open")) toggleTopic(topic, true);
+        }
+      });
+      if (topics.length === 0){
+        const text = chapter.textContent.toLowerCase();
+        anyVisible = text.includes(q);
+      }
+      chapter.classList.toggle("search-hide", !anyVisible && topics.length > 0);
+    });
+    countEl.textContent = matchCount > 0
+      ? `${matchCount} topic${matchCount===1?'':'s'} match`
+      : "No matches — try a different term";
+  }
+
+  input.addEventListener("input", runSearch);
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") clear();
+  });
+  clearBtn.addEventListener("click", clear);
+}
+
+// ---------- Scrollspy for sidebar active link ----------
+let _scrollspySuspended = false;
+
+function setupScrollspy(){
+  const links = Array.from(document.querySelectorAll(".toc-link"));
+  const targets = links.map(l => document.querySelector(l.getAttribute("href"))).filter(Boolean);
+
+  function setActive(idx){
+    links.forEach((l, i) => l.classList.toggle("active", i === idx));
+  }
+
+  function onScroll(){
+    if (_scrollspySuspended) return;
+    let activeIdx = -1;
+    const scrollPos = window.scrollY + 140;
+    targets.forEach((t, i) => {
+      if (t && t.getBoundingClientRect().top + window.scrollY <= scrollPos) activeIdx = i;
+    });
+    setActive(activeIdx);
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll);
+  onScroll();
+
+  return { setActive: (link) => setActive(links.indexOf(link)) };
+}
+
+// ---------- Scroll-to-target, waiting for any expand transition to finish ----------
+// Avoids the bug where scrolling fires before a just-expanded card has taken
+// its final height, landing the viewport at the wrong offset.
+let _navToken = 0;
+function scrollToTarget(target, behavior, onDone){
+  const myToken = ++_navToken; // supersede any in-flight navigation
+  const body = target.classList.contains("topic") ? target.querySelector(".topic-body") : null;
+
+  function doScroll(){
+    if (myToken !== _navToken) return; // a newer navigation took over
+    const top = target.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET;
+    window.scrollTo({ top, behavior });
+    if (onDone) onDone();
+  }
+
+  if (body && body.style.height !== "auto"){
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      requestAnimationFrame(doScroll);
+    };
+    body.addEventListener("transitionend", finish, { once: true });
+    setTimeout(finish, 260);
+  } else {
+    requestAnimationFrame(() => requestAnimationFrame(doScroll));
+  }
+}
+
+// ---------- TOC click: expand target + scroll to correct position ----------
+function setupTocNavigation(scrollspy){
+  document.querySelectorAll(".toc-link").forEach(link => {
+    link.addEventListener("click", (e) => {
+      const href = link.getAttribute("href");
+      if (!href || !href.startsWith("#")) return;
+      const targetId = href.slice(1);
+      const target = document.getElementById(targetId);
+      if (!target) return;
+
+      e.preventDefault();
+
+      // Reflect the click immediately — don't wait for scroll position to
+      // settle before showing which section is "active".
+      if (scrollspy) scrollspy.setActive(link);
+      _scrollspySuspended = true;
+
+      const isTopic = target.classList.contains("topic");
+      if (isTopic && !target.classList.contains("open")){
+        toggleTopic(target, true);
+      }
+
+      history.pushState(null, "", href);
+      scrollToTarget(target, "smooth", () => {
+        waitForScrollEnd(() => { _scrollspySuspended = false; });
+      });
+
+      target.setAttribute("tabindex", "-1");
+      target.focus({ preventScroll: true });
+    });
+  });
+}
+
+// Calls `cb` once window.scrollY has stopped changing for a short interval —
+// used to know when a smooth-scroll animation has actually finished, rather
+// than guessing a fixed delay (smooth-scroll duration varies with distance).
+function waitForScrollEnd(cb){
+  let called = false;
+  const fire = () => { if (called) return; called = true; cb(); };
+
+  let lastY = window.scrollY;
+  let stableFrames = 0;
+  function check(){
+    if (called) return;
+    const y = window.scrollY;
+    if (Math.abs(y - lastY) < 0.5){
+      stableFrames++;
+    } else {
+      stableFrames = 0;
+      lastY = y;
+    }
+    if (stableFrames >= 4){
+      fire();
+      return;
+    }
+    requestAnimationFrame(check);
+  }
+  requestAnimationFrame(check);
+  setTimeout(fire, 1500); // absolute safety net
+}
+
+// ---------- Expand / collapse all ----------
+function setupExpandCollapseAll(){
+  const expandBtn = document.getElementById("expand-all");
+  const collapseBtn = document.getElementById("collapse-all");
+  if (expandBtn){
+    expandBtn.addEventListener("click", () => {
+      document.querySelectorAll(".topic:not(.open)").forEach(c => toggleTopic(c, true));
+    });
+  }
+  if (collapseBtn){
+    collapseBtn.addEventListener("click", () => {
+      document.querySelectorAll(".topic.open").forEach(c => toggleTopic(c, false));
+    });
+  }
+}
+
+// ---------- Handle a deep link present on initial load ----------
+function handleInitialHash(){
+  if (!location.hash) return;
+  const target = document.querySelector(location.hash);
+  if (!target) return;
+  if (target.classList.contains("topic")){
+    toggleTopic(target, true);
+  }
+  scrollToTarget(target, "auto");
+}
+
+// ---------- Back to top button ----------
+function setupBackToTop(){
+  const btn = document.getElementById("backTop");
+  window.addEventListener("scroll", () => {
+    btn.classList.toggle("show", window.scrollY > 500);
+  }, { passive: true });
+  btn.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+}
+
+// ---------- Init ----------
+document.addEventListener("DOMContentLoaded", () => {
+  renderTopics("ch1-content", CH1_TOPICS);
+  renderTopics("ch2-content", CH2_TOPICS);
+  renderTopics("ch3-content", CH3_TOPICS);
+  renderTopics("ch4-content", CH4_TOPICS);
+  renderQuickref();
+  renderTraps();
+
+  mountAllWidgets();
+
+  setupSearch();
+  const scrollspy = setupScrollspy();
+  setupTocNavigation(scrollspy);
+  setupExpandCollapseAll();
+  setupBackToTop();
+
+  const first = document.querySelector(".topic");
+  if (first) toggleTopic(first, true);
+
+  handleInitialHash();
+});
+
+</script>
+</body>
+</html>
