@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACI Lecture 5 · Local Search & Hill Climbing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#070B14; --surface:#0E1422; --surface2:#141929; --surface3:#1A2035;
+  --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.12);
+  --text:#E2E8F8; --muted:#6B7A9F; --muted2:#8A97BC;
+  --blue:#4D9EFF; --blue-dim:rgba(77,158,255,0.10); --blue-glow:rgba(77,158,255,0.20);
+  --amber:#F59E0B; --amber-dim:rgba(245,158,11,0.10);
+  --green:#10B981; --green-dim:rgba(16,185,129,0.10);
+  --red:#F87171; --red-dim:rgba(248,113,113,0.10);
+  --purple:#A78BFA; --purple-dim:rgba(167,139,250,0.10);
+  --code-bg:#080C18; --radius-sm:6px; --radius:10px; --radius-lg:16px;
+  --nav-w:240px; --reading-w:720px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;font-size:15px;line-height:1.75;min-height:100vh;-webkit-font-smoothing:antialiased;}
+.layout{display:flex;min-height:100vh;}
+.rail{width:var(--nav-w);background:var(--surface);border-right:1px solid var(--border);position:fixed;top:0;left:0;bottom:0;overflow-y:auto;overflow-x:hidden;z-index:200;display:flex;flex-direction:column;scrollbar-width:thin;scrollbar-color:var(--surface3) transparent;}
+.rail::-webkit-scrollbar{width:4px;} .rail::-webkit-scrollbar-track{background:transparent;} .rail::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:4px;}
+.rail-brand{padding:1.5rem 1.25rem 1rem;border-bottom:1px solid var(--border);flex-shrink:0;}
+.rail-course{font-family:'Fira Code',monospace;font-size:0.65rem;color:var(--blue);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.35rem;}
+.rail-title{font-family:'Instrument Serif',serif;font-size:1.05rem;color:var(--text);line-height:1.3;}
+.rail-subtitle{font-size:0.72rem;color:var(--muted);margin-top:0.25rem;}
+.rail-progress-wrap{padding:1rem 1.25rem 0.75rem;border-bottom:1px solid var(--border);flex-shrink:0;}
+.rail-progress-label{font-size:0.68rem;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:0.5rem;display:flex;justify-content:space-between;align-items:center;}
+.rail-progress-bar{height:3px;background:var(--surface3);border-radius:2px;overflow:hidden;}
+.rail-progress-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--green));border-radius:2px;transition:width 0.5s ease;width:0%;}
+.rail-nav{flex:1;padding:0.75rem 0;overflow-y:auto;}
+.nav-link{display:flex;align-items:center;gap:0.65rem;padding:0.5rem 1.25rem;text-decoration:none;color:var(--muted);font-size:0.8rem;font-weight:450;transition:color 0.18s,background 0.18s;position:relative;line-height:1.35;}
+.nav-link:hover{color:var(--text);background:var(--surface2);}
+.nav-link.active{color:var(--blue);background:var(--blue-dim);font-weight:500;}
+.nav-link.active::before{content:'';position:absolute;left:0;top:4px;bottom:4px;width:2px;background:var(--blue);border-radius:1px;}
+.nav-dot{width:6px;height:6px;border-radius:50%;background:var(--surface3);border:1px solid var(--border2);flex-shrink:0;transition:background 0.3s;}
+.nav-link.active .nav-dot{background:var(--blue);border-color:var(--blue);box-shadow:0 0 6px var(--blue-glow);}
+.nav-link.visited .nav-dot{background:var(--green);}
+.nav-link-text{flex:1;}
+.nav-check{font-size:0.65rem;color:var(--green);opacity:0;transition:opacity 0.3s;}
+.nav-link.visited .nav-check{opacity:1;}
+.rail-footer{padding:1rem 1.25rem;border-top:1px solid var(--border);flex-shrink:0;}
+.rail-footer-text{font-size:0.7rem;color:var(--muted);line-height:1.5;}
+.mobile-bar{display:none;position:fixed;top:0;left:0;right:0;height:52px;background:var(--surface);border-bottom:1px solid var(--border);z-index:300;padding:0 1rem;align-items:center;justify-content:space-between;}
+.mobile-bar-title{font-size:0.88rem;font-weight:600;color:var(--text);}
+.mobile-menu-btn{background:none;border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--muted2);cursor:pointer;padding:0.35rem 0.65rem;font-size:0.8rem;}
+.content{margin-left:var(--nav-w);flex:1;min-width:0;}
+.hero{background:var(--surface);border-bottom:1px solid var(--border);padding:4rem 3rem 3.5rem;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;top:-60px;right:-80px;width:400px;height:400px;background:radial-gradient(circle,rgba(77,158,255,0.08) 0%,transparent 65%);pointer-events:none;}
+.hero::after{content:'';position:absolute;bottom:-40px;left:30%;width:300px;height:300px;background:radial-gradient(circle,rgba(16,185,129,0.05) 0%,transparent 65%);pointer-events:none;}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:0.5rem;font-family:'Fira Code',monospace;font-size:0.72rem;color:var(--blue);background:var(--blue-dim);border:1px solid rgba(77,158,255,0.2);padding:0.3rem 0.85rem;border-radius:999px;letter-spacing:0.06em;margin-bottom:1.5rem;position:relative;}
+.hero-eyebrow::before{content:'';width:6px;height:6px;background:var(--blue);border-radius:50%;animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.5;transform:scale(0.8);}}
+.hero h1{font-family:'Instrument Serif',serif;font-size:clamp(2rem,4vw,3.2rem);font-weight:400;line-height:1.15;color:var(--text);position:relative;margin-bottom:1rem;}
+.hero h1 em{font-style:italic;color:var(--blue);}
+.hero-desc{font-size:1rem;color:var(--muted2);max-width:540px;position:relative;line-height:1.7;}
+.hero-meta{display:flex;gap:1.5rem;margin-top:2rem;flex-wrap:wrap;position:relative;}
+.hero-meta-item{display:flex;align-items:center;gap:0.4rem;font-size:0.82rem;color:var(--muted);}
+.hero-meta-icon{color:var(--blue);}
+.page-body{max-width:calc(var(--reading-w) + 6rem);margin:0 auto;padding:3rem 3rem 6rem;}
+.chapter{margin-bottom:4rem;scroll-margin-top:24px;}
+.chapter-header{display:flex;align-items:flex-start;gap:1rem;margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border);}
+.chapter-num{font-family:'Fira Code',monospace;font-size:0.72rem;color:var(--blue);background:var(--blue-dim);border:1px solid rgba(77,158,255,0.2);padding:0.25rem 0.65rem;border-radius:var(--radius-sm);letter-spacing:0.08em;flex-shrink:0;margin-top:0.2rem;white-space:nowrap;}
+.chapter-num.amber{color:var(--amber);background:var(--amber-dim);border-color:rgba(245,158,11,0.2);}
+.chapter-num.green{color:var(--green);background:var(--green-dim);border-color:rgba(16,185,129,0.2);}
+.chapter-num.red{color:var(--red);background:var(--red-dim);border-color:rgba(248,113,113,0.2);}
+.chapter-num.purple{color:var(--purple);background:var(--purple-dim);border-color:rgba(167,139,250,0.2);}
+.chapter-title{font-family:'Instrument Serif',serif;font-size:1.6rem;font-weight:400;color:var(--text);line-height:1.25;}
+.chapter-subtitle{font-size:0.82rem;color:var(--muted);margin-top:0.25rem;}
+h3.sub{font-size:1rem;font-weight:600;color:var(--blue);margin:1.75rem 0 0.75rem;display:flex;align-items:center;gap:0.5rem;}
+h3.sub::after{content:'';flex:1;height:1px;background:var(--border);}
+h3.sub.amber{color:var(--amber);} h3.sub.green{color:var(--green);}
+p{color:var(--muted2);margin-bottom:0.9rem;line-height:1.8;}
+p:last-child{margin-bottom:0;}
+strong{color:var(--text);font-weight:600;}
+code{font-family:'Fira Code',monospace;font-size:0.83em;background:var(--surface3);color:var(--blue);padding:0.15em 0.45em;border-radius:4px;border:1px solid var(--border2);}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem 1.5rem;margin-bottom:1rem;}
+.card-blue{border-left:2px solid var(--blue);} .card-amber{border-left:2px solid var(--amber);}
+.card-green{border-left:2px solid var(--green);} .card-red{border-left:2px solid var(--red);}
+.callout{display:flex;gap:0.9rem;align-items:flex-start;padding:1rem 1.25rem;border-radius:var(--radius);margin:1.25rem 0;font-size:0.9rem;}
+.callout-icon{font-size:1rem;flex-shrink:0;margin-top:0.1rem;}
+.callout-body{flex:1;color:var(--muted2);line-height:1.65;}
+.callout-body strong{color:var(--text);}
+.callout.info{background:var(--blue-dim);border:1px solid rgba(77,158,255,0.15);}
+.callout.warn{background:var(--amber-dim);border:1px solid rgba(245,158,11,0.15);}
+.callout.success{background:var(--green-dim);border:1px solid rgba(16,185,129,0.15);}
+.callout.danger{background:var(--red-dim);border:1px solid rgba(248,113,113,0.15);}
+.algo-block{background:var(--code-bg);border:1px solid var(--border2);border-left:3px solid var(--green);border-radius:var(--radius);padding:1.25rem 1.5rem;font-family:'Fira Code',monospace;font-size:0.8rem;color:#A8C8FF;white-space:pre-wrap;line-height:1.9;margin:1.25rem 0;overflow-x:auto;position:relative;}
+.algo-block .kw{color:var(--blue);font-weight:600;} .algo-block .cm{color:var(--muted);}
+.algo-block .val{color:var(--green);font-weight:500;} .algo-block .op{color:var(--amber);}
+.algo-block .label{position:absolute;top:0.65rem;right:1rem;font-size:0.65rem;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;}
+.diagram{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.75rem;margin:1.25rem 0;overflow-x:auto;}
+.diagram svg{display:block;margin:0 auto;max-width:100%;}
+.diagram-caption{text-align:center;font-size:0.76rem;color:var(--muted);margin-top:1rem;font-style:italic;letter-spacing:0.02em;}
+.tbl-wrap{overflow-x:auto;margin:1.25rem 0;border-radius:var(--radius);border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;font-size:0.87rem;}
+thead{background:var(--surface2);}
+th{color:var(--blue);font-weight:600;font-size:0.78rem;letter-spacing:0.04em;padding:0.75rem 1.1rem;text-align:left;border-bottom:1px solid var(--border2);white-space:nowrap;}
+td{padding:0.7rem 1.1rem;border-bottom:1px solid var(--border);color:var(--muted2);vertical-align:top;line-height:1.55;}
+tr:last-child td{border-bottom:none;}
+td:first-child{color:var(--text);font-weight:500;}
+tbody tr:hover td{background:rgba(255,255,255,0.015);}
+.btn{display:inline-flex;align-items:center;gap:0.45rem;padding:0.55rem 1.15rem;border:none;border-radius:var(--radius-sm);font-family:'Inter',sans-serif;font-size:0.84rem;font-weight:600;cursor:pointer;transition:all 0.18s;}
+.btn-primary{background:var(--blue);color:#fff;}
+.btn-primary:hover{background:#6AADFF;transform:translateY(-1px);box-shadow:0 4px 12px rgba(77,158,255,0.3);}
+.btn-ghost{background:transparent;color:var(--muted2);border:1px solid var(--border2);}
+.btn-ghost:hover{background:var(--surface2);color:var(--text);}
+.input-row{display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem;}
+.input-row label{color:var(--muted2);font-size:0.84rem;font-weight:500;}
+.num-input{width:64px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-family:'Fira Code',monospace;font-size:0.9rem;padding:0.45rem 0.65rem;text-align:center;transition:border-color 0.18s;}
+.num-input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-glow);}
+.tag{display:inline-flex;align-items:center;gap:0.3rem;font-family:'Fira Code',monospace;font-size:0.7rem;padding:0.2rem 0.65rem;border-radius:999px;font-weight:500;letter-spacing:0.03em;border:1px solid;}
+.tag-blue{background:var(--blue-dim);color:var(--blue);border-color:rgba(77,158,255,0.25);}
+.tag-green{background:var(--green-dim);color:var(--green);border-color:rgba(16,185,129,0.25);}
+.tag-red{background:var(--red-dim);color:var(--red);border-color:rgba(248,113,113,0.25);}
+.tag-amber{background:var(--amber-dim);color:var(--amber);border-color:rgba(245,158,11,0.25);}
+.tag-purple{background:var(--purple-dim);color:var(--purple);border-color:rgba(167,139,250,0.25);}
+.pill-row{display:flex;flex-wrap:wrap;gap:0.5rem;margin:0.75rem 0;}
+.divider{border:none;border-top:1px solid var(--border);margin:3.5rem 0;}
+.tabs{display:flex;gap:0.25rem;border-bottom:1px solid var(--border);margin-bottom:1.5rem;flex-wrap:wrap;}
+.tab-btn{background:none;border:none;color:var(--muted);padding:0.6rem 1.1rem;font-family:'Inter',sans-serif;font-size:0.84rem;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.18s;margin-bottom:-1px;}
+.tab-btn:hover{color:var(--text);} .tab-btn.active{color:var(--blue);border-bottom-color:var(--blue);}
+.tab-pane{display:none;} .tab-pane.active{display:block;animation:fadeUp 0.2s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+.calc-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.75rem;margin:1.25rem 0;}
+.calc-title{font-size:0.84rem;font-weight:600;color:var(--muted2);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1.25rem;}
+.state-display{font-family:'Fira Code',monospace;color:var(--blue);font-size:1.05rem;font-weight:500;text-align:center;margin-bottom:0.75rem;letter-spacing:0.05em;}
+.fitness-display{text-align:center;font-size:2rem;font-weight:700;font-variant-numeric:tabular-nums;margin:0.5rem 0;transition:color 0.3s;}
+.fitness-sub{text-align:center;font-size:0.78rem;color:var(--muted);margin-bottom:1rem;font-family:'Fira Code',monospace;}
+.pairs-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-top:1rem;}
+.pair-row{font-family:'Fira Code',monospace;font-size:0.74rem;padding:0.45rem 0.75rem;border-radius:var(--radius-sm);border:1px solid;line-height:1.4;}
+.pair-ok{background:var(--green-dim);border-color:rgba(16,185,129,0.2);color:var(--green);}
+.pair-bad{background:var(--red-dim);border-color:rgba(248,113,113,0.2);color:var(--red);}
+.board-wrap{display:flex;justify-content:center;margin:1rem 0;}
+.board{display:grid;grid-template-columns:repeat(4,44px);grid-template-rows:repeat(4,44px);border:1px solid var(--border2);border-radius:6px;overflow:hidden;}
+.cell{display:flex;align-items:center;justify-content:center;font-size:1.4rem;transition:background 0.2s;}
+.cell.light{background:var(--surface2);} .cell.dark{background:var(--surface3);}
+.cell.queen-ok{background:rgba(16,185,129,0.15);} .cell.queen-bad{background:rgba(248,113,113,0.15);}
+.prob-container{display:flex;gap:1rem;align-items:flex-end;height:120px;margin:1.25rem 0;padding:0 0.5rem;}
+.prob-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:0.3rem;}
+.prob-bar-inner{width:100%;border-radius:4px 4px 0 0;transition:height 0.45s cubic-bezier(0.34,1.56,0.64,1),background 0.3s;min-height:4px;}
+.prob-bar-lbl{font-family:'Fira Code',monospace;font-size:0.72rem;color:var(--muted);}
+.prob-bar-val{font-family:'Fira Code',monospace;font-size:0.7rem;color:var(--blue);font-weight:500;}
+.threads-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0.85rem;margin:1.25rem 0;}
+.thread{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem;transition:all 0.3s;}
+.thread.winner{border-color:var(--green);background:var(--green-dim);box-shadow:0 0 16px rgba(16,185,129,0.15);}
+.thread.stopped{opacity:0.4;}
+.thread-header{display:flex;align-items:center;gap:0.5rem;margin-bottom:0.85rem;}
+.thread-indicator{width:8px;height:8px;border-radius:50%;animation:throb 1.5s ease-in-out infinite;}
+.thread.winner .thread-indicator,.thread.stopped .thread-indicator{animation:none;}
+@keyframes throb{0%,100%{opacity:1;}50%{opacity:0.35;}}
+.thread-name{font-size:0.8rem;font-weight:600;color:var(--text);}
+.thread-state{font-family:'Fira Code',monospace;font-size:0.82rem;color:var(--blue);}
+.thread-fitness{font-size:0.76rem;color:var(--muted);margin-top:0.2rem;}
+.thread-log{font-size:0.72rem;color:var(--muted);margin-top:0.65rem;padding-top:0.65rem;border-top:1px solid var(--border);line-height:1.5;}
+.step-list{display:flex;flex-direction:column;gap:0.6rem;}
+.step-item{display:flex;align-items:flex-start;gap:0.65rem;font-size:0.9rem;color:var(--muted2);}
+.step-num{width:24px;height:24px;background:var(--blue-dim);border:1px solid rgba(77,158,255,0.25);color:var(--blue);border-radius:50%;font-size:0.72rem;font-weight:700;font-family:'Fira Code',monospace;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:0.1rem;}
+.quiz-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.25rem;transition:border-color 0.2s;}
+.quiz-card:hover{border-color:var(--border2);}
+.quiz-q{font-size:0.94rem;font-weight:600;color:var(--text);margin-bottom:1.1rem;line-height:1.6;display:flex;gap:0.75rem;}
+.qnum{font-family:'Fira Code',monospace;font-size:0.72rem;background:var(--blue-dim);color:var(--blue);border:1px solid rgba(77,158,255,0.25);padding:0.2rem 0.55rem;border-radius:var(--radius-sm);flex-shrink:0;height:fit-content;margin-top:0.1rem;}
+.options{display:flex;flex-direction:column;gap:0.5rem;}
+.option{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.75rem 1rem;cursor:pointer;font-size:0.88rem;color:var(--muted2);display:flex;align-items:center;gap:0.65rem;transition:all 0.18s;line-height:1.45;}
+.option:hover{border-color:var(--blue);color:var(--text);background:var(--surface3);}
+.option.correct{background:var(--green-dim);border-color:var(--green);color:var(--green);}
+.option.wrong{background:var(--red-dim);border-color:var(--red);color:var(--red);}
+.option.disabled{pointer-events:none;}
+.opt-letter{width:26px;height:26px;border-radius:50%;background:var(--surface3);border:1px solid var(--border2);color:var(--muted2);font-size:0.72rem;font-weight:700;font-family:'Fira Code',monospace;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.18s;}
+.correct .opt-letter{background:var(--green);border-color:var(--green);color:#0d2018;}
+.wrong .opt-letter{background:var(--red);border-color:var(--red);color:#fff;}
+.explanation{display:none;margin-top:0.85rem;padding:0.85rem 1rem;background:var(--surface3);border-radius:var(--radius-sm);font-size:0.85rem;color:var(--muted2);line-height:1.65;border-left:2px solid var(--blue);}
+.explanation.show{display:block;animation:fadeUp 0.2s ease;}
+.score-wrap{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:1.5rem;margin-top:1.5rem;display:none;}
+.score-header{font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:0.4rem;}
+.score-bar{height:8px;background:var(--surface3);border-radius:999px;overflow:hidden;margin:0.75rem 0;}
+.score-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--green));border-radius:999px;transition:width 0.8s cubic-bezier(0.34,1.56,0.64,1);width:0%;}
+.score-msg{font-family:'Fira Code',monospace;font-size:0.82rem;color:var(--muted);}
+.exercise-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1.25rem;}
+.exercise-header{padding:1.1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.18s;}
+.exercise-header:hover{background:var(--surface2);}
+.ex-title-row{display:flex;align-items:center;gap:0.75rem;}
+.ex-badge{font-family:'Fira Code',monospace;font-size:0.68rem;padding:0.2rem 0.6rem;border-radius:999px;border:1px solid;font-weight:600;letter-spacing:0.04em;white-space:nowrap;}
+.ex-title{font-size:0.94rem;font-weight:600;color:var(--text);}
+.ex-chevron{color:var(--muted);font-size:0.9rem;transition:transform 0.25s;flex-shrink:0;}
+.exercise-card.open .ex-chevron{transform:rotate(180deg);}
+.exercise-body{padding:1.25rem 1.5rem;display:none;}
+.exercise-card.open .exercise-body{display:block;animation:fadeUp 0.2s ease;}
+.ex-question{color:var(--muted2);font-size:0.9rem;margin-bottom:1.25rem;line-height:1.8;}
+.ex-parts{display:flex;flex-direction:column;gap:0.35rem;margin-bottom:1.25rem;}
+.ex-part{display:flex;gap:0.65rem;font-size:0.88rem;color:var(--muted2);}
+.ex-part-letter{font-family:'Fira Code',monospace;font-size:0.75rem;font-weight:600;color:var(--blue);flex-shrink:0;margin-top:0.15rem;}
+.ex-divider{height:1px;background:var(--border);margin:1.25rem 0;}
+.ex-solution-label{font-size:0.7rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--green);margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;}
+.ref-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem 1.25rem;margin-bottom:0.75rem;display:flex;gap:1rem;align-items:flex-start;transition:border-color 0.18s;}
+.ref-card:hover{border-color:var(--border2);}
+.ref-icon{font-size:1.25rem;flex-shrink:0;margin-top:0.05rem;}
+.ref-title{font-size:0.9rem;font-weight:600;color:var(--text);margin-bottom:0.25rem;}
+.ref-desc{font-size:0.82rem;color:var(--muted);line-height:1.6;margin-bottom:0.4rem;}
+.ref-link{font-family:'Fira Code',monospace;font-size:0.74rem;color:var(--blue);text-decoration:none;display:inline-flex;align-items:center;gap:0.3rem;}
+.ref-link:hover{text-decoration:underline;}
+@media(max-width:900px){
+  .rail{transform:translateX(-100%);transition:transform 0.3s;} .rail.open{transform:translateX(0);}
+  .content{margin-left:0;} .mobile-bar{display:flex;}
+  .hero{padding:4.5rem 1.5rem 2.5rem;} .page-body{padding:2rem 1.25rem 5rem;}
+  .pairs-grid{grid-template-columns:1fr;}
+}
+@media(max-width:560px){.hero h1{font-size:1.75rem;}.chapter-header{flex-direction:column;gap:0.5rem;}}
+@media(prefers-reduced-motion:reduce){*,::before,::after{animation-duration:0.01ms !important;transition-duration:0.01ms !important;}}
+</style>
+</head>
+<body>
+<div class="mobile-bar" id="mobileBar">
+  <span class="mobile-bar-title">ACI Lecture 5</span>
+  <button class="mobile-menu-btn" onclick="toggleRail()">&#9776; Menu</button>
+</div>
+<div class="layout">
+<nav class="rail" id="rail">
+  <div class="rail-brand">
+    <div class="rail-course">ZG557 &middot; BITS Pilani WILP</div>
+    <div class="rail-title">Local Search &amp;<br>Hill Climbing</div>
+    <div class="rail-subtitle">Lecture 5 &middot; Interactive Guide</div>
+  </div>
+  <div class="rail-progress-wrap">
+    <div class="rail-progress-label">
+      <span>Progress</span>
+      <span id="progressPct" style="font-family:'Fira Code',monospace;font-size:0.68rem;">0%</span>
+    </div>
+    <div class="rail-progress-bar"><div class="rail-progress-fill" id="railFill"></div></div>
+  </div>
+  <div class="rail-nav" id="railNav">
+    <a class="nav-link" href="#s1" data-sec="s1"><span class="nav-dot"></span><span class="nav-link-text">Path vs Local Search</span><span class="nav-check">&#10003;</span></a>
+    <a class="nav-link" href="#s2" data-sec="s2"><span class="nav-dot"></span><span class="nav-link-text">State &amp; Neighbours</span><span class="nav-check">&#10003;</span></a>
+    <a class="nav-link" href="#s3" data-sec="s3"><span class="nav-dot"></span><span class="nav-link-text">Fitness Function</span><span class="nav-check">&#10003;</span></a>
+    <a class="nav-link" href="#s4" data-sec="s4"><span class="nav-dot"></span><span class="nav-link-text">Hill Climbing</span><span class="nav-check">&#10003;</span></a>
+    <a class="nav-link" href="#s5" data-sec="s5"><span class="nav-dot"></span><span class="nav-link-text">HC Variants</span><span class="nav-check">&#10003;</span></a>
+    <a class="nav-link" href="#s6" data-sec="s6"><span class="nav-dot"></span><span class="nav-link-text">Beam Search</span><span class="nav-check">&#10003;</span></a>
+    <a class="nav-link" href="#s7" data-sec="s7"><span class="nav-dot"></span><span class="nav-link-text">Optimization Landscape</span><span class="nav-check">&#10003;</span></a>
+    <a class="nav-link" href="#s8" data-sec="s8"><span class="nav-dot"></span><span class="nav-link-text">Algorithm Comparison</span><span class="nav-check">&#10003;</span></a>
+    <a class="nav-link" href="#s9" data-sec="s9"><span class="nav-dot"></span><span class="nav-link-text">Genetic Algorithms Preview</span><span class="nav-check">&#10003;</span></a>
+    <a class="nav-link" href="#s10" data-sec="s10"><span class="nav-dot"></span><span class="nav-link-text">Exercises</span><span class="nav-check">&#10003;</span></a>
+    <a class="nav-link" href="#s11" data-sec="s11"><span class="nav-dot"></span><span class="nav-link-text">References</span><span class="nav-check">&#10003;</span></a>
+    <a class="nav-link" href="#s12" data-sec="s12"><span class="nav-dot"></span><span class="nav-link-text">Self-Test Quiz</span><span class="nav-check">&#10003;</span></a>
+  </div>
+  <div class="rail-footer">
+    <div class="rail-footer-text">AIMA 4th Ed. &middot; Chapter 4 &sect;4.1&ndash;4.2<br>Russell &amp; Norvig (2020)</div>
+  </div>
+</nav>
+<div class="content">
+<div class="hero">
+  <div class="hero-eyebrow">Session 5</div>
+  <h1>Local Search:<br><em>Hill Climbing</em> &amp; Beam Search</h1>
+  <p class="hero-desc">When the journey doesn&rsquo;t matter &mdash; only the destination does. Interactive tools, worked examples, and 10 quiz questions to build deep intuition for every algorithm.</p>
+  <div class="hero-meta">
+    <span class="hero-meta-item"><span class="hero-meta-icon">&#9881;</span> N-Queens walkthrough</span>
+    <span class="hero-meta-item"><span class="hero-meta-icon">&#128208;</span> Live fitness calculator</span>
+    <span class="hero-meta-item"><span class="hero-meta-icon">&#9654;</span> Beam Search simulator</span>
+    <span class="hero-meta-item"><span class="hero-meta-icon">&#9998;</span> 4 worked exercises</span>
+  </div>
+</div>
+<div class="page-body">
+<!-- S1 -->
+<section class="chapter" id="s1">
+  <div class="chapter-header">
+    <span class="chapter-num">01</span>
+    <div class="chapter-title-wrap">
+      <div class="chapter-title">Path Search vs Local Search</div>
+      <div class="chapter-subtitle">The fundamental shift in how we think about solutions</div>
+    </div>
+  </div>
+  <p>Sessions 2&ndash;4 cared about the <strong>journey</strong> &mdash; the path from initial state to goal, its cost, and the sequence of steps. Session 5 introduces a completely different philosophy: only the <strong>destination matters</strong>.</p>
+  <div class="diagram">
+    <svg viewBox="0 0 760 235" xmlns="http://www.w3.org/2000/svg" font-family="Inter,sans-serif">
+      <rect x="8" y="8" width="360" height="218" rx="12" fill="#0E1422" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+      <text x="188" y="32" fill="#4D9EFF" font-size="11" font-weight="600" text-anchor="middle" letter-spacing="0.06em">PATH SEARCH &mdash; Sessions 2&ndash;4</text>
+      <text x="188" y="48" fill="#6B7A9F" font-size="9.5" text-anchor="middle">The journey is the answer</text>
+      <circle cx="52" cy="128" r="20" fill="#141929" stroke="#4D9EFF" stroke-width="1.5"/><text x="52" y="133" fill="#4D9EFF" font-size="9.5" font-weight="600" text-anchor="middle">Start</text>
+      <circle cx="128" cy="98" r="15" fill="#141929" stroke="rgba(255,255,255,0.07)" stroke-width="1"/><text x="128" y="103" fill="#6B7A9F" font-size="9" text-anchor="middle">N1</text>
+      <circle cx="128" cy="158" r="15" fill="#141929" stroke="rgba(255,255,255,0.07)" stroke-width="1"/><text x="128" y="163" fill="#6B7A9F" font-size="9" text-anchor="middle">N2</text>
+      <circle cx="210" cy="72" r="15" fill="#141929" stroke="rgba(255,255,255,0.07)" stroke-width="1"/><text x="210" y="77" fill="#6B7A9F" font-size="9" text-anchor="middle">N3</text>
+      <circle cx="210" cy="128" r="15" fill="#141929" stroke="rgba(255,255,255,0.07)" stroke-width="1"/><text x="210" y="133" fill="#6B7A9F" font-size="9" text-anchor="middle">N4</text>
+      <circle cx="310" cy="128" r="20" fill="#141929" stroke="#10B981" stroke-width="1.5"/><text x="310" y="133" fill="#10B981" font-size="9.5" font-weight="600" text-anchor="middle">Goal</text>
+      <line x1="72" y1="121" x2="113" y2="105" stroke="rgba(255,255,255,0.07)" stroke-width="1.5"/>
+      <line x1="72" y1="135" x2="113" y2="151" stroke="rgba(255,255,255,0.07)" stroke-width="1.5"/>
+      <line x1="143" y1="98" x2="195" y2="80" stroke="#4D9EFF" stroke-width="2"/>
+      <line x1="143" y1="96" x2="197" y2="123" stroke="rgba(255,255,255,0.07)" stroke-width="1.5"/>
+      <line x1="225" y1="80" x2="293" y2="119" stroke="#4D9EFF" stroke-width="2"/>
+      <text x="188" y="198" fill="#6B7A9F" font-size="9" text-anchor="middle">Tracks queue, costs, every visited state</text>
+      <text x="188" y="215" fill="#F87171" font-size="10" font-weight="600" text-anchor="middle">Memory: O(b&#7496;) &mdash; Exponential</text>
+      <rect x="392" y="8" width="360" height="218" rx="12" fill="#0E1422" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+      <text x="572" y="32" fill="#10B981" font-size="11" font-weight="600" text-anchor="middle" letter-spacing="0.06em">LOCAL SEARCH &mdash; Session 5+</text>
+      <text x="572" y="48" fill="#6B7A9F" font-size="9.5" text-anchor="middle">The state itself is the answer</text>
+      <rect x="452" y="62" width="240" height="108" rx="6" fill="#141929" stroke="rgba(255,255,255,0.07)"/>
+      <line x1="512" y1="62" x2="512" y2="170" stroke="rgba(255,255,255,0.05)"/><line x1="572" y1="62" x2="572" y2="170" stroke="rgba(255,255,255,0.05)"/><line x1="632" y1="62" x2="632" y2="170" stroke="rgba(255,255,255,0.05)"/>
+      <line x1="452" y1="89" x2="692" y2="89" stroke="rgba(255,255,255,0.05)"/><line x1="452" y1="116" x2="692" y2="116" stroke="rgba(255,255,255,0.05)"/><line x1="452" y1="143" x2="692" y2="143" stroke="rgba(255,255,255,0.05)"/>
+      <text x="482" y="84" font-size="18" text-anchor="middle">&#9819;</text><text x="542" y="138" font-size="18" text-anchor="middle">&#9819;</text>
+      <text x="602" y="111" font-size="18" text-anchor="middle">&#9819;</text><text x="662" y="84" font-size="18" text-anchor="middle">&#9819;</text>
+      <text x="572" y="188" fill="#10B981" font-size="11" font-weight="700" text-anchor="middle">[2, 4, 3, 2] &mdash; this IS the answer</text>
+      <text x="572" y="205" fill="#10B981" font-size="10" font-weight="600" text-anchor="middle">Memory: O(1) &mdash; Constant</text>
+    </svg>
+    <p class="diagram-caption">Fig 1 &mdash; Path Search tracks every step; Local Search only keeps the current configuration.</p>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Term</th><th>Meaning</th><th>Exam one-liner</th></tr></thead>
+    <tbody>
+      <tr><td>Feasible Solution</td><td>Any valid state &mdash; queens placed, constraints obeyed, may still conflict</td><td>&ldquo;An answer, not necessarily optimal&rdquo;</td></tr>
+      <tr><td>Global Optimum</td><td>The single best feasible solution &mdash; fitness = maximum (f=6 for 4-Queens)</td><td>&ldquo;The best possible answer&rdquo;</td></tr>
+      <tr><td>Local Optimum</td><td>State where all neighbours are worse &mdash; not necessarily globally best</td><td>&ldquo;Stuck, no immediate improvement&rdquo;</td></tr>
+      <tr><td>Fitness Value</td><td>Numerical score measuring how good a state is &mdash; computed from the state</td><td>&ldquo;Computed from the state itself&rdquo;</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout info"><span class="callout-icon">&#9821;</span>
+    <div class="callout-body"><strong>N-Queens analogy:</strong> Path search starts with an empty board and places queens one by one, tracking each choice. Local search starts with all queens already placed randomly and asks: &ldquo;can I improve this board by moving exactly one queen?&rdquo;</div>
+  </div>
+  <h3 class="sub">1.2 &mdash; When to Use Local Search</h3>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Condition</th><th>Explanation</th><th>Real-world example</th></tr></thead>
+    <tbody>
+      <tr><td>Path doesn&rsquo;t matter</td><td>Only the final configuration is needed, not how you got there</td><td>N-Queens, job scheduling, timetabling</td></tr>
+      <tr><td>State space is huge</td><td>Path search (BFS/A*) runs out of memory &mdash; O(b&#7496;) is infeasible</td><td>Hyperparameter tuning: millions of combinations</td></tr>
+      <tr><td>Any valid state is a start</td><td>Generate a random feasible solution instantly and improve it</td><td>Randomly placed queens &rarr; move to reduce conflicts</td></tr>
+      <tr><td>Optimisation over satisfaction</td><td>Goal is to maximise/minimise a score, not reach a fixed goal node</td><td>Minimise energy, maximise non-conflicting pairs</td></tr>
+    </tbody>
+  </table></div>
+  <h3 class="sub">1.3 &mdash; The State IS the Solution</h3>
+  <div class="card card-amber"><p style="margin:0;">In local search, <strong>any valid state is a &ldquo;feasible solution.&rdquo;</strong> This does not mean it is optimal &mdash; it means you have something to evaluate and improve. The fitness value tells you how good the current state is. The algorithm climbs toward higher fitness until no improvement is possible &mdash; at which point you have found a local optimum, which may or may not coincide with the global one.</p></div>
+</section>
+<hr class="divider">
+<!-- S2 -->
+<section class="chapter" id="s2">
+  <div class="chapter-header">
+    <span class="chapter-num">02</span>
+    <div class="chapter-title-wrap">
+      <div class="chapter-title">State Representation &amp; Neighbours</div>
+      <div class="chapter-subtitle">Vector notation and the 1-NN rule for 4-Queens</div>
+    </div>
+  </div>
+  <p>A 4-Queens board state is encoded as a vector <code>[V1, V2, V3, V4]</code> where each value is the <strong>row position</strong> of the queen in that column (1 = top, 4 = bottom).</p>
+  <div class="diagram">
+    <svg viewBox="0 0 700 210" xmlns="http://www.w3.org/2000/svg" font-family="Inter,sans-serif">
+      <rect x="15" y="15" width="200" height="180" rx="6" fill="#141929" stroke="rgba(255,255,255,0.07)"/>
+      <line x1="65" y1="15" x2="65" y2="195" stroke="rgba(255,255,255,0.05)"/><line x1="115" y1="15" x2="115" y2="195" stroke="rgba(255,255,255,0.05)"/><line x1="165" y1="15" x2="165" y2="195" stroke="rgba(255,255,255,0.05)"/>
+      <line x1="15" y1="60" x2="215" y2="60" stroke="rgba(255,255,255,0.05)"/><line x1="15" y1="105" x2="215" y2="105" stroke="rgba(255,255,255,0.05)"/><line x1="15" y1="150" x2="215" y2="150" stroke="rgba(255,255,255,0.05)"/>
+      <text x="7" y="43" fill="#6B7A9F" font-size="9.5" text-anchor="middle">r1</text><text x="7" y="88" fill="#6B7A9F" font-size="9.5" text-anchor="middle">r2</text><text x="7" y="133" fill="#6B7A9F" font-size="9.5" text-anchor="middle">r3</text><text x="7" y="178" fill="#6B7A9F" font-size="9.5" text-anchor="middle">r4</text>
+      <text x="40" y="208" fill="#4D9EFF" font-size="9.5" text-anchor="middle">C1</text><text x="90" y="208" fill="#4D9EFF" font-size="9.5" text-anchor="middle">C2</text><text x="140" y="208" fill="#4D9EFF" font-size="9.5" text-anchor="middle">C3</text><text x="190" y="208" fill="#4D9EFF" font-size="9.5" text-anchor="middle">C4</text>
+      <text x="40" y="97" font-size="22" text-anchor="middle" fill="#10B981">&#9819;</text>
+      <text x="90" y="187" font-size="22" text-anchor="middle" fill="#10B981">&#9819;</text>
+      <text x="140" y="97" font-size="22" text-anchor="middle" fill="#F87171">&#9819;</text>
+      <text x="190" y="97" font-size="22" text-anchor="middle" fill="#F87171">&#9819;</text>
+      <rect x="250" y="20" width="430" height="52" rx="8" fill="#080C18" stroke="rgba(77,158,255,0.2)" stroke-width="1.5"/>
+      <text x="465" y="50" fill="#4D9EFF" font-size="22" font-weight="600" text-anchor="middle" font-family="'Fira Code',monospace">[2, 4, 2, 2]</text>
+      <text x="465" y="68" fill="#6B7A9F" font-size="9.5" text-anchor="middle">col1=row2 &nbsp; col2=row4 &nbsp; col3=row2 &nbsp; col4=row2</text>
+      <rect x="250" y="86" width="430" height="108" rx="8" fill="#141929" stroke="rgba(255,255,255,0.07)"/>
+      <text x="465" y="110" fill="#F59E0B" font-size="11.5" font-weight="600" text-anchor="middle">1-NN Rule: change exactly ONE queen</text>
+      <text x="262" y="132" fill="#6B7A9F" font-size="9.5">Each column has 4 rows &mdash; queen occupies 1 &rarr; 3 possible moves per column</text>
+      <text x="262" y="152" fill="#6B7A9F" font-size="9.5">4 columns &times; 3 moves each = 12 neighbours total</text>
+      <rect x="262" y="163" width="406" height="22" rx="4" fill="rgba(16,185,129,0.08)" stroke="rgba(16,185,129,0.15)"/>
+      <text x="465" y="178" fill="#10B981" font-size="10.5" font-weight="600" text-anchor="middle" font-family="'Fira Code',monospace">Formula: N &times; (N&minus;1) = 4 &times; 3 = 12 neighbours</text>
+    </svg>
+    <p class="diagram-caption">Fig 2 &mdash; State [2,4,2,2]: columns 3 &amp; 4 share row 2 (conflict shown in red). 1-NN generates 12 neighbours.</p>
+  </div>
+  <div class="callout warn"><span class="callout-icon">&#9888;</span>
+    <div class="callout-body"><strong>Don&rsquo;t confuse with ML&rsquo;s K-Nearest Neighbours!</strong> In local search, 1-NN means &ldquo;change 1 queen at a time.&rdquo; In machine learning, KNN is a classification algorithm. Same abbreviation, completely different concept.</div>
+  </div>
+  <div class="algo-block"><span class="label">NEIGHBOURHOOD SIZES</span><span class="kw">1-NN:</span> change 1 queen  &rarr;  <span class="val">N&times;(N&minus;1)</span> neighbours     <span class="cm">e.g. 4&times;3 = 12</span>
+<span class="kw">2-NN:</span> change 2 queens &rarr;  <span class="val">C(N,2)&times;(N&minus;1)&sup2;</span>           <span class="cm">e.g. 6&times;9 = 54</span>
+<span class="kw">K-NN:</span> change K queens &rarr;  exponentially many combinations
+
+<span class="cm">Exam rule: ALWAYS use 1-NN unless explicitly stated otherwise.</span></div>
+</section>
+<hr class="divider">
+<!-- S3 -->
+<section class="chapter" id="s3">
+  <div class="chapter-header">
+    <span class="chapter-num amber">03</span>
+    <div class="chapter-title-wrap">
+      <div class="chapter-title">Fitness Function</div>
+      <div class="chapter-subtitle">Live calculator &mdash; set queen positions and watch the math</div>
+    </div>
+  </div>
+  <div class="card card-amber" style="margin-bottom:1.25rem;">
+    <p style="margin:0;"><strong>Fitness vs Heuristic &mdash; key difference:</strong> A <strong>heuristic h(n)</strong> estimates cost to goal from state n &mdash; given externally, used in path search (A*, Greedy). A <strong>fitness f(s)</strong> scores how good a state is &mdash; computed directly from the state itself, used in local search. There is no predefined goal node; fitness replaces both the goal test and the heuristic.</p>
+  </div>
+  <div class="callout info"><span class="callout-icon">&#128208;</span>
+    <div class="callout-body"><strong>Diagonal conflict rule:</strong> Queens at columns c1, c2 in rows r1, r2 conflict diagonally if <code>|r1 &minus; r2| = |c1 &minus; c2|</code>. Same row conflict if <code>r1 = r2</code>. Same column is impossible by design (one queen per column).</div>
+  </div>
+  <div class="calc-panel">
+    <div class="calc-title">Interactive Fitness Calculator</div>
+    <div class="input-row">
+      <label>Col 1:</label><input class="num-input" id="q1" type="number" min="1" max="4" value="2" oninput="calcFitness()">
+      <label>Col 2:</label><input class="num-input" id="q2" type="number" min="1" max="4" value="4" oninput="calcFitness()">
+      <label>Col 3:</label><input class="num-input" id="q3" type="number" min="1" max="4" value="2" oninput="calcFitness()">
+      <label>Col 4:</label><input class="num-input" id="q4" type="number" min="1" max="4" value="2" oninput="calcFitness()">
+    </div>
+    <div class="state-display" id="stateDisplay">State: [2, 4, 2, 2]</div>
+    <div class="board-wrap" id="boardWrap"></div>
+    <div class="fitness-display" id="fitnessDisplay">&mdash;</div>
+    <div class="fitness-sub" id="fitnessSub">non-conflicting pairs out of 6</div>
+    <div class="pairs-grid" id="pairsList"></div>
+    <div style="margin-top:1.25rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="calcFitness()">Recalculate</button>
+      <button class="btn btn-ghost" onclick="randomState()">Random State</button>
+      <button class="btn btn-ghost" onclick="setOptimal()">Try [2,4,1,3] &mdash; f=6</button>
+    </div>
+  </div>
+  <div class="algo-block"><span class="label">CONFLICT RULES</span><span class="kw">Max possible pairs</span> = C(N,2) = N&times;(N&minus;1)/2
+4-Queens: C(4,2) = <span class="val">6 pairs</span>
+
+<span class="cm">Queens CONFLICT if:</span>
+<span class="op">Same row:  </span>  r1 == r2
+<span class="op">Diagonal:  </span>  |r1 &minus; r2| == |c1 &minus; c2|
+<span class="cm">Same column is impossible &mdash; 1 queen per column by design</span>
+
+<span class="cm">Goal (maximising):</span> fitness = <span class="val">6</span>  (all 6 pairs safe)</div>
+</section>
+<hr class="divider">
+<!-- S4 -->
+<section class="chapter" id="s4">
+  <div class="chapter-header">
+    <span class="chapter-num">04</span>
+    <div class="chapter-title-wrap">
+      <div class="chapter-title">Hill Climbing &mdash; The Algorithm</div>
+      <div class="chapter-subtitle">Greedy local improvement until stuck at a peak</div>
+    </div>
+  </div>
+  <div class="diagram">
+    <svg viewBox="0 0 720 225" xmlns="http://www.w3.org/2000/svg" font-family="Inter,sans-serif">
+      <defs>
+        <marker id="arrG" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto"><polygon points="0 0,8 3.5,0 7" fill="#10B981"/></marker>
+        <marker id="arrR" markerWidth="8" markerHeight="7" refX="7" refY="3.5" orient="auto"><polygon points="0 0,8 3.5,0 7" fill="#4D9EFF"/></marker>
+      </defs>
+      <path d="M 30,200 Q 80,200 110,170 Q 145,135 175,118 Q 200,105 230,92 Q 255,80 278,62 Q 298,44 320,36 Q 342,28 360,42 Q 380,58 400,78 Q 425,102 460,118 Q 488,130 515,124 Q 540,115 562,92 Q 584,68 608,46 Q 628,26 650,18 Q 668,12 688,24 L 710,38" fill="none" stroke="#4D9EFF" stroke-width="2.5"/>
+      <path d="M 30,200 Q 80,200 110,170 Q 145,135 175,118 Q 200,105 230,92 Q 255,80 278,62 Q 298,44 320,36 Q 342,28 360,42 Q 380,58 400,78 Q 425,102 460,118 Q 488,130 515,124 Q 540,115 562,92 Q 584,68 608,46 Q 628,26 650,18 Q 668,12 688,24 L 710,38 L 710,210 L 30,210 Z" fill="rgba(77,158,255,0.05)"/>
+      <line x1="20" y1="10" x2="20" y2="210" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+      <line x1="20" y1="210" x2="715" y2="210" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+      <text x="14" y="115" fill="#6B7A9F" font-size="9" text-anchor="middle" transform="rotate(-90,14,115)">Fitness</text>
+      <text x="365" y="225" fill="#6B7A9F" font-size="9" text-anchor="middle">State Space</text>
+      <circle cx="320" cy="36" r="8" fill="#F87171" stroke="#080C18" stroke-width="2"/>
+      <text x="320" y="22" fill="#F87171" font-size="9" font-weight="600" text-anchor="middle">Local Max f=4</text>
+      <circle cx="650" cy="18" r="10" fill="#10B981" stroke="#080C18" stroke-width="2"/>
+      <text x="650" y="6" fill="#10B981" font-size="10" font-weight="700" text-anchor="middle">Global Max f=6</text>
+      <text x="382" y="96" fill="#6B7A9F" font-size="9" text-anchor="middle">Valley</text>
+      <circle cx="190" cy="118" r="5" fill="#F87171"/>
+      <path d="M 190,118 Q 215,100 240,88 Q 265,74 285,58 Q 308,42 320,36" fill="none" stroke="#F87171" stroke-width="2" stroke-dasharray="5,2"/>
+      <text x="176" y="136" fill="#F87171" font-size="8.5">Start A &rarr; stuck</text>
+      <circle cx="562" cy="92" r="5" fill="#4D9EFF"/>
+      <path d="M 562,92 Q 578,68 595,50 Q 620,30 650,18" fill="none" stroke="#4D9EFF" stroke-width="2" stroke-dasharray="5,2"/>
+      <text x="548" y="110" fill="#4D9EFF" font-size="8.5">Start B &rarr; global</text>
+    </svg>
+    <p class="diagram-caption">Fig 3 &mdash; Hill Climbing always reaches a nearby peak, but which peak depends entirely on the starting position.</p>
+  </div>
+  <div class="algo-block"><span class="label">ALGORITHM</span><span class="kw">HILL CLIMBING</span>
+
+<span class="cm">Step</span> <span class="op">1.</span>  Pick a RANDOM valid state s          <span class="cm">&larr; feasible solution</span>
+<span class="cm">Step</span> <span class="op">2.</span>  Evaluate fitness f(s)               <span class="cm">&larr; count non-conflicting pairs</span>
+<span class="cm">Step</span> <span class="op">3.</span>  Generate all 1-NN neighbours of s   <span class="cm">&larr; 12 for 4-Queens</span>
+<span class="cm">Step</span> <span class="op">4.</span>  Evaluate f(n) for all neighbours n
+<span class="cm">Step</span> <span class="op">5.</span>  IF any neighbour n has f(n) &gt; f(s):
+         &rarr; s = best_neighbour  &mdash;  GO TO Step 3
+<span class="cm">Step</span> <span class="op">6.</span>  IF no neighbour improves on f(s):
+         &rarr; STOP. Return s      <span class="cm">&larr; stuck at local maximum</span></div>
+  <h3 class="sub">Worked Example &mdash; 4-Queens</h3>
+  <div class="step-list">
+    <div class="step-item"><span class="step-num">1</span><span>Pick random state <code>[1,4,2,2]</code>. Compute fitness = 4 non-conflicting pairs. Goal is f = 6.</span></div>
+    <div class="step-item"><span class="step-num">2</span><span>Generate 12 neighbours. Evaluate each. Best neighbour: <code>[1,4,3,2]</code> with f = 5. Since 5 &gt; 4, move there.</span></div>
+    <div class="step-item"><span class="step-num">3</span><span>Now at <code>[1,4,3,2]</code> with f = 5. Generate its 12 neighbours. All have f &le; 5 &mdash; no improvement possible.</span></div>
+    <div class="step-item"><span class="step-num">4</span><span><strong>STOP.</strong> Return <code>[1,4,3,2]</code> with f = 5. Goal was f = 6 &mdash; stuck at local optimum. Not solved.</span></div>
+  </div>
+  <div class="callout danger"><span class="callout-icon">&#9889;</span>
+    <div class="callout-body"><strong>The core limitation:</strong> Hill Climbing guarantees only a <strong>local optimum</strong>. Whether that equals the global optimum depends entirely on the starting state. This is what motivates Random Restart and Beam Search.</div>
+  </div>
+</section>
+<hr class="divider">
+<!-- S5 -->
+<section class="chapter" id="s5">
+  <div class="chapter-header">
+    <span class="chapter-num amber">05</span>
+    <div class="chapter-title-wrap">
+      <div class="chapter-title">Three Variants of Hill Climbing</div>
+      <div class="chapter-subtitle">Strategies to escape local optima and explore more of the landscape</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('basic',this)">Basic HC</button>
+    <button class="tab-btn" onclick="showTab('restart',this)">Random Restart</button>
+    <button class="tab-btn" onclick="showTab('stochastic',this)">Stochastic HC</button>
+  </div>
+  <div id="tab-basic" class="tab-pane active">
+    <p><strong>Always picks the best neighbour.</strong> Stops the moment no improvement exists. Simple and fast, but very prone to getting stuck at local optima.</p>
+    <div class="diagram">
+      <svg viewBox="0 0 650 100" xmlns="http://www.w3.org/2000/svg" font-family="Inter,sans-serif">
+        <defs><marker id="a1" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><polygon points="0 0,7 3.5,0 7" fill="#6B7A9F"/></marker></defs>
+        <rect x="10" y="30" width="108" height="36" rx="18" fill="#141929" stroke="#4D9EFF" stroke-width="1.5"/>
+        <text x="64" y="53" fill="#4D9EFF" font-size="10.5" text-anchor="middle" font-weight="500">Random State</text>
+        <line x1="118" y1="48" x2="142" y2="48" stroke="#6B7A9F" stroke-width="1.5" marker-end="url(#a1)"/>
+        <rect x="144" y="30" width="96" height="36" rx="6" fill="#141929" stroke="rgba(255,255,255,0.07)" stroke-width="1.5"/>
+        <text x="192" y="53" fill="#E2E8F8" font-size="10.5" text-anchor="middle">Eval f(s)</text>
+        <line x1="240" y1="48" x2="264" y2="48" stroke="#6B7A9F" stroke-width="1.5" marker-end="url(#a1)"/>
+        <rect x="266" y="30" width="136" height="36" rx="6" fill="#141929" stroke="rgba(255,255,255,0.07)" stroke-width="1.5"/>
+        <text x="334" y="53" fill="#E2E8F8" font-size="10.5" text-anchor="middle">Better neighbour?</text>
+        <line x1="402" y1="48" x2="426" y2="48" stroke="#10B981" stroke-width="1.5" marker-end="url(#a1)"/>
+        <text x="414" y="42" fill="#10B981" font-size="8.5">YES</text>
+        <rect x="428" y="30" width="86" height="36" rx="6" fill="#141929" stroke="#10B981" stroke-width="1.5"/>
+        <text x="471" y="53" fill="#10B981" font-size="10.5" text-anchor="middle">Move to it</text>
+        <path d="M 471,66 Q 471,86 334,86 Q 262,86 260,66" fill="none" stroke="#10B981" stroke-width="1.5" marker-end="url(#a1)"/>
+        <line x1="334" y1="66" x2="334" y2="82" stroke="#F87171" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <text x="356" y="95" fill="#F87171" font-size="8.5">NO &rarr; STOP (local max)</text>
+      </svg>
+    </div>
+    <div class="pill-row"><span class="tag tag-red">Cannot escape local optima</span><span class="tag tag-blue">Memory: O(1)</span><span class="tag tag-amber">Single run</span></div>
+  </div>
+  <div id="tab-restart" class="tab-pane">
+    <p>When stuck at a local maximum, <strong>pick a completely new random starting state</strong> and run Hill Climbing again. Repeat K times, keep the best result found.</p>
+    <div class="diagram">
+      <svg viewBox="0 0 680 155" xmlns="http://www.w3.org/2000/svg" font-family="Inter,sans-serif">
+        <rect x="10" y="15" width="185" height="120" rx="8" fill="#141929" stroke="rgba(255,255,255,0.07)"/>
+        <text x="102" y="36" fill="#6B7A9F" font-size="10" font-weight="600" text-anchor="middle">Run 1: Start s&#8321;</text>
+        <path d="M 25,125 Q 55,95 80,72 Q 100,55 120,60 Q 140,65 162,70" fill="none" stroke="#F87171" stroke-width="2"/>
+        <circle cx="120" cy="60" r="5" fill="#F87171"/>
+        <text x="102" y="144" fill="#F87171" font-size="9" text-anchor="middle">Stuck: f=4</text>
+        <rect x="248" y="15" width="185" height="120" rx="8" fill="#141929" stroke="rgba(255,255,255,0.07)"/>
+        <text x="340" y="36" fill="#6B7A9F" font-size="10" font-weight="600" text-anchor="middle">Run 2: New random s&#8322;</text>
+        <path d="M 263,115 Q 285,88 308,65 Q 325,50 350,58" fill="none" stroke="#F59E0B" stroke-width="2"/>
+        <circle cx="350" cy="58" r="5" fill="#F59E0B"/>
+        <text x="340" y="144" fill="#F59E0B" font-size="9" text-anchor="middle">Stuck: f=5</text>
+        <rect x="485" y="15" width="185" height="120" rx="8" fill="#141929" stroke="#10B981" stroke-width="1.5"/>
+        <text x="577" y="36" fill="#10B981" font-size="10" font-weight="600" text-anchor="middle">Run 3: New random s&#8323;</text>
+        <path d="M 500,130 Q 528,100 552,65 Q 568,42 590,28" fill="none" stroke="#10B981" stroke-width="2.5"/>
+        <circle cx="590" cy="28" r="7" fill="#10B981" stroke="#080C18" stroke-width="2"/>
+        <text x="577" y="148" fill="#10B981" font-size="9" font-weight="700" text-anchor="middle">GLOBAL MAX f=6 !</text>
+        <text x="215" y="80" fill="#6B7A9F" font-size="18" text-anchor="middle">&rarr;</text>
+        <text x="215" y="96" fill="#6B7A9F" font-size="8" text-anchor="middle">restart</text>
+        <text x="452" y="80" fill="#6B7A9F" font-size="18" text-anchor="middle">&rarr;</text>
+        <text x="452" y="96" fill="#6B7A9F" font-size="8" text-anchor="middle">restart</text>
+      </svg>
+    </div>
+    <div class="algo-block"><span class="kw">K = 1:</span>  Same as basic HC
+<span class="kw">K = 5:</span>  Run HC 5 times, return best result
+<span class="kw">K = &infin;:</span> Guaranteed to find global optimum (no time bound)</div>
+    <div class="pill-row"><span class="tag tag-green">Explores multiple landscape areas</span><span class="tag tag-blue">Sequential &mdash; not parallel</span><span class="tag tag-amber">K = number of restarts</span></div>
+  </div>
+  <div id="tab-stochastic" class="tab-pane">
+    <p>Instead of always picking the best neighbour, <strong>compute a probability for each fitness value</strong> proportional to how often it appears, then select probabilistically. Helps escape near-plateau regions.</p>
+    <div class="algo-block"><span class="kw">Example with 12 neighbours:</span>
+f=1: appears 2 times  &rarr;  P = 2/12 = 0.17
+f=2: appears 5 times  &rarr;  P = 5/12 = 0.42  <span class="val">&larr; highest &mdash; SELECT this group</span>
+f=3: appears 4 times  &rarr;  P = 4/12 = 0.33
+f=4: appears 1 time   &rarr;  P = 1/12 = 0.08
+
+<span class="cm">&rarr; Pick the group with highest probability; random among ties.</span></div>
+    <p><strong>Interactive probability visualiser:</strong> adjust neighbour counts to see which group wins.</p>
+    <div class="calc-panel" style="padding:1.25rem;">
+      <div class="input-row" style="flex-wrap:wrap;">
+        <span style="color:var(--muted2);font-size:0.84rem;font-weight:500;">Count at f=1:</span><input class="num-input" id="sf1" type="number" min="0" max="12" value="2" oninput="updateProbs()">
+        <span style="color:var(--muted2);font-size:0.84rem;font-weight:500;">f=2:</span><input class="num-input" id="sf2" type="number" min="0" max="12" value="5" oninput="updateProbs()">
+        <span style="color:var(--muted2);font-size:0.84rem;font-weight:500;">f=3:</span><input class="num-input" id="sf3" type="number" min="0" max="12" value="4" oninput="updateProbs()">
+        <span style="color:var(--muted2);font-size:0.84rem;font-weight:500;">f=4:</span><input class="num-input" id="sf4" type="number" min="0" max="12" value="1" oninput="updateProbs()">
+      </div>
+      <div class="prob-container" id="probBarsContainer"></div>
+      <div id="probWinner" style="text-align:center;font-size:0.88rem;color:var(--green);font-weight:600;"></div>
+    </div>
+    <div class="pill-row"><span class="tag tag-green">Some exploration via probability</span><span class="tag tag-blue">Runs continuously</span><span class="tag tag-amber">No K parameter</span></div>
+  </div>
+  <h3 class="sub">Summary Comparison</h3>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Variant</th><th>Escapes Local Optima?</th><th>Mechanism</th><th>K parameter</th></tr></thead>
+    <tbody>
+      <tr><td>Basic HC</td><td><span class="tag tag-red">No</span></td><td>Cannot &mdash; returns local max immediately</td><td>K=1 (one run)</td></tr>
+      <tr><td>HC + Random Restart</td><td><span class="tag tag-amber">Somewhat</span></td><td>Tries completely new starting points</td><td>K = # restarts</td></tr>
+      <tr><td>Stochastic HC</td><td><span class="tag tag-green">Somewhat</span></td><td>Probabilistic selection allows exploration</td><td>N/A &mdash; continuous</td></tr>
+    </tbody>
+  </table></div>
+</section>
+<hr class="divider">
+<!-- S6 -->
+<section class="chapter" id="s6">
+  <div class="chapter-header">
+    <span class="chapter-num green">06</span>
+    <div class="chapter-title-wrap">
+      <div class="chapter-title">Beam Search &mdash; Parallel Hill Climbing</div>
+      <div class="chapter-subtitle">K independent threads; first to find global optimum broadcasts STOP</div>
+    </div>
+  </div>
+  <p><strong>Beam Search = K threads of Hill Climbing running simultaneously.</strong> If any thread finds the global optimum, it broadcasts STOP to all others. Unlike Random Restart, the threads run in parallel &mdash; not one after another.</p>
+  <div class="diagram">
+    <svg viewBox="0 0 700 175" xmlns="http://www.w3.org/2000/svg" font-family="Inter,sans-serif">
+      <defs><marker id="ag" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><polygon points="0 0,7 3.5,0 7" fill="#F87171"/></marker></defs>
+      <rect x="20" y="30" width="145" height="120" rx="8" fill="#141929" stroke="rgba(77,158,255,0.25)" stroke-width="1.5"/>
+      <circle cx="35" cy="44" r="5" fill="#4D9EFF"/>
+      <text x="50" y="48" fill="#4D9EFF" font-size="10" font-weight="600">Thread 1</text>
+      <text x="30" y="70" fill="#6B7A9F" font-size="8.5">start: [2,4,1,3]</text>
+      <text x="30" y="86" fill="#6B7A9F" font-size="8.5">f=5 &rarr; climb...</text>
+      <text x="30" y="102" fill="#6B7A9F" font-size="8.5">best nbr: f=6</text>
+      <text x="30" y="124" fill="#10B981" font-size="10" font-weight="700">FOUND f=6 !</text>
+      <text x="30" y="142" fill="#10B981" font-size="8">&rarr; broadcast STOP</text>
+      <rect x="278" y="30" width="145" height="120" rx="8" fill="#141929" stroke="rgba(255,255,255,0.07)"/>
+      <circle cx="293" cy="44" r="5" fill="#F59E0B"/>
+      <text x="308" y="48" fill="#F59E0B" font-size="10" font-weight="600">Thread 2</text>
+      <text x="288" y="70" fill="#6B7A9F" font-size="8.5">start: [1,3,1,4]</text>
+      <text x="288" y="86" fill="#6B7A9F" font-size="8.5">f=3 &rarr; climb...</text>
+      <text x="288" y="102" fill="#6B7A9F" font-size="8.5">f=4 &rarr; climbing</text>
+      <text x="288" y="124" fill="#F87171" font-size="10">&larr; STOP</text>
+      <text x="288" y="142" fill="#F87171" font-size="8">halted by broadcast</text>
+      <rect x="536" y="30" width="145" height="120" rx="8" fill="#141929" stroke="rgba(255,255,255,0.07)"/>
+      <circle cx="551" cy="44" r="5" fill="#A78BFA"/>
+      <text x="566" y="48" fill="#A78BFA" font-size="10" font-weight="600">Thread 3</text>
+      <text x="546" y="70" fill="#6B7A9F" font-size="8.5">start: [4,2,3,1]</text>
+      <text x="546" y="86" fill="#6B7A9F" font-size="8.5">f=4 &rarr; climb...</text>
+      <text x="546" y="102" fill="#6B7A9F" font-size="8.5">f=5 &rarr; climbing</text>
+      <text x="546" y="124" fill="#F87171" font-size="10">&larr; STOP</text>
+      <text x="546" y="142" fill="#F87171" font-size="8">halted by broadcast</text>
+      <line x1="165" y1="134" x2="276" y2="134" stroke="#F87171" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ag)"/>
+      <line x1="165" y1="134" x2="534" y2="134" stroke="#F87171" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ag)"/>
+      <text x="350" y="125" fill="#F87171" font-size="8.5" text-anchor="middle">STOP broadcast</text>
+    </svg>
+    <p class="diagram-caption">Fig 4 &mdash; K=3 parallel threads. Thread 1 finds f=6 and broadcasts STOP; threads 2 &amp; 3 halt immediately.</p>
+  </div>
+  <div class="algo-block"><span class="label">ALGORITHM</span><span class="kw">BEAM SEARCH (K parallel threads)</span>
+
+<span class="cm">Step</span> <span class="op">1.</span>  Start K random states simultaneously: s&#8321;, s&#8322;, ..., sK
+<span class="cm">Step</span> <span class="op">2.</span>  Each thread independently applies Hill Climbing:
+         Thread 1: s&#8321; &rarr; generate neighbours &rarr; evaluate &rarr; move to best
+         Thread 2: s&#8322; &rarr; generate neighbours &rarr; evaluate &rarr; move to best ...
+<span class="cm">Step</span> <span class="op">3.</span>  IF any thread finds global optimum:
+         &rarr; Broadcast STOP to all other threads
+         &rarr; Return the winning state
+<span class="cm">Step</span> <span class="op">4.</span>  IF no thread finds global optimum (all stuck):
+         &rarr; Stochastic variant: each picks next state by probability
+         &rarr; Repeat from Step 2
+
+<span class="kw">KEY:</span>  Threads do NOT share information mid-search.
+      They only communicate when ONE finds the global answer.
+<span class="kw">K = 1</span>  &rarr;  Beam Search = Stochastic Hill Climbing</div>
+  <h3 class="sub">Interactive Simulation</h3>
+  <div class="calc-panel">
+    <div class="input-row">
+      <label>K threads:</label>
+      <input class="num-input" id="beamK" type="number" min="1" max="5" value="3">
+      <button class="btn btn-primary" onclick="runBeamDemo()">&#9654; Run</button>
+      <button class="btn btn-ghost" onclick="resetBeamDemo()">Reset</button>
+    </div>
+    <div class="threads-grid" id="beamThreads"></div>
+    <div id="beamLog" style="font-family:'Fira Code',monospace;font-size:0.76rem;color:var(--muted);margin-top:0.5rem;min-height:1.2em;"></div>
+  </div>
+  <div class="card card-blue"><p style="margin:0;"><strong>Random Restart vs Beam Search:</strong><br>
+    Random Restart runs K hill climbs <em>one after another</em> &mdash; total time = K &times; one HC run.<br>
+    Beam Search runs K hill climbs <em>simultaneously</em> &mdash; total time &asymp; 1 HC run.<br>
+    With K processors available, Beam Search is approximately K times faster.</p>
+  </div>
+  <h3 class="sub amber">Stochastic Beam Search</h3>
+  <div class="card card-amber">
+    <p style="margin-bottom:0.5rem;"><strong>Standard Beam Search:</strong> each thread picks the best neighbour (greedy, like Basic HC).</p>
+    <p style="margin-bottom:0.75rem;"><strong>Stochastic Beam Search:</strong> each thread picks a neighbour probabilistically (like Stochastic HC). This adds exploration and helps threads avoid converging to the same local optimum.</p>
+    <div class="tbl-wrap" style="margin:0;"><table>
+      <thead><tr><th>Variant</th><th>Selection</th><th>Escape local optima</th></tr></thead>
+      <tbody>
+        <tr><td>Beam Search</td><td>Greedy &mdash; always best</td><td>Somewhat (K threads)</td></tr>
+        <tr><td>Stochastic Beam Search</td><td>Probabilistic by frequency</td><td>Better &mdash; probabilistic + parallel</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+<hr class="divider">
+<!-- S7 -->
+<section class="chapter" id="s7">
+  <div class="chapter-header">
+    <span class="chapter-num purple">07</span>
+    <div class="chapter-title-wrap">
+      <div class="chapter-title">The Optimization Landscape</div>
+      <div class="chapter-subtitle">Visualising why local search behaves the way it does</div>
+    </div>
+  </div>
+  <p>Think of fitness as a <strong>hilly terrain</strong>. Each state is a point on the surface; its height is its fitness. Hill Climbing is like climbing this terrain blindfolded &mdash; it can only feel the slope immediately around the current position.</p>
+  <div class="diagram">
+    <svg viewBox="0 0 740 255" xmlns="http://www.w3.org/2000/svg" font-family="Inter,sans-serif">
+      <rect x="0" y="0" width="740" height="255" fill="#080C18" rx="10"/>
+      <line x1="28" y1="18" x2="28" y2="228" stroke="rgba(255,255,255,0.07)" stroke-width="1.5"/>
+      <line x1="28" y1="228" x2="722" y2="228" stroke="rgba(255,255,255,0.07)" stroke-width="1.5"/>
+      <text x="14" y="128" fill="#6B7A9F" font-size="9" text-anchor="middle" transform="rotate(-90,14,128)">Fitness</text>
+      <text x="375" y="248" fill="#6B7A9F" font-size="9" text-anchor="middle">State Space &rarr;</text>
+      <path d="M 28,228 Q 80,228 105,200 Q 133,165 165,145 Q 192,130 218,120 Q 238,112 258,100 Q 274,90 290,74 Q 305,56 322,44 Q 340,32 360,48 Q 380,64 396,84 Q 422,110 457,128 Q 480,138 508,132 Q 532,122 552,98 Q 572,74 594,52 Q 614,32 636,22 Q 654,14 672,26 Q 685,38 704,55 L 722,70" fill="none" stroke="#4D9EFF" stroke-width="2.5"/>
+      <path d="M 28,228 Q 80,228 105,200 Q 133,165 165,145 Q 192,130 218,120 Q 238,112 258,100 Q 274,90 290,74 Q 305,56 322,44 Q 340,32 360,48 Q 380,64 396,84 Q 422,110 457,128 Q 480,138 508,132 Q 532,122 552,98 Q 572,74 594,52 Q 614,32 636,22 Q 654,14 672,26 Q 685,38 704,55 L 722,70 L 722,228 Z" fill="rgba(77,158,255,0.04)"/>
+      <line x1="448" y1="125" x2="520" y2="132" stroke="#F59E0B" stroke-width="1.5" stroke-dasharray="3,2"/>
+      <text x="484" y="116" fill="#F59E0B" font-size="9" text-anchor="middle" font-weight="500">Plateau</text>
+      <circle cx="322" cy="44" r="8" fill="#F87171" stroke="#080C18" stroke-width="2"/>
+      <text x="322" y="32" fill="#F87171" font-size="9" font-weight="600" text-anchor="middle">Local Max</text>
+      <circle cx="636" cy="22" r="10" fill="#10B981" stroke="#080C18" stroke-width="2"/>
+      <text x="636" y="8" fill="#10B981" font-size="10" font-weight="700" text-anchor="middle">Global Max f=6</text>
+      <text x="380" y="100" fill="#8A97BC" font-size="9" text-anchor="middle">Valley</text>
+      <text x="560" y="114" fill="#8A97BC" font-size="9" text-anchor="middle">Ridge</text>
+      <circle cx="200" cy="126" r="5" fill="#F87171"/>
+      <path d="M 200,126 Q 228,108 252,96 Q 270,86 288,72 Q 305,58 322,44" fill="none" stroke="#F87171" stroke-width="2" stroke-dasharray="5,2"/>
+      <text x="184" y="145" fill="#F87171" font-size="8.5">Start A</text>
+      <circle cx="560" cy="96" r="5" fill="#4D9EFF"/>
+      <path d="M 560,96 Q 577,74 594,52 Q 616,34 636,22" fill="none" stroke="#4D9EFF" stroke-width="2" stroke-dasharray="5,2"/>
+      <text x="546" y="115" fill="#4D9EFF" font-size="8.5">Start B</text>
+    </svg>
+    <p class="diagram-caption">Fig 5 &mdash; The optimization landscape. Local max at f=4, global max at f=6. Start A gets stuck; Start B reaches the global.</p>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Feature</th><th>Description</th><th>Algorithm implication</th></tr></thead>
+    <tbody>
+      <tr><td>Local Maximum</td><td>All neighbours are worse &mdash; algorithm stops here</td><td>Basic HC always stops here; may not be global</td></tr>
+      <tr><td>Global Maximum</td><td>The single highest point across all states</td><td>The target; f=6 for 4-Queens</td></tr>
+      <tr><td>Plateau</td><td>Flat region &mdash; all neighbours have equal fitness</td><td>HC gets confused; stochastic variants handle better</td></tr>
+      <tr><td>Ridge</td><td>Narrow elevated strip &mdash; movement along it is tricky</td><td>Hard for HC; needs diagonal moves it cannot make</td></tr>
+      <tr><td>Valley</td><td>Local minimum (when minimising fitness)</td><td>Same as local max when minimising</td></tr>
+    </tbody>
+  </table></div>
+</section>
+<hr class="divider">
+<!-- S8 -->
+<section class="chapter" id="s8">
+  <div class="chapter-header">
+    <span class="chapter-num">08</span>
+    <div class="chapter-title-wrap">
+      <div class="chapter-title">Algorithm Comparison</div>
+      <div class="chapter-subtitle">Full reference table for all algorithms covered</div>
+    </div>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Algorithm</th><th>Starting States</th><th>Parallelism</th><th>Escape Local Optima?</th><th>Optimal?</th><th>Memory</th></tr></thead>
+    <tbody>
+      <tr><td>Basic Hill Climbing</td><td>1 random</td><td>No</td><td><span class="tag tag-red">No</span></td><td>No</td><td>O(1)</td></tr>
+      <tr><td>HC + Random Restart</td><td>1 per restart</td><td>Sequential</td><td><span class="tag tag-amber">Somewhat</span></td><td>No (improves with K)</td><td>O(1)</td></tr>
+      <tr><td>Stochastic HC</td><td>1 random</td><td>No</td><td><span class="tag tag-amber">Somewhat</span></td><td>No</td><td>O(1)</td></tr>
+      <tr><td>Beam Search (K)</td><td>K random (parallel)</td><td>Yes &mdash; K threads</td><td><span class="tag tag-green">Better</span></td><td>No (K chances)</td><td>O(K)</td></tr>
+      <tr><td>Stochastic Beam Search</td><td>K random (parallel)</td><td>Yes &mdash; K threads</td><td><span class="tag tag-green">Best here</span></td><td>No</td><td>O(K)</td></tr>
+    </tbody>
+  </table></div>
+  <h3 class="sub">Path Search vs Local Search</h3>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Dimension</th><th>Path Search (BFS/DFS/A*)</th><th>Local Search (HC/Beam)</th></tr></thead>
+    <tbody>
+      <tr><td>Solution</td><td>The PATH from initial to goal</td><td>The STATE itself</td></tr>
+      <tr><td>What is tracked</td><td>All visited states (queue/stack)</td><td>Only current state + neighbours</td></tr>
+      <tr><td>Memory</td><td>O(b&#7496;) &mdash; exponential</td><td>O(1) &mdash; essentially constant</td></tr>
+      <tr><td>Completeness</td><td>Yes (BFS, UCS, A*)</td><td>No &mdash; may miss global optimum</td></tr>
+      <tr><td>Optimality</td><td>Yes (A* with admissible h)</td><td>No &mdash; local optimum only</td></tr>
+      <tr><td>Best for</td><td>When path/cost matters; small spaces</td><td>When configuration is the answer; large spaces</td></tr>
+      <tr><td>Example</td><td>Romania map routing</td><td>N-Queens, timetable scheduling, hyperparameter tuning</td></tr>
+    </tbody>
+  </table></div>
+</section>
+<hr class="divider">
+<!-- S9 -->
+<section class="chapter" id="s9">
+  <div class="chapter-header">
+    <span class="chapter-num purple">09</span>
+    <div class="chapter-title-wrap">
+      <div class="chapter-title">Preview &mdash; Genetic Algorithms</div>
+      <div class="chapter-subtitle">What changes when threads start cooperating instead of working alone</div>
+    </div>
+  </div>
+  <p>The key distinction between Beam Search and Genetic Algorithms is <strong>whether the threads share information</strong> mid-search.</p>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Aspect</th><th>Beam Search</th><th>Genetic Algorithms</th></tr></thead>
+    <tbody>
+      <tr><td>Starting point</td><td>K random independent states</td><td>Initial population of states</td></tr>
+      <tr><td>Thread collaboration</td><td>None &mdash; work independently</td><td>Yes &mdash; states share information (crossover)</td></tr>
+      <tr><td>Information sharing</td><td>Only final answer shared</td><td>Intermediate states combine to produce children</td></tr>
+      <tr><td>Variation mechanism</td><td>Move one queen (1-NN)</td><td>Crossover (combine parents) + Mutation</td></tr>
+      <tr><td>Inspiration</td><td>Parallel computing</td><td>Biological evolution and natural selection</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout success"><span class="callout-icon">&#129516;</span>
+    <div class="callout-body"><strong>The key insight:</strong> In Beam Search, K threads are like K people solving the same puzzle separately in different rooms. In Genetic Algorithms, they cooperate &mdash; like parents having children who inherit features from both. The &ldquo;fittest&rdquo; states reproduce; weaker ones are discarded. This biological metaphor makes GAs significantly more powerful for certain problem types.</div>
+  </div>
+</section>
+<hr class="divider">
+<!-- S10 -->
+<section class="chapter" id="s10">
+  <div class="chapter-header">
+    <span class="chapter-num green">&#9998;</span>
+    <div class="chapter-title-wrap">
+      <div class="chapter-title">Exercises &mdash; Worked Solutions</div>
+      <div class="chapter-subtitle">Four problems from the lecture. Attempt before revealing the solution.</div>
+    </div>
+  </div>
+  <!-- EX 1 -->
+  <div class="exercise-card" id="exc1">
+    <div class="exercise-header" onclick="toggleExercise('exc1')">
+      <div class="ex-title-row"><span class="ex-badge tag-blue">Exercise 1</span><span class="ex-title">Hill Climbing Trace on 4-Queens</span></div>
+      <span class="ex-chevron">&#9660;</span>
+    </div>
+    <div class="exercise-body">
+      <div class="ex-question">Starting state: <code>[3, 1, 4, 2]</code> &mdash; queen in col1=row3, col2=row1, col3=row4, col4=row2</div>
+      <div class="ex-parts">
+        <div class="ex-part"><span class="ex-part-letter">a</span><span>Calculate fitness using non-conflicting pairs. Show ALL 6 pair checks.</span></div>
+        <div class="ex-part"><span class="ex-part-letter">b</span><span>Generate all 12 1-NN neighbours.</span></div>
+        <div class="ex-part"><span class="ex-part-letter">c</span><span>Calculate fitness for each neighbour.</span></div>
+        <div class="ex-part"><span class="ex-part-letter">d</span><span>Which neighbour does Hill Climbing move to?</span></div>
+        <div class="ex-part"><span class="ex-part-letter">e</span><span>From that neighbour, are you closer to the global optimum f=6?</span></div>
+      </div>
+      <div class="ex-divider"></div>
+      <div class="ex-solution-label">Solution</div>
+      <div class="algo-block"><span class="kw">State [3,1,4,2]: Q1=row3, Q2=row1, Q3=row4, Q4=row2</span>
+
+<span class="cm">All 6 pair checks  (diagonal rule: |r1&minus;r2| = |c1&minus;c2|)</span>
+Q1,Q2: rows 3 vs 1 &rarr; |3&minus;1|=2, |col1&minus;col2|=1 &rarr; 2&ne;1 &rarr; <span class="val">NOT conflicting &#10003;</span>
+Q1,Q3: rows 3 vs 4 &rarr; |3&minus;4|=1, |1&minus;3|=2 &rarr; 1&ne;2   &rarr; <span class="val">NOT conflicting &#10003;</span>
+Q1,Q4: rows 3 vs 2 &rarr; |3&minus;2|=1, |1&minus;4|=3 &rarr; 1&ne;3   &rarr; <span class="val">NOT conflicting &#10003;</span>
+Q2,Q3: rows 1 vs 4 &rarr; |1&minus;4|=3, |2&minus;3|=1 &rarr; 3&ne;1   &rarr; <span class="val">NOT conflicting &#10003;</span>
+Q2,Q4: rows 1 vs 2 &rarr; |1&minus;2|=1, |2&minus;4|=2 &rarr; 1&ne;2   &rarr; <span class="val">NOT conflicting &#10003;</span>
+Q3,Q4: rows 4 vs 2 &rarr; |4&minus;2|=2, |3&minus;4|=1 &rarr; 2&ne;1   &rarr; <span class="val">NOT conflicting &#10003;</span>
+
+<span class="val">Fitness = 6 / 6 &larr; GLOBAL OPTIMUM! [3,1,4,2] is already a solution.</span>
+
+<span class="cm">Hill Climbing stops immediately at Step 2. Parts (b)&ndash;(e) are not needed.</span>
+<span class="cm">The random starting state happened to be the global optimum directly.</span></div>
+      <div class="callout info" style="margin-top:0.75rem;"><span class="callout-icon">&#128161;</span>
+        <div class="callout-body">This illustrates why Random Restart can find the global optimum in very few restarts &mdash; sometimes the initial random state is already at or near the global optimum.</div>
+      </div>
+    </div>
+  </div>
+  <!-- EX 2 -->
+  <div class="exercise-card" id="exc2">
+    <div class="exercise-header" onclick="toggleExercise('exc2')">
+      <div class="ex-title-row"><span class="ex-badge tag-green">Exercise 2</span><span class="ex-title">Local Beam Search with K=3</span></div>
+      <span class="ex-chevron">&#9660;</span>
+    </div>
+    <div class="exercise-body">
+      <div class="ex-question">Three starting states: <code>[2,4,1,3] f=5</code> &nbsp; <code>[1,3,1,4] f=3</code> &nbsp; <code>[4,2,3,1] f=4</code></div>
+      <div class="ex-parts">
+        <div class="ex-part"><span class="ex-part-letter">a</span><span>Which thread is most promising?</span></div>
+        <div class="ex-part"><span class="ex-part-letter">b</span><span>Thread 1 generates neighbours and best has f=6. What happens?</span></div>
+        <div class="ex-part"><span class="ex-part-letter">c</span><span>If no thread found f=6 in round 1, describe round 2.</span></div>
+        <div class="ex-part"><span class="ex-part-letter">d</span><span>If K=1, what algorithm does Beam Search become?</span></div>
+      </div>
+      <div class="ex-divider"></div>
+      <div class="ex-solution-label">Solution</div>
+      <div class="algo-block"><span class="kw">(a) Most promising thread:</span>
+Thread 1 [2,4,1,3] with f=5 &mdash; highest fitness among the three.
+Threads 2 and 3 have f=3 and f=4 respectively.
+
+<span class="kw">(b) Thread 1 finds f=6:</span>
+&rarr; Thread 1 finds global optimum f=6
+&rarr; Thread 1 <span class="op">broadcasts STOP to ALL other threads</span>
+&rarr; Threads 2 and 3 halt immediately, regardless of their current state
+&rarr; Beam Search terminates; returns the winning state from Thread 1
+
+<span class="kw">(c) Round 2 if no winner in round 1:</span>
+&rarr; Each thread independently generates 12 neighbours
+&rarr; Each thread moves to its best neighbour (or probabilistic if stochastic variant)
+&rarr; All 3 threads continue climbing in parallel
+&rarr; Repeat until a thread hits f=6 or iteration limit is reached
+
+<span class="kw">(d) K=1 reduces to:</span>
+<span class="val">K=1 &rarr; Stochastic Hill Climbing</span>
+One thread, probabilistic selection = Stochastic HC by definition.</div>
+    </div>
+  </div>
+  <!-- EX 3 -->
+  <div class="exercise-card" id="exc3">
+    <div class="exercise-header" onclick="toggleExercise('exc3')">
+      <div class="ex-title-row"><span class="ex-badge tag-amber">Exercise 3</span><span class="ex-title">Stochastic HC &mdash; Probability Calculation</span></div>
+      <span class="ex-chevron">&#9660;</span>
+    </div>
+    <div class="exercise-body">
+      <div class="ex-question">Starting state: <code>[2,2,4,3] f=3</code>. After generating 12 neighbours:</div>
+      <div class="ex-question" style="font-family:'Fira Code',monospace;font-size:0.85rem;margin-top:-0.25rem;">f=1: &times;1 &nbsp;|&nbsp; f=2: &times;2 &nbsp;|&nbsp; f=3: &times;5 &nbsp;|&nbsp; f=4: &times;3 &nbsp;|&nbsp; f=5: &times;1</div>
+      <div class="ex-parts">
+        <div class="ex-part"><span class="ex-part-letter">a</span><span>Calculate probability for each fitness value.</span></div>
+        <div class="ex-part"><span class="ex-part-letter">b</span><span>Which fitness group has the highest probability?</span></div>
+        <div class="ex-part"><span class="ex-part-letter">c</span><span>If two neighbours have f=4, which one do you pick?</span></div>
+        <div class="ex-part"><span class="ex-part-letter">d</span><span>How does this differ from Basic Hill Climbing?</span></div>
+      </div>
+      <div class="ex-divider"></div>
+      <div class="ex-solution-label">Solution</div>
+      <div class="algo-block"><span class="kw">(a) Probabilities (frequency &divide; 12):</span>
+P(f=1) = 1/12 = <span class="val">0.083</span>  ( 8.3%)
+P(f=2) = 2/12 = <span class="val">0.167</span>  (16.7%)
+P(f=3) = 5/12 = <span class="val">0.417</span>  (41.7%) <span class="op">&larr; highest probability group</span>
+P(f=4) = 3/12 = <span class="val">0.250</span>  (25.0%)
+P(f=5) = 1/12 = <span class="val">0.083</span>  ( 8.3%)
+Sum    = 12/12 = 1.000 &#10003;
+
+<span class="kw">(b) Highest probability group:</span>
+f=3 with P=0.417 &mdash; Stochastic HC selects from this group.
+<span class="cm">This is NOT the highest fitness group! Basic HC would pick f=5.</span>
+
+<span class="kw">(c) Tie within the selected group:</span>
+Pick <span class="val">uniformly at random</span> among the neighbours in the winning group.
+
+<span class="kw">(d) Difference from Basic HC:</span>
+Basic HC: moves to neighbour with MAXIMUM fitness (f=5 here).
+Stochastic HC: moves to neighbour from MOST PROBABLE group (f=3 here).
+<span class="val">Stochastic HC may move to a LOWER fitness state &mdash; intentional exploration.</span></div>
+    </div>
+  </div>
+  <!-- EX 4 -->
+  <div class="exercise-card" id="exc4">
+    <div class="exercise-header" onclick="toggleExercise('exc4')">
+      <div class="ex-title-row"><span class="ex-badge tag-red">Challenge</span><span class="ex-title">Exercise 4 &mdash; Hyperparameter Tuning as Local Search</span></div>
+      <span class="ex-chevron">&#9660;</span>
+    </div>
+    <div class="exercise-body">
+      <div class="ex-question">Tuning a neural network: <code>lr &isin; {0.001, 0.01, 0.1}</code> &nbsp; <code>batch &isin; {16, 32, 64}</code> &nbsp; <code>epochs &isin; {10, 20, 30}</code></div>
+      <div class="ex-parts">
+        <div class="ex-part"><span class="ex-part-letter">a</span><span>What is the total state space size?</span></div>
+        <div class="ex-part"><span class="ex-part-letter">b</span><span>Define a fitness function for this problem.</span></div>
+        <div class="ex-part"><span class="ex-part-letter">c</span><span>Starting from [lr=0.01, batch=32, epochs=20], how many 1-NN neighbours exist?</span></div>
+        <div class="ex-part"><span class="ex-part-letter">d</span><span>Which local search variant would you recommend, and why?</span></div>
+        <div class="ex-part"><span class="ex-part-letter">e</span><span>What is the &ldquo;global optimum&rdquo; in this context?</span></div>
+      </div>
+      <div class="ex-divider"></div>
+      <div class="ex-solution-label">Solution</div>
+      <div class="algo-block"><span class="kw">(a) Total state space:</span>
+3 &times; 3 &times; 3 = <span class="val">27 possible configurations</span>
+
+<span class="kw">(b) Fitness function:</span>
+<span class="val">f(state) = validation accuracy of the trained model</span>
+Higher accuracy = better state. Goal: maximise f.
+
+<span class="kw">(c) 1-NN neighbours from [lr=0.01, batch=32, epochs=20]:</span>
+lr: 0.01&rarr;0.001  |  0.01&rarr;0.1    = 2 neighbours
+batch: 32&rarr;16    |  32&rarr;64        = 2 neighbours
+epochs: 20&rarr;10   |  20&rarr;30        = 2 neighbours
+<span class="val">Total = 6 neighbours</span>
+
+<span class="kw">(d) Recommended algorithm:</span>
+<span class="val">Beam Search (K=3 to 5)</span>
+Each evaluation trains a full model &mdash; expensive. Beam Search
+gives K parallel explorations with far fewer total evaluations than grid search.
+
+<span class="kw">(e) Global optimum:</span>
+<span class="val">The hyperparameter combination with the highest validation accuracy.</span>
+The true global is unknown; local search approximates it efficiently.</div>
+      <div class="callout info" style="margin-top:0.75rem;"><span class="callout-icon">&#128161;</span>
+        <div class="callout-body">This is how real ML practitioners tune large models &mdash; exhaustive grid search over all 27 combinations is wasteful when each evaluation is expensive. Local search finds a good solution with far fewer evaluations.</div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+<!-- S11 -->
+<section class="chapter" id="s11">
+  <div class="chapter-header">
+    <span class="chapter-num">&#128218;</span>
+    <div class="chapter-title-wrap">
+      <div class="chapter-title">References</div>
+      <div class="chapter-subtitle">Primary sources for this lecture</div>
+    </div>
+  </div>
+  <div class="ref-card"><span class="ref-icon">&#128214;</span>
+    <div class="ref-body">
+      <div class="ref-title">AIMA 4th Ed. &mdash; Chapter 4 &sect;4.1 &middot; Local Search Algorithms</div>
+      <div class="ref-desc">Russell &amp; Norvig (2020, Pearson). Covers all algorithms from this lecture: Hill Climbing (standard, random restart, stochastic), Beam Search. Section 4.1.2 covers N-Queens local search specifically.</div>
+      <a class="ref-link" href="https://aima.cs.berkeley.edu/" target="_blank">aima.cs.berkeley.edu &#8599;</a>
+    </div>
+  </div>
+  <div class="ref-card"><span class="ref-icon">&#128214;</span>
+    <div class="ref-body">
+      <div class="ref-title">AIMA &sect;4.2 &mdash; Local Search in Continuous Spaces</div>
+      <div class="ref-desc">Extension of local search to real-valued parameter spaces. Directly relevant to Exercise 4 (hyperparameter tuning) and robotics applications.</div>
+    </div>
+  </div>
+  <div class="ref-card"><span class="ref-icon">&#128214;</span>
+    <div class="ref-body">
+      <div class="ref-title">AIMA &sect;4.3 &mdash; Searching with Non-Deterministic Actions</div>
+      <div class="ref-desc">Online search and AND-OR trees &mdash; mentioned briefly as a follow-on topic in this lecture.</div>
+    </div>
+  </div>
+  <div class="ref-card"><span class="ref-icon">&#128279;</span>
+    <div class="ref-body">
+      <div class="ref-title">AIMA Interactive Demos</div>
+      <div class="ref-desc">Watch Hill Climbing move through the state space in real time &mdash; best way to build intuition for the landscape metaphor before your exam.</div>
+      <a class="ref-link" href="https://aimacode.github.io/aima-javascript/" target="_blank">aimacode.github.io/aima-javascript/ &#8599;</a>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+<!-- S12 -->
+<section class="chapter" id="s12">
+  <div class="chapter-header">
+    <span class="chapter-num amber">Q</span>
+    <div class="chapter-title-wrap">
+      <div class="chapter-title">Self-Test Quiz</div>
+      <div class="chapter-subtitle">10 questions &mdash; covers every concept from this lecture</div>
+    </div>
+  </div>
+  <div id="quizContainer"></div>
+  <div class="score-wrap" id="scoreWrap">
+    <div class="score-header" id="scoreLabel">Score: 0 / 10</div>
+    <div class="score-bar"><div class="score-fill" id="scoreFill"></div></div>
+    <div class="score-msg" id="scoreText"></div>
+  </div>
+  <div style="margin-top:1.25rem;">
+    <button class="btn btn-ghost" onclick="resetQuiz()">&#8635; Restart Quiz</button>
+  </div>
+</section>
+</div></div></div>
+<script>
+const SECTIONS=['s1','s2','s3','s4','s5','s6','s7','s8','s9','s10','s11','s12'];
+const visited=new Set();
+function updateNav(){
+  const sy=window.scrollY;
+  let cur=SECTIONS[0];
+  SECTIONS.forEach(id=>{const el=document.getElementById(id);if(el&&sy>=el.offsetTop-130)cur=id;});
+  document.querySelectorAll('.nav-link').forEach(a=>{
+    const sec=a.dataset.sec;
+    a.classList.toggle('active',sec===cur);
+    const el=document.getElementById(sec);
+    if(el&&sy>el.offsetTop-200){visited.add(sec);a.classList.add('visited');}
+  });
+  const pct=Math.round((visited.size/SECTIONS.length)*100);
+  document.getElementById('railFill').style.width=pct+'%';
+  document.getElementById('progressPct').textContent=pct+'%';
+}
+window.addEventListener('scroll',updateNav,{passive:true});
+updateNav();
+function toggleRail(){document.getElementById('rail').classList.toggle('open');}
+document.querySelectorAll('.nav-link').forEach(a=>a.addEventListener('click',()=>document.getElementById('rail').classList.remove('open')));
+function showTab(id,btn){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+function clamp(v,lo,hi){return Math.min(hi,Math.max(lo,parseInt(v)||lo));}
+function getQueens(){return['q1','q2','q3','q4'].map(id=>clamp(document.getElementById(id).value,1,4));}
+function calcFitness(){
+  const q=getQueens();
+  document.getElementById('stateDisplay').textContent='State: ['+q.join(', ')+']';
+  const pairs=[];
+  for(let i=0;i<4;i++)for(let j=i+1;j<4;j++){
+    const sr=q[i]===q[j],diag=Math.abs(q[i]-q[j])===Math.abs(i-j);
+    pairs.push({c1:i+1,c2:j+1,r1:q[i],r2:q[j],conflict:sr||diag,reason:sr?'same row':diag?'diagonal':''});
+  }
+  const nc=pairs.filter(p=>!p.conflict).length;
+  const fd=document.getElementById('fitnessDisplay');
+  fd.textContent=nc+' / 6';
+  fd.style.color=nc===6?'var(--green)':nc>=4?'var(--amber)':'var(--red)';
+  const bw=document.getElementById('boardWrap');
+  bw.innerHTML='';
+  const board=document.createElement('div');
+  board.className='board';
+  const conflicts=new Set();
+  pairs.forEach(p=>{if(p.conflict){conflicts.add(p.c1-1);conflicts.add(p.c2-1);}});
+  for(let row=1;row<=4;row++){
+    for(let col=0;col<4;col++){
+      const cell=document.createElement('div');
+      const hasQ=q[col]===row;
+      if(hasQ){cell.className='cell '+(conflicts.has(col)?'queen-bad':'queen-ok');cell.textContent='♛';}
+      else{cell.className='cell '+((row+col)%2===0?'light':'dark');}
+      board.appendChild(cell);
+    }
+  }
+  bw.appendChild(board);
+  const pl=document.getElementById('pairsList');
+  pl.innerHTML='';
+  pairs.forEach(p=>{
+    const d=document.createElement('div');
+    d.className='pair-row '+(p.conflict?'pair-bad':'pair-ok');
+    d.textContent=p.conflict?`Q${p.c1},Q${p.c2}: rows ${p.r1} vs ${p.r2} → ${p.reason} ✗`:`Q${p.c1},Q${p.c2}: rows ${p.r1} vs ${p.r2} → safe ✓`;
+    pl.appendChild(d);
+  });
+}
+function randomState(){['q1','q2','q3','q4'].forEach(id=>{document.getElementById(id).value=Math.floor(Math.random()*4)+1;});calcFitness();}
+function setOptimal(){['q1','q2','q3','q4'].forEach((id,i)=>{document.getElementById(id).value=[2,4,1,3][i];});calcFitness();}
+const BAR_COLORS=['var(--red)','var(--amber)','var(--blue)','var(--green)'];
+function updateProbs(){
+  const vals=[1,2,3,4].map(i=>Math.max(0,parseInt(document.getElementById('sf'+i).value)||0));
+  const total=vals.reduce((a,b)=>a+b,0);
+  const probs=vals.map(v=>total>0?v/total:0);
+  const maxP=Math.max(...probs);
+  const container=document.getElementById('probBarsContainer');
+  if(!container.children.length){
+    container.innerHTML='';
+    for(let i=0;i<4;i++){
+      const col=document.createElement('div');col.className='prob-col';
+      col.innerHTML=`<div class="prob-bar-val" id="pbv${i}">0%</div><div class="prob-bar-inner" id="pb${i}" style="height:4px;background:${BAR_COLORS[i]};"></div><div class="prob-bar-lbl">f=${i+1}</div>`;
+      container.appendChild(col);
+    }
+  }
+  probs.forEach((p,i)=>{
+    document.getElementById('pb'+i).style.height=Math.max(4,p*100)+'px';
+    document.getElementById('pb'+i).style.background=p===maxP&&total>0?BAR_COLORS[i]:'rgba(255,255,255,0.08)';
+    document.getElementById('pbv'+i).textContent=(p*100).toFixed(0)+'%';
+    document.getElementById('pbv'+i).style.color=p===maxP&&total>0?BAR_COLORS[i]:'var(--muted)';
+  });
+  const w=document.getElementById('probWinner');
+  if(total===0){w.textContent='';return;}
+  const wf=probs.indexOf(maxP)+1;
+  w.textContent='→ Selected group: f='+wf+'  (P='+(maxP*100).toFixed(1)+'%)';
+}
+const TC=['var(--blue)','var(--amber)','var(--green)','var(--red)','var(--purple)'];
+function fitState(s){let nc=0;for(let i=0;i<4;i++)for(let j=i+1;j<4;j++)if(s[i]!==s[j]&&Math.abs(s[i]-s[j])!==Math.abs(i-j))nc++;return nc;}
+function randState(){return[1,2,3,4].map(()=>Math.floor(Math.random()*4)+1);}
+let beamInterval=null;
+function resetBeamDemo(){clearInterval(beamInterval);document.getElementById('beamThreads').innerHTML='';document.getElementById('beamLog').textContent='';}
+function runBeamDemo(){
+  clearInterval(beamInterval);
+  const K=Math.max(1,Math.min(5,parseInt(document.getElementById('beamK').value)||3));
+  const threads=Array.from({length:K},(_,k)=>{const s=randState();return{state:s,fitness:fitState(s),stopped:false,won:false,color:TC[k]};});
+  const tg=document.getElementById('beamThreads');tg.innerHTML='';
+  threads.forEach((t,k)=>{
+    const el=document.createElement('div');el.className='thread';el.id='t'+k;
+    el.innerHTML=`<div class="thread-header"><div class="thread-indicator" style="background:${t.color}" id="tind${k}"></div><span class="thread-name">Thread ${k+1}</span></div>`+
+      `<div class="thread-state" id="ts${k}s">[${t.state.join(',')}]</div>`+
+      `<div class="thread-fitness" id="ts${k}f">Fitness: ${t.fitness}/6</div>`+
+      `<div class="thread-log" id="ts${k}l">Starting…</div>`;
+    tg.appendChild(el);
+  });
+  const logDiv=document.getElementById('beamLog');
+  let round=0;
+  beamInterval=setInterval(()=>{
+    round++;let anyWon=false;
+    threads.forEach((t,k)=>{
+      if(t.stopped)return;
+      let best=null,bf=-1;
+      for(let i=0;i<12;i++){const ns=t.state.slice();ns[Math.floor(Math.random()*4)]=Math.floor(Math.random()*4)+1;const nf=fitState(ns);if(nf>bf){bf=nf;best=ns;}}
+      if(bf>t.fitness){t.state=best;t.fitness=bf;}
+      document.getElementById('ts'+k+'s').textContent='['+t.state.join(',')+']';
+      document.getElementById('ts'+k+'f').textContent='Fitness: '+t.fitness+'/6';
+      document.getElementById('ts'+k+'l').textContent='Round '+round+': f='+t.fitness;
+      if(t.fitness===6){t.won=true;t.stopped=true;document.getElementById('t'+k).classList.add('winner');document.getElementById('tind'+k).style.animation='none';document.getElementById('ts'+k+'l').textContent='WINNER! f=6 found';anyWon=true;}
+    });
+    if(anyWon){clearInterval(beamInterval);threads.forEach((t,k)=>{if(!t.won){t.stopped=true;document.getElementById('t'+k).classList.add('stopped');document.getElementById('ts'+k+'l').textContent='Halted (STOP broadcast)';document.getElementById('tind'+k).style.animation='none';}});logDiv.textContent='✓ Done in '+round+' round(s). Global optimum found!';}
+    if(round>=30){clearInterval(beamInterval);logDiv.textContent='Stopped after 30 rounds. Best: f='+Math.max(...threads.map(t=>t.fitness))+'/6';}
+  },700);
+}
+function toggleExercise(id){document.getElementById(id).classList.toggle('open');}
+const QUIZ=[
+  {q:"In 4-Queens local search with 1-NN, how many neighbours does any state have?",opts:["6","8","12","16"],ans:2,exp:"4 columns × 3 possible moves each = 12 neighbours. Each queen can move to 3 other rows (not its current one)."},
+  {q:"What is the maximum fitness (non-conflicting pairs) for 4-Queens?",opts:["4","6","8","12"],ans:1,exp:"C(4,2) = 4×3/2 = 6 possible pairs. All 6 non-conflicting = global optimum f=6."},
+  {q:"Queens in column 1 row 2 and column 3 row 4 — do they conflict on a diagonal?",opts:["Yes — |2−4|=2 equals |1−3|=2","No — rows are different","Yes — same column","No — row difference too large"],ans:0,exp:"|r1−r2| = |2−4| = 2, |c1−c2| = |1−3| = 2. Equal → diagonal conflict."},
+  {q:"Hill Climbing is guaranteed to find the global optimum.",opts:["True — it always climbs to the top","False — it only finds the local optimum","True — with enough steps","False — it never finds any optimum"],ans:1,exp:"Hill Climbing guarantees only a local optimum. The starting state determines which peak is reached."},
+  {q:"What does Random Restart HC do when stuck at a local maximum?",opts:["Tries all 12 neighbours again","Picks a completely new random starting state","Uses probability to choose a neighbour","Broadcasts STOP to other threads"],ans:1,exp:"Random Restart picks a completely new random state (not a neighbour) and runs HC again from scratch."},
+  {q:"In Stochastic HC, which neighbour is selected?",opts:["Always the best neighbour","The worst neighbour","One from the fitness group with highest probability","A completely random neighbour"],ans:2,exp:"Stochastic HC groups neighbours by fitness, computes P=count/12 for each group, picks the highest-probability group, then selects randomly within that group."},
+  {q:"Beam Search with K=1 is equivalent to:",opts:["Random Restart HC","Stochastic Hill Climbing","A* Search","BFS"],ans:1,exp:"K=1 means one thread with probabilistic selection — exactly Stochastic Hill Climbing."},
+  {q:"Random Restart runs K hill climbs sequentially. Beam Search runs them:",opts:["Also sequentially but faster","In parallel simultaneously","One at a time with shared memory","Using BFS instead of HC"],ans:1,exp:"Beam Search runs K hill climbs simultaneously in parallel. With K processors, approximately K times faster than Random Restart."},
+  {q:"In Genetic Algorithms vs Beam Search, states share information through:",opts:["Broadcasting STOP messages","Crossover — combining halves of two parent states","A central fitness database","Random mutation only"],ans:1,exp:"GAs use crossover: two parent states swap parts of their vectors to produce children inheriting features from both. Beam Search threads are fully independent."},
+  {q:"Two queens conflict on a diagonal if — pick the most complete answer:",opts:["Their row numbers are equal","Their column numbers are equal","The absolute row difference equals the absolute column difference","The sum of rows equals the sum of columns"],ans:2,exp:"Diagonal conflict: |r1−r2| = |c1−c2|. Same row is a row conflict. Same column is impossible by design."}
+];
+let answered=[],score=0;
+function buildQuiz(){
+  answered=new Array(QUIZ.length).fill(false);score=0;
+  const c=document.getElementById('quizContainer');c.innerHTML='';
+  QUIZ.forEach((q,qi)=>{
+    const card=document.createElement('div');card.className='quiz-card';card.id='qc'+qi;
+    const letters=['A','B','C','D'];
+    card.innerHTML='<div class="quiz-q"><span class="qnum">Q'+(qi+1)+'</span><span>'+q.q+'</span></div>'+
+      '<div class="options" id="opts'+qi+'">'+
+      q.opts.map((o,oi)=>'<div class="option" onclick="answerQ('+qi+','+oi+')"><span class="opt-letter">'+letters[oi]+'</span><span>'+o+'</span></div>').join('')+
+      '</div><div class="explanation" id="exp'+qi+'">'+q.exp+'</div>';
+    c.appendChild(card);
+  });
+  document.getElementById('scoreWrap').style.display='none';
+}
+function answerQ(qi,sel){
+  if(answered[qi])return;answered[qi]=true;
+  document.querySelectorAll('#opts'+qi+' .option').forEach((o,i)=>{
+    o.classList.add('disabled');
+    if(i===QUIZ[qi].ans)o.classList.add('correct');
+    else if(i===sel)o.classList.add('wrong');
+  });
+  document.getElementById('exp'+qi).classList.add('show');
+  if(sel===QUIZ[qi].ans)score++;
+  if(answered.every(Boolean))showScore();
+}
+function showScore(){
+  const w=document.getElementById('scoreWrap');w.style.display='block';
+  const pct=(score/QUIZ.length*100).toFixed(0);
+  document.getElementById('scoreLabel').textContent='Score: '+score+' / '+QUIZ.length;
+  setTimeout(()=>{document.getElementById('scoreFill').style.width=pct+'%';},50);
+  const msgs=[[0,4,'Keep reviewing the lecture notes!'],[5,7,'Good — review the tricky ones.'],[8,9,'Great work, almost perfect!'],[10,10,'Perfect score — exam ready.']];
+  const m=msgs.find(([lo,hi])=>score>=lo&&score<=hi);
+  document.getElementById('scoreText').textContent=pct+'% — '+m[2];
+  w.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function resetQuiz(){buildQuiz();document.getElementById('s12').scrollIntoView({behavior:'smooth'});}
+calcFitness();updateProbs();buildQuiz();
+</script>
+</body></html>
