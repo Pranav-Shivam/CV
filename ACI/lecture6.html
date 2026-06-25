@@ -455,12 +455,14 @@ footer.page-footer{
       <button class="rail-item" data-view="ga"><span class="dot"></span>Genetic Algorithms</button>
       <button class="rail-item" data-view="aco"><span class="dot"></span>Ant Colony Optimization</button>
       <button class="rail-item" data-view="nas"><span class="dot"></span>Neural Arch. Search</button>
+      <button class="rail-item" data-view="game"><span class="dot"></span>Game Playing (Minimax)</button>
     </div>
 
     <div class="rail-group">
       <div class="rail-label">Work it out</div>
       <button class="rail-item" data-view="ga-calc"><span class="dot"></span>GA Calculator</button>
       <button class="rail-item" data-view="aco-calc"><span class="dot"></span>ACO Calculator</button>
+      <button class="rail-item" data-view="game-calc"><span class="dot"></span>Minimax Calculator</button>
     </div>
 
     <div class="rail-group">
@@ -700,19 +702,37 @@ footer.page-footer{
         <div class="story"><span class="tag">Story</span>Ants explore randomly at first. A shorter path means a faster round trip — so that ant lays pheromone sooner, and more ants follow it, reinforcing it further. Unused trails fade. But if a longer-path ant gets lucky early, the colony can be misled.</div>
 
         <div class="panel">
+          <h3>General pseudocode</h3>
+          <div class="board-panel" style="padding:18px 20px;">
+            <div class="chalk-output" style="margin-top:0;">
+              <div class="chalk-line">Procedure ACO</div>
+              <div class="chalk-line">&nbsp;&nbsp;Schedule Activities</div>
+              <div class="chalk-line">&nbsp;&nbsp;&nbsp;&nbsp;Initialization</div>
+              <div class="chalk-line">&nbsp;&nbsp;&nbsp;&nbsp;Construction</div>
+              <div class="chalk-line">&nbsp;&nbsp;&nbsp;&nbsp;Update Pheromone</div>
+              <div class="chalk-line">&nbsp;&nbsp;&nbsp;&nbsp;Daemon Actions {optional — local search, elitism}</div>
+              <div class="chalk-line">&nbsp;&nbsp;End Schedule Activities</div>
+              <div class="chalk-line">End ACO</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
           <h3>Symbol decoder</h3>
           <div class="tbl-wrap">
             <table>
               <thead><tr><th>Symbol</th><th>Meaning</th></tr></thead>
               <tbody>
-                <tr><td class="mono-cell">τ<sub>ij</sub></td><td>pheromone on edge i→j</td></tr>
+                <tr><td class="mono-cell">N</td><td>total number of ants; N &gt; 1</td></tr>
+                <tr><td class="mono-cell">τ₀</td><td>initial pheromone amount</td></tr>
+                <tr><td class="mono-cell">τ<sub>ij</sub></td><td>pheromone deposited while traversing i→j</td></tr>
                 <tr><td class="mono-cell">η<sub>ij</sub></td><td>1 / cost(i,j) — shorter edge = bigger η</td></tr>
-                <tr><td class="mono-cell">α</td><td>importance of pheromone</td></tr>
-                <tr><td class="mono-cell">β</td><td>importance of cost / heuristic</td></tr>
-                <tr><td class="mono-cell">ρ</td><td>evaporation rate</td></tr>
-                <tr><td class="mono-cell">Q</td><td>constant for pheromone deposit</td></tr>
-                <tr><td class="mono-cell">f<sub>k</sub> / L<sub>k</sub></td><td>cost / length of the tour built by ant k</td></tr>
-                <tr><td class="mono-cell">visited<sub>k</sub></td><td>list of nodes ant k has already visited</td></tr>
+                <tr><td class="mono-cell">α</td><td>importance coefficient of pheromone intensity</td></tr>
+                <tr><td class="mono-cell">β</td><td>importance coefficient of route cost</td></tr>
+                <tr><td class="mono-cell">ρ</td><td>evaporation coefficient; 0 &lt; ρ &lt; 1</td></tr>
+                <tr><td class="mono-cell">visit<sub>k</sub></td><td>visited-nodes table for ant k</td></tr>
+                <tr><td class="mono-cell">Q</td><td>constant for pheromone trail importance</td></tr>
+                <tr><td class="mono-cell">f<sub>k</sub></td><td>route cost obtained by ant k</td></tr>
               </tbody>
             </table>
           </div>
@@ -723,24 +743,25 @@ footer.page-footer{
           <h3>The two core formulas</h3>
           <div class="board-panel" style="padding:20px 22px;">
             <div class="chalk-output" style="margin-top:0;">
-              <div class="chalk-line">P<sub>ij</sub> = ( τ<sub>ij</sub><sup>α</sup> · η<sub>ij</sub><sup>β</sup> ) / Σ<sub>h</sub> ( τ<sub>ih</sub><sup>α</sup> · η<sub>ih</sub><sup>β</sup> )</div>
-              <div style="color:#8FA89C; font-size:11.5px; margin-top:6px;">numerator = this edge's pull · denominator = sum over all allowed next edges from i</div>
+              <div class="chalk-line">NTP<sub>ij</sub> = ( τ<sub>ij</sub><sup>α</sup> · η<sub>ij</sub><sup>β</sup> ) / Σ<sub>h∉visit<sub>k</sub></sub> ( τ<sub>ih</sub><sup>α</sup> · η<sub>ih</sub><sup>β</sup> )</div>
+              <div style="color:#8FA89C; font-size:11.5px; margin-top:6px;">NTP = next transition probability. numerator = this edge's pull · denominator = sum over all <b>unvisited</b> next edges from i</div>
             </div>
             <div class="chalk-output">
-              <div class="chalk-line">τ<sub>ij</sub>(new) = (1 − ρ) · τ<sub>ij</sub>(old) + Δτ<sub>ij</sub></div>
-              <div class="chalk-line" style="margin-top:4px;">Δτ<sub>ij</sub> = Q / f<sub>k</sub> &nbsp;if ant used edge (i,j), else 0</div>
+              <div class="chalk-line">τ<sub>ij</sub>(new) = (1 − ρ) · τ<sub>ij</sub>(old) + Δτ<sub>ij</sub><sup>k</sup></div>
+              <div class="chalk-line" style="margin-top:4px;">Δτ<sub>ij</sub><sup>k</sup> = Q / f<sub>k</sub> &nbsp;if ant k passes edge (i,j), else 0</div>
             </div>
           </div>
-          <div class="callout tip"><span class="icon">✓</span><div>Every edge evaporates. Only the edge the ant <b>actually walked</b> gets the extra deposit.</div></div>
+          <div class="callout tip"><span class="icon">✓</span><div>Every edge evaporates every step. Only the edge the ant <b>actually walked</b> gets the extra deposit — reinforcement (exploitation) vs. fading (exploration) are two separate mechanisms.</div></div>
+          <div class="callout warn"><span class="icon">⚠</span><div><b>Stopping criterion:</b> reaching a predetermined number of iterations. Watch for the "ant drop" problem — if the limit is reached before the destination, the ant's incomplete tour is simply dropped.</div></div>
         </div>
 
         <div class="panel">
-          <h3>Full worked numerical — 5 cities, start at node 4</h3>
-          <p class="panel-note">5 ants, 5 cities — the lecture's example sets number of ants equal to number of cities. α = 0.5, β = 0.75, ρ = 0.1, Q = 100.</p>
-          <p class="panel-note">Cost matrix (symmetric):</p>
+          <h3>TSP setup — 5 cities, start at node 4</h3>
+          <p class="panel-note">No. of ants = No. of cities = 5 · start at city 4 · α = 0.5, β = 0.75, ρ = 0.1, Q = 100</p>
+          <p class="panel-note">Distance matrix d<sub>ij</sub> (symmetric):</p>
           <div class="tbl-wrap">
             <table class="matrix-table">
-              <thead><tr><th>cost</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr></thead>
+              <thead><tr><th>d</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr></thead>
               <tbody>
                 <tr><th>1</th><td>0</td><td>65</td><td>52</td><td>69</td><td>72</td></tr>
                 <tr><th>2</th><td>65</td><td>0</td><td>39</td><td>28</td><td>43</td></tr>
@@ -750,29 +771,108 @@ footer.page-footer{
               </tbody>
             </table>
           </div>
-          <p class="panel-note">Pheromone (symmetric): τ₁₂=.54, τ₁₃=.53, τ₁₄=.35, τ₁₅=.24, τ₂₃=.53, τ₂₄=.39, τ₂₅=.18, τ₃₄=.32, τ₃₅=.9, τ₄₅=.68</p>
+          <p class="panel-note">Initial pheromone τ (symmetric): τ₁₂=.54, τ₁₃=.53, τ₁₄=.35, τ₁₅=.24, τ₂₃=.53, τ₂₄=.39, τ₂₅=.18, τ₃₄=.32, τ₃₅=.9, τ₄₅=.68</p>
+        </div>
+
+        <div class="panel">
+          <h3>Step 1 — Transition from node 4</h3>
+          <p class="panel-note">Candidates from 4: nodes 1, 2, 3, 5.</p>
           <div class="tbl-wrap">
             <table>
               <thead><tr><th>Edge</th><th>τ</th><th>η = 1/d</th><th>τ<sup>0.5</sup>·η<sup>0.75</sup></th><th>P<sub>4j</sub></th></tr></thead>
               <tbody>
-                <tr><td>4→1</td><td class="mono-cell">0.35</td><td class="mono-cell">1/69 = .0145</td><td class="mono-cell">0.0247</td><td class="mono-cell">0.1724</td></tr>
+                <tr><td>4→1</td><td class="mono-cell">0.35</td><td class="mono-cell">1/69 = .0145</td><td class="mono-cell">0.0247</td><td class="mono-cell">0.1723</td></tr>
                 <tr class="row-max"><td>4→2</td><td class="mono-cell">0.39</td><td class="mono-cell">1/28 = .0357</td><td class="mono-cell">0.0513</td><td class="mono-cell">0.3577 ← max</td></tr>
                 <tr><td>4→3</td><td class="mono-cell">0.32</td><td class="mono-cell">1/72 = .0139</td><td class="mono-cell">0.0229</td><td class="mono-cell">0.1596</td></tr>
                 <tr><td>4→5</td><td class="mono-cell">0.68</td><td class="mono-cell">1/49 = .0204</td><td class="mono-cell">0.0445</td><td class="mono-cell">0.3104</td></tr>
               </tbody>
             </table>
           </div>
-          <div class="callout tip"><span class="icon">✓</span><div>Sum of numerators ≈ 0.1434. P<sub>42</sub> = 0.0513 / 0.1434 = <b>0.3577</b> → ant moves <b>4 → 2</b>. Then τ<sub>42</sub> gets the extra deposit; every other edge from 4 just evaporates.</div></div>
-          <div class="story" style="margin-top:14px;"><span class="tag">Result</span>Continuing the same rule each step yields the final tour: <b>4 → 2 → 3 → 5 → 1 → 4</b>.</div>
+          <div class="callout tip"><span class="icon">✓</span><div>Denominator ≈ 0.1434. P₄₂ is max → ant moves <b>4 → 2</b>.</div></div>
+          <p class="panel-note">Pheromone update — only τ₂₄ gets a deposit (Q/f<sub>k</sub> = 100/28), every other edge just evaporates ×(1−0.1):</p>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Edge</th><th>Updated τ</th><th>Calculation</th></tr></thead>
+              <tbody>
+                <tr><td>τ₁₂</td><td class="mono-cell">0.486</td><td class="mono-cell">0.9×0.54 + 0</td></tr>
+                <tr><td>τ₁₃</td><td class="mono-cell">0.477</td><td class="mono-cell">0.9×0.53 + 0</td></tr>
+                <tr><td>τ₁₄</td><td class="mono-cell">0.315</td><td class="mono-cell">0.9×0.35 + 0</td></tr>
+                <tr><td>τ₁₅</td><td class="mono-cell">0.216</td><td class="mono-cell">0.9×0.24 + 0</td></tr>
+                <tr><td>τ₂₃</td><td class="mono-cell">0.477</td><td class="mono-cell">0.9×0.53 + 0</td></tr>
+                <tr class="row-max"><td>τ₂₄ = τ₄₂</td><td class="mono-cell">3.924</td><td class="mono-cell">0.9×0.39 + 100/28 (traversed)</td></tr>
+                <tr><td>τ₂₅</td><td class="mono-cell">0.162</td><td class="mono-cell">0.9×0.18 + 0</td></tr>
+                <tr><td>τ₃₄</td><td class="mono-cell">0.288</td><td class="mono-cell">0.9×0.32 + 0</td></tr>
+                <tr><td>τ₃₅</td><td class="mono-cell">0.81</td><td class="mono-cell">0.9×0.9 + 0</td></tr>
+                <tr><td>τ₄₅</td><td class="mono-cell">0.612</td><td class="mono-cell">0.9×0.68 + 0</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Step 2 — Transition from node 2</h3>
+          <p class="panel-note">Visited so far: 4 → 2. Candidates from 2 (excluding visited node 4): nodes 1, 3, 5.</p>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Edge</th><th>τ (updated)</th><th>η = 1/d</th><th>P<sub>2j</sub></th></tr></thead>
+              <tbody>
+                <tr><td>2→1</td><td class="mono-cell">0.486</td><td class="mono-cell">1/65</td><td class="mono-cell">0.3086</td></tr>
+                <tr class="row-max"><td>2→3</td><td class="mono-cell">0.477</td><td class="mono-cell">1/39</td><td class="mono-cell">0.4485 ← max</td></tr>
+                <tr><td>2→5</td><td class="mono-cell">0.162</td><td class="mono-cell">1/43</td><td class="mono-cell">0.2429</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout tip"><span class="icon">✓</span><div>P₂₃ is max → ant moves <b>2 → 3</b>. Tour so far: 4 → 2 → 3.</div></div>
+          <p class="panel-note">Pheromone update — only τ₂₃ gets the deposit (100/39):</p>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Edge</th><th>Updated τ</th></tr></thead>
+              <tbody>
+                <tr><td>τ₁₂</td><td class="mono-cell">0.4374</td></tr>
+                <tr><td>τ₁₃</td><td class="mono-cell">0.4293</td></tr>
+                <tr><td>τ₁₄</td><td class="mono-cell">0.2835</td></tr>
+                <tr><td>τ₁₅</td><td class="mono-cell">0.1944</td></tr>
+                <tr class="row-max"><td>τ₂₃</td><td class="mono-cell">2.9934 (traversed: 0.9×0.477 + 100/39)</td></tr>
+                <tr><td>τ₂₄</td><td class="mono-cell">3.5316</td></tr>
+                <tr><td>τ₂₅</td><td class="mono-cell">0.1458</td></tr>
+                <tr><td>τ₃₄</td><td class="mono-cell">0.2592</td></tr>
+                <tr><td>τ₃₅</td><td class="mono-cell">0.729</td></tr>
+                <tr><td>τ₄₅</td><td class="mono-cell">0.5508</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Step 3 — Transition from node 3</h3>
+          <p class="panel-note">Visited so far: 4 → 2 → 3. Candidates from 3: nodes 1, 5.</p>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Edge</th><th>P<sub>3j</sub></th></tr></thead>
+              <tbody>
+                <tr><td>3→1</td><td class="mono-cell">0.4668</td></tr>
+                <tr class="row-max"><td>3→5</td><td class="mono-cell">0.5332 ← max</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout tip"><span class="icon">✓</span><div>P₃₅ is max → ant moves <b>3 → 5</b>. Tour so far: 4 → 2 → 3 → 5.</div></div>
+          <p class="panel-note">Only τ₃₅ gets the deposit: 0.9×0.729 + 100/62 = <b>2.269</b>. All other edges continue to evaporate.</p>
+        </div>
+
+        <div class="panel">
+          <h3>Steps 4 &amp; 5 — forced moves, tour completes</h3>
+          <p class="panel-note">From node 5, only city 1 remains unvisited — no probability comparison needed. The ant moves directly <b>5 → 1</b>. τ₁₅ updates to 0.9×0.175 + 100/72 = <b>1.5464</b>.</p>
+          <p class="panel-note">From node 1, every other city has been visited — the ant returns to the origin: <b>1 → 4</b>, completing the Hamiltonian cycle. τ₁₄ updates to 0.9×0.2296 + 100/69 = <b>1.6559</b>.</p>
+          <div class="story" style="margin-top:14px;"><span class="tag">Final tour</span><b>4 → 2 → 3 → 5 → 1 → 4</b> — a complete single-ant tour. Note pages 9–16 form one continuous worked build: each step is transition-probability → pheromone-update, reusing the same TSP instance throughout.</div>
         </div>
 
         <div class="panel">
           <h3>Exam method — 4 steps (≈8 marks)</h3>
           <ul class="clean">
             <li>Write the transition-probability formula — marks on its own.</li>
-            <li>Build the τ<sup>α</sup>·η<sup>β</sup> table for all allowed next nodes, normalize, pick max.</li>
+            <li>Build the τ<sup>α</sup>·η<sup>β</sup> table for all unvisited next nodes, normalize, pick max.</li>
             <li>Pheromone update table: (1−ρ)τ column, Δτ=Q/f<sub>k</sub> column for the used edge only, then sum.</li>
-            <li>State the final tour and its total distance.</li>
+            <li>Repeat until every city is visited, then state the final tour and its total distance.</li>
           </ul>
         </div>
       </div>
@@ -880,6 +980,50 @@ footer.page-footer{
       </div>
     </section>
 
+    <!-- ===================== MINIMAX CALCULATOR ===================== -->
+    <section class="view" id="view-game-calc">
+      <div class="view-header">
+        <div class="eyebrow">Worked, live</div>
+        <h2>Minimax calculator</h2>
+        <p class="sub">Build a small MAX/MIN tree and watch the values back up live — plus a weighted static evaluation calculator.</p>
+      </div>
+
+      <div class="view-body">
+        <div class="board-panel">
+          <div class="board-panel-head">
+            <h3><span class="blip"></span>2-level tree: MAX root → 2 MIN nodes → 2 leaves each</h3>
+          </div>
+          <p class="chalk-label" style="margin-bottom:10px;">Enter the 4 leaf values (left-pair under MIN-left, right-pair under MIN-right)</p>
+          <div class="chalk-row">
+            <div class="chalk-field"><span class="chalk-label">MIN-left leaf 1</span><input class="chalk-input" type="number" id="leafA" value="3"></div>
+            <div class="chalk-field"><span class="chalk-label">MIN-left leaf 2</span><input class="chalk-input" type="number" id="leafB" value="5"></div>
+            <div class="chalk-field"><span class="chalk-label">MIN-right leaf 1</span><input class="chalk-input" type="number" id="leafC" value="-2"></div>
+            <div class="chalk-field"><span class="chalk-label">MIN-right leaf 2</span><input class="chalk-input" type="number" id="leafD" value="4"></div>
+          </div>
+          <button class="btn btn-primary" onclick="computeMinimax()">▸ Back up the tree</button>
+          <div class="chalk-output" id="minimaxResult"><span class="placeholder">MIN-node values and the final MAX root value will render here.</span></div>
+        </div>
+
+        <div class="board-panel">
+          <div class="board-panel-head">
+            <h3><span class="blip"></span>Weighted static evaluation</h3>
+          </div>
+          <p class="chalk-label" style="margin-bottom:10px;">Eval(S) = w₁f₁ + w₂f₂ + w₃f₃ + w₄f₄ — enter up to 4 feature/weight pairs</p>
+          <table id="evalTable" style="width:100%;">
+            <thead><tr><th style="color:#8FA89C; font-family:var(--font-mono); font-size:11px; text-align:left; padding-bottom:6px;">Feature</th><th style="color:#8FA89C; font-family:var(--font-mono); font-size:11px; text-align:left;">Weight (w)</th><th style="color:#8FA89C; font-family:var(--font-mono); font-size:11px; text-align:left;">Value (f)</th></tr></thead>
+            <tbody>
+              <tr><td><input class="chalk-input" style="width:140px;" value="Material advantage"></td><td><input class="chalk-input" style="width:70px;" type="number" value="1"></td><td><input class="chalk-input" style="width:70px;" type="number" value="5"></td></tr>
+              <tr><td><input class="chalk-input" style="width:140px;" value="King safety"></td><td><input class="chalk-input" style="width:70px;" type="number" value="1"></td><td><input class="chalk-input" style="width:70px;" type="number" value="2"></td></tr>
+              <tr><td><input class="chalk-input" style="width:140px;" value="Mobility"></td><td><input class="chalk-input" style="width:70px;" type="number" value="1"></td><td><input class="chalk-input" style="width:70px;" type="number" value="1"></td></tr>
+              <tr><td><input class="chalk-input" style="width:140px;" value="Board control"></td><td><input class="chalk-input" style="width:70px;" type="number" value="1"></td><td><input class="chalk-input" style="width:70px;" type="number" value="2"></td></tr>
+            </tbody>
+          </table>
+          <button class="btn btn-primary" style="margin-top:16px;" onclick="computeEval()">▸ Compute evaluation</button>
+          <div class="chalk-output" id="evalResult"><span class="placeholder">Weighted evaluation score will render here, with interpretation for MAX.</span></div>
+        </div>
+      </div>
+    </section>
+
     <!-- ===================== NAS ===================== -->
     <section class="view" id="view-nas">
       <div class="view-header">
@@ -926,6 +1070,50 @@ footer.page-footer{
         </div>
 
         <div class="panel">
+          <h3>Why decompose into modules + blueprints?</h3>
+          <p class="panel-note">Evolving one entire deep network as a single structure is expensive and hard to optimize. CoDeepNEAT splits the search into two smaller, separately-evolving populations instead.</p>
+          <ul class="clean">
+            <li><b>Modules</b> — reusable subnetwork components (e.g. Conv→ReLU→Pool), each with its own topology + hyperparameters, evolved in their own subpopulation.</li>
+            <li><b>Blueprints</b> — high-level structural graphs where each node references a module <i>species</i> (placeholder), not a concrete layer.</li>
+            <li>Smaller subnetworks (feature extractors) and their arrangement evolve <b>separately</b>, instead of evolving one giant CNN end to end — this is what makes deeper, more complex architectures tractable to search.</li>
+          </ul>
+          <div class="callout tip"><span class="icon">✓</span><div><b>Assembly, 3 steps:</b> (1) select a blueprint, (2) for each node, randomly pick a module from the matching species, (3) replace nodes with the chosen modules and connect them as the blueprint specifies. The assembled network is then trained and evaluated.</div></div>
+        </div>
+
+        <div class="panel">
+          <h3>The full evolutionary cycle, with numbers</h3>
+          <p class="panel-note">Six named phases, each illustrated with the lecture's cat-vs-dog running example.</p>
+          <div class="flow">
+            <div class="flow-step"><span class="step-num">1</span><div class="step-title">Initialization</div><div class="step-sub">"the Big Bang" — e.g. 100 random simple networks</div></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step"><span class="step-num">2</span><div class="step-title">Fitness evaluation</div><div class="step-sub">train on data, score = validation accuracy</div></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step heart"><span class="step-num">3 · HEART</span><div class="step-title">Selection</div><div class="step-sub">fitness-proportionate, like GA's roulette wheel</div></div>
+          </div>
+          <div class="flow">
+            <div class="flow-step heart"><span class="step-num">4 · HEART</span><div class="step-title">Crossover</div><div class="step-sub">combine two parent architectures</div></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step heart"><span class="step-num">5 · HEART</span><div class="step-title">Mutation</div><div class="step-sub">add layer, add connection, tweak hyperparams</div></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step"><span class="step-num">6</span><div class="step-title">Speciation</div><div class="step-sub">group similar architectures, compete within group</div></div>
+          </div>
+
+          <div class="tbl-wrap" style="margin-top:14px;">
+            <table>
+              <thead><tr><th>Phase</th><th>Worked detail</th></tr></thead>
+              <tbody>
+                <tr><td><b>Fitness</b></td><td>CNN trained on a 10,000-image cat/dog set for 5–10 epochs; if it classifies 90 of 100 validation images correctly, fitness = 90%</td></tr>
+                <tr><td><b>Selection</b></td><td>Four architectures with fitness A=80%, B=60%, C=40%, D=20% → A and B get picked often, C occasionally, D rarely — same fitness-proportionate logic as GA's roulette wheel</td></tr>
+                <tr><td><b>Crossover</b></td><td>Parent 1: Conv→Pool→Dense. Parent 2: Conv→Conv→Dense. Child: Conv→Conv→Dense (inherits the deeper feature-extraction path)</td></tr>
+                <tr><td><b>Mutation</b></td><td>Conv(3×3)→Pool→Dense mutates to Conv(5×5)→Pool→Dense — captures larger patterns, validation accuracy improves 85% → 92% in the example</td></tr>
+                <tr><td><b>Speciation</b></td><td>Species 1: shallow nets (1–2 layers). Species 2: deeper nets (3–5 layers). Competition happens <i>within</i> a species, not globally — this protects structurally novel architectures from being wiped out early by unrelated, already-optimized designs</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout tip"><span class="icon">✓</span><div><b>Generational trend (cat vs dog example):</b> Gen 1 ≈ 50% accuracy (random) → Gen 20 ≈ 75% (basic features learned) → Gen 50 ≈ 95% (advanced feature extraction). Weak architectures disappear, strong ones survive and recombine.</div></div>
+        </div>
+
+        <div class="panel">
           <h3>CoDeepNEAT mechanics</h3>
           <ul class="clean">
             <li><b>Blueprint</b> — macro-architecture graph; each node points to a module species (a placeholder).</li>
@@ -933,6 +1121,26 @@ footer.page-footer{
             <li><b>Phenotype construction</b> — pick a blueprint → fill each node with a chosen module → connect per blueprint → train.</li>
             <li><b>Shared fitness</b> — the assembled network's score credits both the blueprint and every module used, so good building blocks spread.</li>
           </ul>
+        </div>
+
+        <div class="panel">
+          <h3>Inside a forward pass — cat vs dog, layer by layer</h3>
+          <p class="panel-note">Once CoDeepNEAT has evolved an architecture, here's what actually happens when an image goes through it.</p>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Step</th><th>What happens</th></tr></thead>
+              <tbody>
+                <tr><td><b>1. Input → numbers</b></td><td>A 32×32 cat image becomes a 32×32×3 = 3072-value tensor. Pixel (R,G,B) = (120,80,60) normalizes to (0.47, 0.31, 0.23). At this point the system has no concept of "cat" — only numbers.</td></tr>
+                <tr><td><b>2. Conv + ReLU</b></td><td>A 3×3 filter detects edges (ear outlines, body silhouette). ReLU, f(x) = max(0,x), zeroes out negative activations, keeping only the strongest signals.</td></tr>
+                <tr><td><b>3. Conv + Pool</b></td><td>A second convolution combines edges into textures (fur, eye regions). Max pooling (2×2) shrinks the map while keeping the strongest features — "is this feature present," not "exactly where."</td></tr>
+                <tr><td><b>4. Higher-level features</b></td><td>Patterns combine into object parts: triangular ears, small nose, whisker lines — features specific to "cat."</td></tr>
+                <tr><td><b>5. Fully connected</b></td><td>All features flatten into one vector, e.g. [0.2, 0.8, 0.1, 0.9, …], and the layer learns relationships like "whiskers + triangular ears → likely cat."</td></tr>
+                <tr><td><b>6. Softmax output</b></td><td>P(y<sub>i</sub>) = e<sup>z<sub>i</sub></sup> / Σe<sup>z<sub>j</sub></sup>. Example output: Cat = 0.92, Dog = 0.08 → final prediction "Cat," 92% confidence.</td></tr>
+                <tr><td><b>7. Backprop (training only)</b></td><td>If the true label was actually "Dog," loss = predicted − actual, and gradient descent updates the weights to reduce that error next time.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout tip"><span class="icon">✓</span><div><b>Key insight:</b> the network never "sees" a cat the way a human does — it climbs a hierarchy: edges → textures → parts → object. CoDeepNEAT's job is discovering which combination of modules builds that hierarchy best, automatically.</div></div>
         </div>
 
         <div class="panel">
@@ -974,6 +1182,233 @@ footer.page-footer{
       </div>
     </section>
 
+    <!-- ===================== GAME PLAYING / MINIMAX ===================== -->
+    <section class="view" id="view-game">
+      <div class="view-header">
+        <div class="eyebrow">Module 4 · Game Playing (Adversarial Search)</div>
+        <h2>Minimax &amp; static evaluation</h2>
+        <p class="sub">Two players, opposing goals. One side's gain is the other's loss — so every move has to anticipate the opponent's best reply.</p>
+      </div>
+
+      <div class="view-body">
+        <div class="story"><span class="tag">Story</span>In normal search, the only question is "what gets me closer to the goal?" In adversarial search, there's a second question: "what will my opponent do to stop me?" Chess, tic-tac-toe, Go — someone is actively working against you, not just standing still.</div>
+
+        <div class="panel">
+          <h3>Normal search vs. adversarial search</h3>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Aspect</th><th>Normal search</th><th>Adversarial search</th></tr></thead>
+              <tbody>
+                <tr><td>Number of agents</td><td>Usually one</td><td>At least two</td></tr>
+                <tr><td>Goal</td><td>Reach a goal state</td><td>Win or maximize utility</td></tr>
+                <tr><td>Environment</td><td>Passive</td><td>Strategic and competitive</td></tr>
+                <tr><td>Next state depends on</td><td>Our action</td><td>Our action <i>and</i> the opponent's</td></tr>
+                <tr><td>Example</td><td>Route finding</td><td>Chess</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>A game, formally — six parts</h3>
+          <ul class="clean">
+            <li><b>Initial state</b> — the starting board or situation</li>
+            <li><b>Player(s)</b> — whose turn it is at state s</li>
+            <li><b>Actions(s)</b> — the legal moves from state s</li>
+            <li><b>Result(s, a)</b> — the new state after action a</li>
+            <li><b>Terminal-test(s)</b> — checks whether the game has ended</li>
+            <li><b>Utility(s, p)</b> — the final value of outcome s for player p</li>
+          </ul>
+          <div class="callout tip"><span class="icon">✓</span><div><b>Two-player zero-sum convention:</b> Win = +1, Draw = 0, Loss = −1. <b>MAX</b> wants the score as high as possible; <b>MIN</b> wants it as low as possible. If MAX gets +1, MIN effectively gets −1 — one's gain is exactly the other's loss.</div></div>
+        </div>
+
+        <div class="panel">
+          <h3>The minimax principle</h3>
+          <p class="panel-note">MAX does <b>not</b> simply pick the branch with the best-looking leaf. MAX picks the branch whose <i>worst-case, guaranteed</i> outcome is best — because MIN moves next, and MIN will always pick the worst outcome for MAX within whatever branch MAX commits to.</p>
+          <div class="board-panel" style="padding:18px 20px;">
+            <div class="chalk-output" style="margin-top:0;">
+              <div class="chalk-line">function MINIMAX-DECISION(state) returns an action</div>
+              <div class="chalk-line">&nbsp;&nbsp;return argmax<sub>a∈ACTIONS(s)</sub> MIN-VALUE(RESULT(state, a))</div>
+              <div class="chalk-line" style="margin-top:8px;">function MAX-VALUE(state):</div>
+              <div class="chalk-line">&nbsp;&nbsp;if TERMINAL-TEST(state): return UTILITY(state)</div>
+              <div class="chalk-line">&nbsp;&nbsp;v ← −∞; for each a: v ← MAX(v, MIN-VALUE(RESULT(s,a))); return v</div>
+              <div class="chalk-line" style="margin-top:8px;">function MIN-VALUE(state):</div>
+              <div class="chalk-line">&nbsp;&nbsp;if TERMINAL-TEST(state): return UTILITY(state)</div>
+              <div class="chalk-line">&nbsp;&nbsp;v ← +∞; for each a: v ← MIN(v, MAX-VALUE(RESULT(s,a))); return v</div>
+            </div>
+          </div>
+          <div class="callout tip"><span class="icon">✓</span><div><b>Backing up values:</b> leaf values propagate upward — MIN nodes take the min of their children, MAX nodes take the max of theirs, alternating all the way to the root.</div></div>
+        </div>
+
+        <div class="panel">
+          <h3>Worked example — small tree</h3>
+          <div class="flow">
+            <div class="flow-step heart"><span class="step-num">MAX (root)</span><div class="step-title">max(4, 2) = 4</div></div>
+          </div>
+          <div class="flow">
+            <div class="flow-step"><span class="step-num">MIN (left)</span><div class="step-title">min(4, 7) = 4</div></div>
+            <div class="flow-step"><span class="step-num">MIN (right)</span><div class="step-title">min(2, 6) = 2</div></div>
+          </div>
+          <div class="callout tip"><span class="icon">✓</span><div>MAX picks the <b>left</b> branch — guaranteed value 4 — because even after MIN's best response, MAX still walks away with 4. The right branch only guarantees 2.</div></div>
+        </div>
+
+        <div class="panel">
+          <h3>The single most common mistake</h3>
+          <p class="panel-note">Tree: MAX → two MIN children → leaves +3, +5 (left) and −2, +4 (right).</p>
+          <div class="callout warn"><span class="icon">⚠</span><div><b>Wrong reasoning:</b> "MAX should pick the branch containing +5, since that's the best leaf." <b>Why it's wrong:</b> MAX doesn't get to pick a leaf directly — after MAX commits to the left branch, MIN gets a turn, and MIN will pick min(+3, +5) = +3, not +5. The left branch's real value is <b>+3</b>, not +5. Minimax means choosing the best move <i>after</i> accounting for the opponent's optimal reply, every single time.</div></div>
+        </div>
+
+        <div class="panel">
+          <h3>Worked example — deeper tree (4 levels)</h3>
+          <p class="panel-note">Root A (MAX) → B, C (MIN) → D, E, F, G (MAX) → leaf pairs.</p>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Node</th><th>Computation</th><th>Value</th></tr></thead>
+              <tbody>
+                <tr><td>D (MAX)</td><td>max(−1, 8)</td><td class="mono-cell">8</td></tr>
+                <tr><td>E (MAX)</td><td>max(−3, −1)</td><td class="mono-cell">−1</td></tr>
+                <tr class="row-max"><td>B (MIN)</td><td>min(D, E) = min(8, −1)</td><td class="mono-cell">−1</td></tr>
+                <tr><td>F (MAX)</td><td>max(2, 1)</td><td class="mono-cell">2</td></tr>
+                <tr><td>G (MAX)</td><td>max(−3, 4)</td><td class="mono-cell">4</td></tr>
+                <tr class="row-max"><td>C (MIN)</td><td>min(F, G) = min(2, 4)</td><td class="mono-cell">2</td></tr>
+                <tr class="row-max"><td><b>A (MAX, root)</b></td><td>max(B, C) = max(−1, 2)</td><td class="mono-cell"><b>2</b></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout tip"><span class="icon">✓</span><div>Always work <b>bottom-up</b>: compute every leaf-adjacent level first, back values up one level at a time, alternating MIN and MAX, until you reach the root.</div></div>
+        </div>
+
+        <div class="panel">
+          <h3>Worked example — a bigger tree (5 levels)</h3>
+          <p class="panel-note">Square nodes = MAX, circle nodes = MIN. Root → 2 MIN → 4 MAX → 8 MIN → 16 leaves. Each MIN pair under a MAX node backs up first, then each MAX pair under the root's two MIN children.</p>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Level</th><th>Computation</th><th>Values</th></tr></thead>
+              <tbody>
+                <tr><td>MIN (8 nodes, pairs of leaves)</td><td>min of each leaf pair</td><td class="mono-cell">7, 3, 8, −10, 1, 8, 9, −3</td></tr>
+                <tr><td>MAX (4 nodes)</td><td>max of each MIN pair above</td><td class="mono-cell">max(7,3)=7, max(8,−10)=8, max(1,8)=8, max(9,−3)=9</td></tr>
+                <tr><td>MIN (2 nodes)</td><td>min of each MAX pair above</td><td class="mono-cell">min(7,8)=7, min(8,9)=8</td></tr>
+                <tr class="row-max"><td><b>MAX (root)</b></td><td>max(7, 8)</td><td class="mono-cell"><b>8</b></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout tip"><span class="icon">✓</span><div>Same bottom-up method as the smaller trees — it just takes more passes. Root value: <b>8</b>.</div></div>
+        </div>
+
+        <div class="panel">
+          <h3>Multiplayer games — worked example</h3>
+          <p class="panel-note">With 3+ players, each leaf becomes a <b>vector</b> of utilities — one value per player (A, B, C) — instead of a single number. At their own turn, each player maximizes <i>only their own</i> component of the vector, ignoring the others' scores entirely.</p>
+          <div class="board-panel" style="padding:18px 20px;">
+            <div class="chalk-output" style="margin-top:0;">
+              <div class="chalk-line">A to move → chooses between two branches leading to B's turn</div>
+              <div class="chalk-line">B to move → chooses between branches leading to C's turn</div>
+              <div class="chalk-line">C to move → chooses the leaf vector that maximizes <i>C's own</i> value</div>
+              <div class="chalk-line chalk-final">Each player only cares about their own slot in the (A, B, C) vector — there's no single "winner," just everyone optimizing their own outcome along the path that actually gets played.</div>
+            </div>
+          </div>
+          <div class="callout warn"><span class="icon">⚠</span><div>Don't try to find one "best" leaf for everyone — there isn't one. Work backward one player-turn at a time, and at each turn that player picks <i>their own</i> best component, just like MAX does in a 2-player tree.</div></div>
+        </div>
+
+        <div class="panel">
+          <h3>Why not search the whole tree?</h3>
+          <p class="panel-note">Small games (tic-tac-toe) can be fully searched to terminal states. Large games (chess) cannot — the tree is too enormous. The fix: a <b>depth limit</b> + a <b>static evaluation function</b> that estimates how good a non-terminal position is, without searching further.</p>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Property</th><th>Why it matters</th></tr></thead>
+              <tbody>
+                <tr><td>Higher value = better for MAX</td><td>The function must point the right direction</td></tr>
+                <tr><td>Lower value = better for MIN</td><td>Same scale, opposite sign convention</td></tr>
+                <tr><td>Fast to compute</td><td>It runs at every cut-off node — speed matters more than perfection</td></tr>
+                <tr><td>Correlates with true winning chances</td><td>A fast-but-wrong estimate is worse than a slow-but-right search</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Designing an evaluation function</h3>
+          <div class="board-panel" style="padding:18px 20px;">
+            <div class="chalk-output" style="margin-top:0;">
+              <div class="chalk-line">Eval(S) = w₁f₁(s) + w₂f₂(s) + ⋯ + wₙfₙ(s)</div>
+              <div style="color:#8FA89C; font-size:11.5px; margin-top:6px;">a weighted linear combination of board features, each scaled by an importance weight</div>
+            </div>
+          </div>
+          <p class="panel-note">Chess example: Eval = material advantage + king safety + mobility + board control. Suppose White (MAX) scores +5 material, +2 king safety, +1 mobility, +2 board control → Eval = 5+2+1+2 = <b>+10</b>, a strong position for MAX.</p>
+          <p class="panel-note">Simplest possible version: Score = MAX pieces − MIN pieces. If MAX has 8 pieces and MIN has 5, Score = 8−5 = <b>+3</b> (positive = good for MAX, negative = good for MIN, zero = balanced). Crude, but useful when full search isn't possible.</p>
+        </div>
+
+        <div class="panel">
+          <h3>Other evaluation domains</h3>
+          <p class="panel-note">The same weighted-feature idea applies outside chess — anywhere a position isn't a clean win/loss yet.</p>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Domain</th><th>Features used</th></tr></thead>
+              <tbody>
+                <tr><td>Tic-Tac-Toe</td><td>MAX's share of potential winning lines vs. MIN's share, plus overall board value</td></tr>
+                <tr><td>N-Queens</td><td>Per-queen conflict/attack counts feed directly into the same weighted-sum style evaluation</td></tr>
+                <tr><td>8-puzzle (N-Tile)</td><td>Number of tiles out of place compared to the goal configuration — fewer out of place = better state</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout tip"><span class="icon">✓</span><div>Whatever the domain, the recipe is the same: pick a handful of measurable features, weight each by importance, sum them — fast to compute, and roughly tracks who's winning.</div></div>
+        </div>
+
+        <div class="panel">
+          <h3>Exam method — minimax with static evaluation</h3>
+          <ul class="clean">
+            <li>Identify which level is MAX and which is MIN — alternates every ply down from the root.</li>
+            <li>If leaves are terminal states, use the actual utility (+1/0/−1). If leaves are cut off early, use the static evaluation formula given in the question.</li>
+            <li>Work bottom-up: MIN nodes take the min of their children, MAX nodes take the max — one level at a time.</li>
+            <li>State both the backed-up root value <i>and</i> which branch MAX should actually choose.</li>
+          </ul>
+          <div class="callout warn"><span class="icon">⚠</span><div>Watch for single-child branches at any level — their "min" or "max" is just that one value, nothing to compare. Don't skip writing the step out; it's an easy place to lose a mark by jumping ahead.</div></div>
+        </div>
+
+        <div class="panel">
+          <h3>Exercise 1 — solve before checking the quiz</h3>
+          <p class="panel-note">Root MAX → three MIN nodes → each MIN has 2–3 MAX children → each MAX has 1–3 leaves. Leaf groups: MIN-1's MAX children have leaves {4}, {6,2,6}, {3,9}. MIN-2's MAX children have leaves {5,2}, {7,3}. MIN-3's MAX children have leaves {1}, {7,2}, {4,6,3}.</p>
+          <div class="callout tip"><span class="icon">✓</span><div><b>Method:</b> a MAX node with only one leaf simply equals that leaf — no comparison needed. Take MAX of each leaf-group at the bottom level, then MIN across each group of MAX-values, then MAX at the root. Try it by hand, then check the Quiz tab for the worked answer.</div></div>
+        </div>
+
+        <div class="panel">
+          <h3>Exercise 2 — Castle Battle, full setup</h3>
+          <p class="panel-note">MAX is the attacking army, MIN is the defending army. MAX wants to capture the castle; MIN wants to prevent it. Search only 2 moves ahead, then apply a static evaluation function.</p>
+          <p class="panel-note"><b>Part A — game tree:</b> MAX has three opening moves (Attack Left / Main / Right Gate). Each is met by one of MIN's two replies:</p>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>MAX move</th><th>MIN reply 1</th><th>MIN reply 2</th></tr></thead>
+              <tbody>
+                <tr><td>Attack Left Gate</td><td>Reinforce Left Gate (L1)</td><td>Counterattack Left (L2)</td></tr>
+                <tr><td>Attack Main Gate</td><td>Reinforce Main Gate (M1)</td><td>Block Supply Route (M2)</td></tr>
+                <tr><td>Attack Right Gate</td><td>Reinforce Right Gate (R1)</td><td>Counterattack Right (R2)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="panel-note"><b>Part B — evaluation function</b> (4 features, given weights):</p>
+          <div class="board-panel" style="padding:18px 20px;">
+            <div class="chalk-output" style="margin-top:0;">
+              <div class="chalk-line">Eval = 2×(Soldier Advantage) + 3×(Gate Damage) + 2×(MAX Safety) + 4×(Supply Control)</div>
+            </div>
+          </div>
+          <p class="panel-note">Leaf feature data:</p>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Leaf</th><th>Soldier Adv.</th><th>Gate Damage</th><th>MAX Safety</th><th>Supply Control</th></tr></thead>
+              <tbody>
+                <tr><td>L1</td><td>2</td><td>3</td><td>2</td><td>0</td></tr>
+                <tr><td>L2</td><td>1</td><td>4</td><td>0</td><td>1</td></tr>
+                <tr><td>M1</td><td>3</td><td>2</td><td>3</td><td>0</td></tr>
+                <tr><td>M2</td><td>1</td><td>3</td><td>1</td><td>2</td></tr>
+                <tr><td>R1</td><td>2</td><td>2</td><td>2</td><td>1</td></tr>
+                <tr><td>R2</td><td>0</td><td>5</td><td>0</td><td>1</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout tip"><span class="icon">✓</span><div><b>Task:</b> plug each leaf's 4 values into the formula to get 6 evaluation scores, then apply minimax — MIN picks the lower-scoring leaf under each gate, MAX picks the best of those three guaranteed outcomes. Try the full computation by hand, then check the Quiz tab.</div></div>
+        </div>
+      </div>
+    </section>
+
     <!-- ===================== QUIZ ===================== -->
     <section class="view" id="view-quiz">
       <div class="view-header">
@@ -984,7 +1419,7 @@ footer.page-footer{
 
       <div class="view-body">
         <div class="rail-progress" style="background:white; border-color:var(--line); margin-bottom: 8px;">
-          <div class="rail-progress-label" style="color:var(--ink-soft);"><span>Questions opened</span><span id="quizProgressText">0 / 14</span></div>
+          <div class="rail-progress-label" style="color:var(--ink-soft);"><span>Questions opened</span><span id="quizProgressText">0 / 18</span></div>
           <div class="rail-progress-track" style="background:var(--paper-dim);"><div class="rail-progress-fill" id="quizProgressFill" style="background:linear-gradient(90deg, var(--slate), var(--amber));"></div></div>
         </div>
 
@@ -1102,7 +1537,7 @@ railItems.forEach(btn=>{
    ============================================================ */
 const checklistItems = document.querySelectorAll('.checklist-item');
 let quizOpenedCount = 0;
-const QUIZ_TOTAL = 14;
+const QUIZ_TOTAL = 18;
 
 function updateRailProgress(){
   const doneChecks = document.querySelectorAll('.checklist-item.done').length;
@@ -1141,7 +1576,9 @@ const quizData = [
     {tag:"ga", q:"Single-point crossover: P1=43210578, P2=12345123, cut after position 6. Find the children.",
      a:"P1: <b>432105</b> | 78 &nbsp;&nbsp; P2: <b>123451</b> | 23<br>Child1 = 432105 + 23 = <b>43210523</b><br>Child2 = 123451 + 78 = <b>12345178</b><br>These are the GA Calculator's default values — verify there."},
     {tag:"ga", q:"Mutate [2,4,2,2] by changing the 3rd gene. List all valid mutated values.",
-     a:"3rd gene is currently 2. Valid 4-Queens gene values are {1,2,3,4}; mutation moves to a <i>different</i> value, so options are <b>1, 3, or 4</b>. Example: [2,4,1,2]."}
+     a:"3rd gene is currently 2. Valid 4-Queens gene values are {1,2,3,4}; mutation moves to a <i>different</i> value, so options are <b>1, 3, or 4</b>. Example: [2,4,1,2]."},
+    {tag:"ga", q:"Parent 1 = [1,2,3,4,5,6,7,8], Parent 2 = [8,7,6,5,4,3,2,1]. Single-point crossover after position 4 — find both children. Then: fitness A=10, B=30, C=40, D=20 — who has the highest selection chance, and why?",
+     a:"<b>Crossover:</b> P1: [1,2,3,4 | 5,6,7,8], P2: [8,7,6,5 | 4,3,2,1].<br>Child 1 = [1,2,3,4,4,3,2,1]<br>Child 2 = [8,7,6,5,5,6,7,8]<br><br><b>Selection:</b> Total fitness = 10+30+40+20 = 100. P(A)=10%, P(B)=30%, P(C)=<b>40% — highest</b>, P(D)=20%. C has the largest roulette-wheel slice because its fitness is highest relative to the total — fitness-proportionate selection always gives the fittest individual the biggest (not guaranteed, but largest-probability) slice."}
   ]},
   {group:"ACO practice", items:[
     {tag:"aco", q:"From node 4, next nodes are 1, 2, 3, 5. Write the expanded denominator for P4j.",
@@ -1168,6 +1605,16 @@ const quizData = [
      a:"Local beam search keeps k states and advances each to its best successor independently — states never exchange information, they just compete for survival in the &ldquo;keep best k&rdquo; pool. GA introduces crossover, where two selected parents combine their material to produce a child that inherits traits from both. GA states actively share structure; beam search states only watch and compare. That architectural difference lets GA escape local optima that trap beam search. In short: beam search is parallel competition, GA is parallel collaboration."},
     {tag:"concept", q:"True or False: GA and ACO both guarantee a globally optimal solution.",
      a:"<b>False.</b> Both are heuristic / local-search methods. They search for good solutions efficiently, but neither guarantees the global optimum — this exact phrasing is a recurring theory-mark answer."}
+  ]},
+  {group:"Game Playing practice", items:[
+    {tag:"concept", q:"Exercise 1: MAX root → three MIN nodes → MAX children with leaf groups {4}, {6,2,6}, {3,9} under MIN-1; {5,2}, {7,3} under MIN-2; {1}, {7,2}, {4,6,3} under MIN-3. What value backs up to the root?",
+     a:"Work bottom-up. <b>Under MIN-1:</b> MAX values are 4 (single leaf), max(6,2,6)=6, max(3,9)=9 → MIN-1 = min(4,6,9) = <b>4</b>.<br><b>Under MIN-2:</b> MAX values are max(5,2)=5, max(7,3)=7 → MIN-2 = min(5,7) = <b>5</b>.<br><b>Under MIN-3:</b> MAX values are 1 (single leaf), max(7,2)=7, max(4,6,3)=6 → MIN-3 = min(1,7,6) = <b>1</b>.<br><b>Root</b> = max(4, 5, 1) = <b>5</b> — MAX should choose the branch leading to MIN-2."},
+    {tag:"concept", q:"Castle Battle Exercise 2: compute the evaluation score for leaf M2 (Soldier Adv=1, Gate Damage=3, MAX Safety=1, Supply Control=2), then determine MAX's best opening move overall.",
+     a:"Eval(M2) = 2(1) + 3(3) + 2(1) + 4(2) = 2+9+2+8 = <b>21</b>.<br><br>All six leaves: L1=17, L2=18, M1=18, M2=21, R1=18, R2=19.<br>MIN picks the lower of each pair: Left→min(17,18)=17, Main→min(18,21)=18, Right→min(18,19)=18.<br>MAX picks the best of those: max(17,18,18) = <b>18</b>, achieved at both Main and Right Gate — <b>Attack Main Gate</b> is the conventional answer since it's listed first, but Right Gate ties it exactly."}
+  ]},
+  {group:"Bonus — adjacent topic (A* search, not GA/ACO/NAS)", items:[
+    {tag:"concept", q:"A warehouse robot starts at C1 on a 4×4 grid, must collect Items and reach the Dock, avoiding blocked cells and costly Spills, using Energy packs to offset cost. Heuristic h(n) = Manhattan distance to dock + remaining items + adjacent spills. What's the first move to check in an A* expansion?",
+     a:"This is from a different module (informed search, not GA/ACO/NAS) — included here because it appeared alongside this lecture's exercises. A* expands the node with lowest f(n) = g(n) + h(n). From C1, list every legal action (Up/Down/Left/Right, excluding blocked cells), compute g (path cost so far, including any Spill penalty or Energy discount) and h (the given heuristic) for each resulting state, then expand the lowest-f node first. Worth revisiting your informed-search notes for the full method if this resurfaces on the exam."}
   ]}
 ];
 
@@ -1358,6 +1805,55 @@ function computePheromone(){
     renderChalkLine(`Evaporation: (1 − ${rho}) · ${tauold} = <b>${evaporated.toFixed(4)}</b>`) +
     renderChalkLine(`Deposit: ${used ? `${Q} / ${fk} = <b>${delta.toFixed(4)}</b>` : '<b>0</b> (edge not used)'}`) +
     `<div class="chalk-final">τ_new = ${evaporated.toFixed(4)} + ${delta.toFixed(4)} = ${taunew.toFixed(4)}</div>`;
+}
+
+/* ============================================================
+   MINIMAX CALCULATOR
+   ============================================================ */
+function computeMinimax(){
+  const a = parseFloat(document.getElementById('leafA').value);
+  const b = parseFloat(document.getElementById('leafB').value);
+  const c = parseFloat(document.getElementById('leafC').value);
+  const d = parseFloat(document.getElementById('leafD').value);
+  const out = document.getElementById('minimaxResult');
+  if([a,b,c,d].some(isNaN)){
+    out.innerHTML = renderChalkLine('Enter valid numbers for all 4 leaves.');
+    return;
+  }
+  const minLeft = Math.min(a,b);
+  const minRight = Math.min(c,d);
+  const root = Math.max(minLeft, minRight);
+  const bestSide = minLeft >= minRight ? 'left' : 'right';
+  out.innerHTML =
+    renderChalkLine(`MIN-left = min(${a}, ${b}) = <b>${minLeft}</b>`) +
+    renderChalkLine(`MIN-right = min(${c}, ${d}) = <b>${minRight}</b>`) +
+    `<div class="chalk-final">MAX (root) = max(${minLeft}, ${minRight}) = <b>${root}</b><br>MAX should choose the <b>${bestSide}</b> branch — that's the guaranteed best outcome after MIN's optimal reply.</div>`;
+}
+
+function computeEval(){
+  const rows = document.querySelectorAll('#evalTable tbody tr');
+  let total = 0;
+  let lines = [];
+  rows.forEach(row=>{
+    const inputs = row.querySelectorAll('input');
+    const label = inputs[0].value;
+    const w = parseFloat(inputs[1].value);
+    const f = parseFloat(inputs[2].value);
+    if(label && !isNaN(w) && !isNaN(f)){
+      const contribution = w*f;
+      total += contribution;
+      lines.push(`${label}: ${w} × ${f} = <b>${contribution}</b>`);
+    }
+  });
+  const out = document.getElementById('evalResult');
+  if(lines.length===0){
+    out.innerHTML = renderChalkLine('Enter at least one feature with weight and value.');
+    return;
+  }
+  const interpretation = total > 0 ? 'favors MAX' : total < 0 ? 'favors MIN' : 'balanced position';
+  out.innerHTML =
+    lines.map(l=>renderChalkLine(l)).join('') +
+    `<div class="chalk-final">Eval(S) = ${total} → this position <b>${interpretation}</b>.</div>`;
 }
 </script>
 </body>
