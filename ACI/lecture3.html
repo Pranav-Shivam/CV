@@ -542,6 +542,46 @@ footer.colophon a{color:var(--paper-dim);}
           <span class="tg">BFS → shortest path, bipartite check, degrees of separation</span>
           <span class="tg">DFS → maze solving, connectivity, topological sort, cycle detection</span>
         </div>
+
+        <h3 style="font-size:15px; font-weight:600; margin:28px 0 6px;">Two applications, worked small</h3>
+        <p class="block-sub" style="margin-top:0">Same two algorithms, but here's what they're actually <em>for</em> outside of pathfinding — the exam likes asking "which algorithm, and why" for problems like these.</p>
+
+        <div class="grid2">
+          <div class="panel" style="margin-top:0">
+            <div class="panel-label" style="color:var(--blue-soft)">BFS → checking bipartiteness</div>
+            <p style="font-size:13.5px; color:var(--paper-dim); margin:0 0 10px">Colour each node the opposite colour of its parent as BFS visits level by level. If any edge ever connects two same-coloured nodes, the graph is <b>not</b> bipartite.</p>
+            <svg viewBox="0 0 260 130" style="width:100%; max-width:260px; display:block; margin:0 auto 8px">
+              <line x1="40" y1="40" x2="130" y2="40" stroke="#262a32" stroke-width="1.2"/>
+              <line x1="130" y1="40" x2="220" y2="40" stroke="#262a32" stroke-width="1.2"/>
+              <line x1="220" y1="40" x2="220" y2="100" stroke="#262a32" stroke-width="1.2"/>
+              <line x1="220" y1="100" x2="130" y2="100" stroke="#262a32" stroke-width="1.2"/>
+              <circle cx="40" cy="40" r="20" fill="#1A2740" stroke="#5B8DEF" stroke-width="1.5"/>
+              <text x="40" y="44" fill="#C2D3FB" font-size="9" font-family="IBM Plex Mono, monospace" text-anchor="middle">MEHAR</text>
+              <circle cx="130" cy="40" r="20" fill="#3D2410" stroke="#FF8A3D" stroke-width="1.5"/>
+              <text x="130" y="44" fill="#FFD9B8" font-size="9" font-family="IBM Plex Mono, monospace" text-anchor="middle">SUN.</text>
+              <circle cx="220" cy="40" r="20" fill="#3D2410" stroke="#FF8A3D" stroke-width="1.5"/>
+              <text x="220" y="44" fill="#FFD9B8" font-size="9" font-family="IBM Plex Mono, monospace" text-anchor="middle">DEV</text>
+              <circle cx="220" cy="100" r="20" fill="#1A2740" stroke="#5B8DEF" stroke-width="1.5"/>
+              <text x="220" y="104" fill="#C2D3FB" font-size="9" font-family="IBM Plex Mono, monospace" text-anchor="middle">HARISH</text>
+              <circle cx="130" cy="100" r="20" fill="#1A2740" stroke="#5B8DEF" stroke-width="1.5"/>
+              <text x="130" y="104" fill="#C2D3FB" font-size="8.5" font-family="IBM Plex Mono, monospace" text-anchor="middle">JENITTA</text>
+            </svg>
+            <p style="font-size:12.5px; color:var(--paper-faint); margin:0">MEHAR (blue) → SUNANDA, DEV (orange, depth 1) → HARISH, JENITTA (blue, depth 2). Two colours, no clash — bipartite.</p>
+          </div>
+          <div class="panel" style="margin-top:0">
+            <div class="panel-label" style="color:var(--amber-soft)">DFS → topological sort</div>
+            <p style="font-size:13.5px; color:var(--paper-dim); margin:0 0 10px">Run DFS; the moment a node finishes (all its children done), push it onto a stack. Popping the stack gives a valid build/task order — every dependency before its dependent.</p>
+            <pre class="code-block" style="font-size:12px">visited = set(); order = []
+def dfs(node):
+    visited.add(node)
+    for child in children(node):
+        if child not in visited: dfs(child)
+    order.append(node)   <span class="cm"># finishes last → goes in stack</span>
+
+<span class="cm"># topological order = reverse(order)</span></pre>
+            <p style="font-size:12.5px; color:var(--paper-faint); margin:8px 0 0">Same idea behind <code>npm install</code> resolving package dependencies, or a build system ordering compile steps.</p>
+          </div>
+        </div>
       </section>
 
       <section class="block" id="s-ucs">
@@ -636,6 +676,21 @@ while frontier is not empty:
           <b>The city-guide analogy.</b> Uninformed search tries every street. Informed search asks a local: "the station is roughly 3km east." Not exact — but it slashes the search space. Something is better than nothing.
         </div>
 
+        <h3 style="font-size:15px; font-weight:600; margin:28px 0 6px;">Uninformed vs Informed — the full comparison</h3>
+        <p class="block-sub" style="margin-top:0">All 8 rows, exactly as the lecture lists them. This table shows up almost verbatim in exam definitions/short-answer sections — worth memorising as a block.</p>
+        <table class="data">
+          <tr><th>Parameter</th><th>Uninformed search</th><th>Informed search</th></tr>
+          <tr><td>Using knowledge</td><td>Does not use any knowledge during search</td><td>Uses knowledge during search</td></tr>
+          <tr><td>Speed</td><td>Much slower</td><td>Quicker</td></tr>
+          <tr><td>Completion</td><td class="yes">Always complete</td><td>Can be complete or incomplete</td></tr>
+          <tr><td>Time consumption</td><td>Consumes more time</td><td>Consumes less time</td></tr>
+          <tr><td>Cost incurred</td><td>Higher expenses</td><td>Lower expenses</td></tr>
+          <tr><td>Direction/suggestion</td><td>No suggestion on where to find the solution</td><td>Gets suggestions on how/where to find the solution</td></tr>
+          <tr><td>Efficiency</td><td class="no">Costs more, slower — less efficient</td><td class="yes">Costs less, faster — more efficient</td></tr>
+          <tr><td>Length of implementation</td><td>Longer</td><td>Shorter</td></tr>
+          <tr><td>Examples</td><td class="mono">BFS, DFS, UCS, IDS</td><td class="mono">GBFS, A*</td></tr>
+        </table>
+
         <table class="data">
           <tr><th>Type of h(n)</th><th>What it is</th><th>Example</th><th>Quality</th></tr>
           <tr><td>Straight-line distance</td><td>Euclidean to goal</td><td class="mono">h(Arad)=366</td><td class="yes">Admissible</td></tr>
@@ -650,6 +705,7 @@ while frontier is not empty:
           Lecture 4 covers: completing today's admissibility/consistency exercise · good heuristic design, including pattern databases · learning heuristics — algorithms that derive their own h(n) · how to judge whether a heuristic is good before applying it to a problem.
         </div>
       </section>
+
 
       <section class="block" id="s-gbfs">
         <div class="block-head">
@@ -691,6 +747,62 @@ while frontier is not empty:
         </div>
       </section>
 
+      <section class="block" id="s-5node">
+        <div class="block-head">
+          <span class="block-num">05b</span>
+          <h2>5-node graph — GBFS vs A*, hand-traceable</h2>
+          <span class="block-tag core">favourite exam pattern</span>
+        </div>
+        <p class="block-sub">A graph small enough to trace on paper in two minutes. Same start (1), same goal (5) — but GBFS and A* return <em>different</em> answers. This is the cleanest way to see why g(n) matters.</p>
+
+        <div class="tagrow">
+          <span class="tg">Edges used in both walkthroughs: 1→2(100), 1→3(100), 1→4(100), 2→5(125), 3→4(125), 3→5(125), 4→3(100), 4→5(50)</span>
+        </div>
+
+        <div class="callout callout-blue">
+          <span class="callout-kicker">Worth noticing — the slides aren't perfectly tidy here</span>
+          The lecture's own diagram also draws a direct <b>1→5 edge costing 75</b> — but neither the GBFS nor the A* frontier walkthrough on the slides ever uses it; both only ever expand via 2, 3, or 4. <i>And</i> the two slides quietly swap h(3): GBFS's table says h(3)=30, A*'s table (same graph, next slide) says h(3)=70. Toggle below to see both exactly as given — this matters because if you re-derive the graph yourself instead of following the slide's frontier, you'd get a different (and arguably more correct) answer: the direct 1→5 edge alone costs only 75, cheaper than either traced path.
+        </div>
+
+        <div class="controls" style="margin-bottom:14px">
+          <button class="ctl-btn primary" id="n5-toggle-gbfs" onclick="n5SetMode('gbfs')">GBFS table — h(3)=30</button>
+          <button class="ctl-btn" id="n5-toggle-astar" onclick="n5SetMode('astar')">A* table — h(3)=70</button>
+        </div>
+
+        <div class="panel">
+          <div class="panel-label" id="n5-panel-label">GBFS · Node 1 → Node 5 <span class="step-of" id="n5-steplabel">Step 0 of 3</span></div>
+          <div class="stage"><svg id="n5-svg" viewBox="0 0 700 240"></svg></div>
+          <div class="frontier-lane" id="n5-lane-main"></div>
+          <p class="narration" id="n5-narr"></p>
+          <div class="controls">
+            <button class="ctl-btn" id="n5-prev" onclick="n5.prev()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
+            <button class="ctl-btn primary" id="n5-next" onclick="n5.next()">Step<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></button>
+            <button class="ctl-btn" onclick="n5.reset()">Reset</button>
+            <div class="ctl-spacer"></div>
+            <div class="step-pips" id="n5-pips"></div>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="panel" style="margin-top:0">
+            <div class="panel-label" style="color:var(--rose-soft)">GBFS result — h(3)=30, as given on its slide</div>
+            <p style="font-size:13.5px; color:var(--paper-dim); margin:0">Picks node 3 first — lowest h(n)=30 among neighbours of 1. Never looks at edge cost.</p>
+            <p style="font-size:14px; margin:10px 0 0;"><span class="hl" style="background:var(--rose-dim); color:var(--rose-soft)">Path 1 → 3 → 5 = 100 + 125 = 225</span></p>
+            <p style="font-size:13px; color:var(--paper-faint); margin:8px 0 0">Expanded 2 nodes, generated 6 — fast, but not the cheapest path the slide considers.</p>
+          </div>
+          <div class="panel" style="margin-top:0">
+            <div class="panel-label" style="color:var(--moss-soft)">A* result — h(3)=70, as given on its slide</div>
+            <p style="font-size:13.5px; color:var(--paper-dim); margin:0">Picks node 4 first — f(4)=100+40=140 beats node 3's f=100+70=170 and node 2's f=100+120=220.</p>
+            <p style="font-size:14px; margin:10px 0 0;"><span class="hl-moss">Path 1 → 4 → 5 = 100 + 50 = 150</span></p>
+            <p style="font-size:13px; color:var(--paper-faint); margin:8px 0 0">Expanded 2 nodes, generated 5 — cheaper AND fewer nodes generated than GBFS, by the slide's own walkthrough.</p>
+          </div>
+        </div>
+
+        <div class="callout callout-rose">
+          <b>The exam-safe takeaway.</b> Whichever h(3) you're handed, the pattern is identical: GBFS commits to whatever neighbour has the smallest h(n) and never reconsiders; A* weighs g(n)+h(n) together and finds 150 &lt; 225. Reproduce the trace using whatever heuristic values the question actually gives you — don't assume they'll match between two "same-graph" questions.
+        </div>
+      </section>
+
       <section class="block" id="s-astar">
         <div class="block-head">
           <span class="block-num">06</span>
@@ -714,7 +826,7 @@ while frontier is not empty:
         </div>
 
         <div class="callout callout-rose">
-          <b>The trap.</b> At one point Pitesti shows f=415, the lowest value among newly generated nodes. But Fagaras (f=417) was sitting in the open list from an earlier step. A* scans the entire open list before picking — never only the newest arrivals. Miss this and every A* trace in the exam goes wrong.
+          <b>The trap.</b> At one point Pitesti is generated with f=417. But Fagaras (f=415) was already sitting in the open list from an earlier step, and 415 is lower. A* scans the entire open list before picking — never only the newest arrivals, and never assumes the newest arrival wins just because it was generated last. Miss this and every A* trace in the exam goes wrong.
         </div>
 
         <div class="callout callout-moss">
@@ -800,6 +912,33 @@ while open_list is not empty:
           <tr><td>Overestimates (inadmissible)</td><td>Faster, may lose optimality</td></tr>
           <tr><td>Admissible but inconsistent</td><td>Still optimal, may need to re-open closed nodes</td></tr>
         </table>
+
+        <h3 style="font-size:15px; font-weight:600; margin:28px 0 6px;">What makes a heuristic "good"?</h3>
+        <p class="block-sub" style="margin-top:0">Three properties, and one rule for comparing two candidate heuristics against each other.</p>
+
+        <table class="data">
+          <tr><th>Property</th><th>What it means</th></tr>
+          <tr><td><b>Admissible</b></td><td>Never overestimates the true cost — required for optimality</td></tr>
+          <tr><td><b>Consistent</b></td><td>Satisfies the triangle inequality across every neighbouring pair — required for graph-search optimality, and avoids re-opening nodes</td></tr>
+          <tr><td><b>Informative</b></td><td>Close to the actual h*(n) — the closer, the fewer nodes A* needs to explore</td></tr>
+        </table>
+
+        <div class="formula" style="font-size:14px">h₁(n) ≤ h₂(n) ≤ h*(n) for all n<span class="ghost">if both are admissible and h₂ dominates h₁, A* with h₂ expands no more nodes than A* with h₁</span></div>
+
+        <div class="grid2">
+          <div class="panel" style="margin-top:0">
+            <div class="panel-label" style="color:var(--rose-soft)">Weak heuristic: h₁(n) = 0</div>
+            <p style="font-size:13.5px; color:var(--paper-dim); margin:0">f(n) = g(n) + 0 = g(n). This is exactly UCS — admissible (0 never overestimates) but gives zero guidance.</p>
+          </div>
+          <div class="panel" style="margin-top:0">
+            <div class="panel-label" style="color:var(--moss-soft)">Stronger heuristic: h₂(n) = straight-line distance</div>
+            <p style="font-size:13.5px; color:var(--paper-dim); margin:0">Still admissible, but h₂(n) ≥ h₁(n) everywhere — strictly more informative. A* explores far fewer nodes to reach the same optimal answer.</p>
+          </div>
+        </div>
+
+        <div class="callout callout-moss">
+          <b>The dominance rule.</b> If h₁ and h₂ are both admissible and h₂(n) ≥ h₁(n) for every node, h₂ <i>dominates</i> h₁ — and dominance is good news, not a tie. A* using the dominating heuristic never expands more nodes than A* using the dominated one, for the same problem. When you have a choice of heuristics, pick the largest one that's still guaranteed admissible.
+        </div>
       </section>
 
       <section class="block" id="s-admiss">
@@ -871,13 +1010,13 @@ while open_list is not empty:
       <section class="block" id="s-exercises">
         <div class="block-head">
           <span class="block-num">10</span>
-          <h2>The original four exercises</h2>
-          <span class="block-tag core">from the lecture, verbatim</span>
+          <h2>The lecture's exercises</h2>
+          <span class="block-tag core">from the lecture, plus one bonus</span>
         </div>
-        <p class="block-sub">Exactly as given at the end of Lecture 3. Post answers to the Tuxila forum — these are laid out here to attempt properly, not auto-graded.</p>
+        <p class="block-sub">The lecture's actual Exercise 1 asks for problem formulation across three tasks (drone, maze, clinic scheduling), plus a separate A* tracing exercise. Laid out here as individual cards to attempt properly, not auto-graded.</p>
 
         <div class="quiz-card">
-          <span class="qtag">Exercise 1</span>
+          <span class="qtag">Exercise 1 — Task 1 of 3</span>
           <div class="qtext">Problem formulation — plan a trip with a delivery drone</div>
           <p style="font-size:13.5px; color:var(--paper-dim); margin:0 0 10px; line-height:1.7">
           (a) Formulate as a search problem: initial state, goal, possible actions, transition model, path cost.<br>
@@ -888,28 +1027,19 @@ while open_list is not empty:
         </div>
 
         <div class="quiz-card">
-          <span class="qtag">Exercise 2</span>
-          <div class="qtext">Trace A* on this graph</div>
+          <span class="qtag">Exercise 1 — Task 2 of 3</span>
+          <div class="qtext">Problem formulation — solving a maze</div>
           <p style="font-size:13.5px; color:var(--paper-dim); margin:0 0 10px; line-height:1.7">
-          Nodes: S, A, B, C, D, G. Start = S, goal = G.<br>
-          Edges: S→A(3), S→B(6), A→C(2), A→D(4), B→D(1), C→G(5), D→G(2)<br>
-          Heuristics: h(S)=7, h(A)=5, h(B)=4, h(C)=3, h(D)=2, h(G)=0<br>
-          For each expansion: show the open list, the node chosen, its f(n)=g(n)+h(n), and the final path. Then check admissibility.</p>
-          <div class="callout callout-blue" style="margin:0 0 10px">Hint: always compare ALL nodes in the open list, not just recently generated ones.</div>
-          <button class="reveal-btn" onclick="toggleReveal(this)">Reveal worked trace — try it yourself first</button>
-          <div class="explain">
-            <b>Step 1:</b> Expand S. f(S)=0+7=7. Generate A: g=3, h=5, f=8. Generate B: g=6, h=4, f=10. Open: [A 8, B 10]<br>
-            <b>Step 2:</b> Expand A (f=8). Generate C: g=5, h=3, f=8. Generate D: g=7, h=2, f=9. Open: [C 8, D 9, B 10]<br>
-            <b>Step 3:</b> Expand C (f=8, tied-lowest). Generate G: g=10, h=0, f=10. Open: [D 9, B 10, G 10]<br>
-            <b>Step 4:</b> Expand D (f=9, lowest). Generate G via D: g=9, f=9 — replaces the f=10 entry found via C. Open: [B 10, G 9]<br>
-            <b>Step 5:</b> Expand G (f=9, lowest). Goal reached. <b>Path: S→A→D→G, cost 9.</b><br>
-            <b>Admissibility:</b> h(S)=7 vs the true cheapest cost from S (9, via either A-D-G or B-D-G). 7 ≤ 9 ✓. Spot-check the rest the same way — this heuristic is admissible.
-          </div>
+          (a) Formulate as a search problem: initial state, possible actions, transition model, goal test, path cost.<br>
+          (b) What is the state space — every reachable cell, or every (cell, facing-direction) pair? Does the choice matter?<br>
+          (c) Which uninformed algorithm fits best here, and why — BFS, DFS, or something else?<br>
+          (d) Is this problem well-formed? What's missing if the maze has no guaranteed exit?</p>
+          <div class="callout callout-blue" style="margin:0">Hint: think about what "action" means in a grid maze (4 directions? diagonals?) and whether path cost should just be step count or something else.</div>
         </div>
 
         <div class="quiz-card">
-          <span class="qtag">Exercise 3</span>
-          <div class="qtext">Formulate clinic appointment scheduling as a search problem</div>
+          <span class="qtag">Exercise 1 — Task 3 of 3</span>
+          <div class="qtext">Problem formulation — clinic appointment scheduling</div>
           <p style="font-size:13.5px; color:var(--paper-dim); margin:0 0 10px; line-height:1.7">
           (a) What is the initial state? What does the goal state look like?<br>
           (b) What are the possible actions?<br>
@@ -920,8 +1050,27 @@ while open_list is not empty:
         </div>
 
         <div class="quiz-card">
-          <span class="qtag">Exercise 4</span>
-          <div class="qtext">Admissibility check</div>
+          <span class="qtag">Exercise 2 — separate exercise</span>
+          <div class="qtext">Trace A* on this graph</div>
+          <p style="font-size:13.5px; color:var(--paper-dim); margin:0 0 10px; line-height:1.7">
+          Nodes: S, A, B, C, D, G. Start = S, goal = G.<br>
+          Edges: S→A(1), S→G(10), A→B(2), A→C(1), B→D(5), C→D(3), C→G(4), D→G(2)<br>
+          Heuristics: h(S)=5, h(A)=3, h(B)=4, h(C)=2, h(D)=6, h(G)=0<br>
+          For each expansion: show the open list, the node chosen, its f(n)=g(n)+h(n), and the final path. Then check admissibility.</p>
+          <div class="callout callout-blue" style="margin:0 0 10px">Hint: always compare ALL nodes in the open list, not just recently generated ones. Watch out for the direct S→G(10) edge — it looks tempting but isn't on the optimal path.</div>
+          <button class="reveal-btn" onclick="toggleReveal(this)">Reveal worked trace — try it yourself first</button>
+          <div class="explain">
+            <b>Step 1:</b> Expand S (f=0+5=5). Generate A: g=1, h=3, f=4. Generate G: g=10, h=0, f=10. Open: [A 4, G 10]<br>
+            <b>Step 2:</b> Expand A (f=4, lowest). Generate B: g=3, h=4, f=7. Generate C: g=2, h=2, f=4. Open: [C 4, B 7, G 10]<br>
+            <b>Step 3:</b> Expand C (f=4, lowest). Generate D: g=5, h=6, f=11. Generate G via C: g=6, h=0, f=6 — replaces the f=10 entry found via S directly. Open: [G 6, B 7, D 11]<br>
+            <b>Step 4:</b> Expand G (f=6, lowest). Goal reached. <b>Path: S→A→C→G, cost 6.</b><br>
+            <b>Admissibility:</b> h(S)=5 vs the true cheapest cost from S (6, via S-A-C-G). 5 ≤ 6 ✓. Spot-check the rest the same way — h(A)=3 vs true cost 5 (A-C-G) ✓, h(C)=2 vs true cost 4 (C-G) ✓. This heuristic is admissible.
+          </div>
+        </div>
+
+        <div class="quiz-card">
+          <span class="qtag" style="background:var(--blue-dim); color:var(--blue-soft)">Bonus — extra practice</span>
+          <div class="qtext">Admissibility check (not from the lecture slides — extra practice)</div>
           <p style="font-size:13.5px; color:var(--paper-dim); margin:0 0 10px; line-height:1.7">
           Nodes: 1→G actual=6, 2→G actual=4, 3→G actual=2, 4→G actual=5<br>
           Heuristic values: h(1)=5, h(2)=6, h(3)=1, h(4)=4<br>
@@ -980,11 +1129,12 @@ const SECTIONS = [
   {id:'s-ids',       n:'03', label:'Iterative deepening'},
   {id:'s-heuristic', n:'04', label:'Heuristics'},
   {id:'s-gbfs',      n:'05', label:'Greedy best-first'},
+  {id:'s-5node',     n:'5b', label:'5-node: GBFS vs A*'},
   {id:'s-astar',     n:'06', label:'A* trace'},
   {id:'s-compare',   n:'07', label:'Greedy vs UCS vs A*'},
   {id:'s-admiss',    n:'08', label:'Admissibility checker'},
   {id:'s-examref',   n:'09', label:'Exam-ready table'},
-  {id:'s-exercises', n:'10', label:'Original exercises'},
+  {id:'s-exercises', n:'10', label:"Lecture's exercises"},
   {id:'s-quiz',      n:'11', label:'Quiz bank'},
   {id:'s-refs',      n:'12', label:'References'}
 ];
@@ -1194,7 +1344,7 @@ ids.render();
 const gbfsNodes = { Arad:{x:80,y:120}, Zerind:{x:80,y:25}, Timisoara:{x:80,y:215},
   Sibiu:{x:260,y:120}, Oradea:{x:200,y:215},
   Fagaras:{x:430,y:50}, RimnicuV:{x:430,y:190}, Pitesti:{x:560,y:215}, Bucharest:{x:620,y:120} };
-const gbfsH = {Arad:366, Zerind:374, Timisoara:329, Sibiu:253, Oradea:380, Fagaras:178, RimnicuV:193, Pitesti:100, Bucharest:0};
+const gbfsH = {Arad:366, Zerind:374, Timisoara:329, Sibiu:253, Oradea:380, Fagaras:176, RimnicuV:193, Pitesti:100, Bucharest:0};
 const gbfsEdges = [['Arad','Zerind'],['Arad','Sibiu'],['Arad','Timisoara'],['Zerind','Oradea'],
   ['Sibiu','Fagaras'],['Sibiu','RimnicuV'],['Fagaras','Bucharest'],['RimnicuV','Pitesti'],['Pitesti','Bucharest']];
 const gbfsPath = ['Arad','Sibiu','Fagaras','Bucharest'];
@@ -1228,7 +1378,7 @@ const gbfs = makeStepper(gbfsSteps, function(idx){
   document.getElementById('gbfs-next').disabled = idx===gbfsSteps.length-1;
   const notes = [
     `At Arad, compare neighbours' h(n): Zerind=374, Sibiu=253, Timisoara=329. Sibiu is lowest — go there.`,
-    `At Sibiu: Fagaras=178, RimnicuV=193. Fagaras wins — with no idea what the road actually costs.`,
+    `At Sibiu: Fagaras=176, RimnicuV=193. Fagaras wins — with no idea what the road actually costs.`,
     `At Fagaras, only Bucharest left, h=0. Go there.`,
     `Reached Bucharest. Real cost: 140+99+211 = 450km. The optimal route was 418km — GBFS never checked.`
   ];
@@ -1237,14 +1387,96 @@ const gbfs = makeStepper(gbfsSteps, function(idx){
 gbfs.render();
 
 /* ============================================================
+   05b — 5-node graph: GBFS vs A* side-by-side trace
+   Two distinct heuristic tables, exactly as the two source
+   slides give them (h(3) differs between the GBFS slide and
+   the A* slide for the "same" graph) — toggle between modes
+   rather than silently merging them into one invented table.
+   ============================================================ */
+const n5Pos = { 1:{x:90,y:120}, 2:{x:300,y:35}, 3:{x:300,y:120}, 4:{x:480,y:200}, 5:{x:630,y:120} };
+const n5Edges = [['1','2',100],['1','3',100],['1','4',100],['2','5',125],['3','4',125],['3','5',125],['4','3',100],['4','5',50]];
+
+const n5Modes = {
+  gbfs: {
+    h: {1:60, 2:120, 3:30, 4:40, 5:0},
+    label: 'GBFS · Node 1 → Node 5 (h(3)=30, as on the GBFS slide)',
+    steps: [
+      { expanded:[], open:[{l:'1',v:60}],
+        note:'Start at node 1. GBFS frontier is sorted by h(n) alone.' },
+      { expanded:['1'], open:[{l:'2 · h120',v:120},{l:'3 · h30',v:30},{l:'4 · h40',v:40}],
+        note:'Expand 1 → generate 2 (h=120), 3 (h=30), 4 (h=40). Lowest h is node 3 — expand it next, ignoring that the edge to get there costs the same 100 as everything else.' },
+      { expanded:['1','3'], open:[{l:'2 · h120',v:120},{l:'4 · h40',v:40},{l:'5 · h0 (via 3)',v:0}],
+        note:'Expand 3 (h=30) → generate 4 again (already open) and 5 with h=0 via path 1→3→5, g=225. Node 5 has h=0 — the lowest possible — so GBFS commits to it next.' },
+      { expanded:['1','3','5'], open:[],
+        note:'Expand 5 → GOAL. Path 1→3→5, cost = 100+125 = 225. GBFS never compared this to the alternative through node 4 — it only ever looks at h(n).' }
+    ]
+  },
+  astar: {
+    h: {1:60, 2:120, 3:70, 4:40, 5:0},
+    label: 'A* · Node 1 → Node 5 (h(3)=70, as on the A* slide)',
+    steps: [
+      { expanded:[], open:[{l:'1',v:60}],
+        note:'Start at node 1. A* frontier is sorted by f(n) = g(n) + h(n).' },
+      { expanded:['1'], open:[{l:'2 · f220',v:220},{l:'3 · f170',v:170},{l:'4 · f140',v:140}],
+        note:'Expand 1 → generate 2 (g=100,h=120,f=220), 3 (g=100,h=70,f=170), 4 (g=100,h=40,f=140). Node 4 has the lowest f — expand it next.' },
+      { expanded:['1','4'], open:[{l:'2 · f220',v:220},{l:'3 · f170',v:170},{l:'5 · f150 (via 4)',v:150}],
+        note:'Expand 4 (f=140) → generate 3 again (already open at f=170, not improved) and 5 with g=150,h=0,f=150 via path 1→4→5. f=150 is now the lowest in the open list.' },
+      { expanded:['1','4','5'], open:[],
+        note:'Expand 5 (f=150, lowest) → GOAL. Path 1→4→5, cost = 100+50 = 150. A* found this by weighing g(n) alongside h(n) — exactly the comparison GBFS skips.' }
+    ]
+  }
+};
+let n5Mode = 'gbfs';
+function drawN5(svgEl, hTable, expanded){
+  let s='';
+  n5Edges.forEach(([a,b,c])=>{
+    const na=n5Pos[a], nb=n5Pos[b];
+    const mx=(na.x+nb.x)/2, my=(na.y+nb.y)/2;
+    s += `<line x1="${na.x}" y1="${na.y}" x2="${nb.x}" y2="${nb.y}" stroke="#262a32" stroke-width="1.2"/>`;
+    s += `<rect x="${mx-12}" y="${my-9}" width="24" height="15" fill="#14171C"/>`;
+    s += `<text x="${mx}" y="${my+2.5}" fill="#8A887F" font-size="10" font-family="IBM Plex Mono, monospace" text-anchor="middle">${c}</text>`;
+  });
+  Object.keys(n5Pos).forEach(key=>{
+    const n = n5Pos[key];
+    const onPath = expanded.includes(key);
+    let fill = onPath ? '#16291D' : '#181b21', stroke = onPath ? '#5FAD7A' : '#262a32', tcol = onPath ? '#BCE3CA' : '#F7F5F0';
+    s += `<circle cx="${n.x}" cy="${n.y}" r="24" fill="${fill}" stroke="${stroke}" stroke-width="1.8"/>`;
+    s += `<text x="${n.x}" y="${n.y-2}" fill="${tcol}" font-size="13" font-family="IBM Plex Mono, monospace" text-anchor="middle" font-weight="600">${key}</text>`;
+    s += `<text x="${n.x}" y="${n.y+11}" fill="${tcol}" font-size="9" font-family="IBM Plex Mono, monospace" text-anchor="middle" opacity="0.8">h=${hTable[key]}</text>`;
+  });
+  svgEl.innerHTML = s;
+}
+let n5;
+function buildN5(){
+  const cfg = n5Modes[n5Mode];
+  n5 = makeStepper(cfg.steps, function(step, idx){
+    drawN5(document.getElementById('n5-svg'), cfg.h, step.expanded);
+    const minV = step.open.length ? Math.min(...step.open.map(o=>o.v)) : undefined;
+    renderLane('n5-lane-main', n5Mode==='gbfs' ? 'GBFS frontier (h only)' : 'A* open list (g+h)', step.open.map(o=>({label:o.l, v:o.v})), minV);
+    document.getElementById('n5-panel-label').innerHTML = cfg.label + ` <span class="step-of" id="n5-steplabel">Step ${idx} of ${cfg.steps.length-1}</span>`;
+    document.getElementById('n5-prev').disabled = idx===0;
+    document.getElementById('n5-next').disabled = idx===cfg.steps.length-1;
+    document.getElementById('n5-narr').innerHTML = step.note;
+  }, 'n5-pips');
+  n5.render();
+}
+function n5SetMode(mode){
+  n5Mode = mode;
+  document.getElementById('n5-toggle-gbfs').classList.toggle('primary', mode==='gbfs');
+  document.getElementById('n5-toggle-astar').classList.toggle('primary', mode==='astar');
+  buildN5();
+}
+buildN5();
+
+/* ============================================================
    06 — A* full Romania trace
    ============================================================ */
 const astarRows = [
   {step:1, node:'Arad', g:0, h:366, f:366, gen:'Zerind(449), Sibiu(393), Timisoara(447)', open:[{l:'Zerind',v:449},{l:'Sibiu',v:393},{l:'Timisoara',v:447}]},
-  {step:2, node:'Sibiu', g:140, h:253, f:393, gen:'RimnicuV(413), Fagaras(417), Arad(646)', open:[{l:'Zerind',v:449},{l:'Timisoara',v:447},{l:'RimnicuV',v:413},{l:'Fagaras',v:417},{l:'Arad',v:646}]},
-  {step:3, node:'RimnicuV', g:220, h:193, f:413, gen:'Pitesti(415), Craiova(526)', open:[{l:'Zerind',v:449},{l:'Timisoara',v:447},{l:'Fagaras',v:417},{l:'Pitesti',v:415},{l:'Craiova',v:526}]},
-  {step:4, node:'Fagaras', g:239, h:178, f:417, gen:'Bucharest(450)', open:[{l:'Zerind',v:449},{l:'Timisoara',v:447},{l:'Pitesti',v:415},{l:'Bucharest',v:450},{l:'Craiova',v:526}]},
-  {step:5, node:'Pitesti', g:317, h:98, f:415, gen:'Bucharest(418) replaces 450, Craiova(615)', open:[{l:'Zerind',v:449},{l:'Timisoara',v:447},{l:'Bucharest',v:418},{l:'Craiova',v:526}]},
+  {step:2, node:'Sibiu', g:140, h:253, f:393, gen:'RimnicuV(413), Fagaras(415), Arad(646)', open:[{l:'Zerind',v:449},{l:'Timisoara',v:447},{l:'RimnicuV',v:413},{l:'Fagaras',v:415},{l:'Arad',v:646}]},
+  {step:3, node:'RimnicuV', g:220, h:193, f:413, gen:'Pitesti(417), Craiova(526)', open:[{l:'Zerind',v:449},{l:'Timisoara',v:447},{l:'Fagaras',v:415},{l:'Pitesti',v:417},{l:'Craiova',v:526}]},
+  {step:4, node:'Fagaras', g:239, h:176, f:415, gen:'Bucharest(450)', open:[{l:'Zerind',v:449},{l:'Timisoara',v:447},{l:'Pitesti',v:417},{l:'Bucharest',v:450},{l:'Craiova',v:526}]},
+  {step:5, node:'Pitesti', g:317, h:100, f:417, gen:'Bucharest(418) replaces 450, Craiova(615)', open:[{l:'Zerind',v:449},{l:'Timisoara',v:447},{l:'Bucharest',v:418},{l:'Craiova',v:526}]},
   {step:6, node:'Bucharest', g:418, h:0, f:418, gen:'GOAL — return path', open:[]}
 ];
 const astarMap = { Arad:{x:60,y:135}, Sibiu:{x:230,y:70}, Timisoara:{x:60,y:215}, Zerind:{x:60,y:50},
@@ -1354,7 +1586,7 @@ const QUIZ = [
   {cat:'astar', q:'Greedy Best-First Search uses evaluation function:', opts:['f(n) = g(n)','f(n) = h(n)','f(n) = g(n) + h(n)','f(n) = g(n) − h(n)'], ans:1, exp:'GBFS only looks at h(n) and ignores cost paid so far entirely.'},
   {cat:'astar', q:'A* uses evaluation function:', opts:['f(n) = h(n)','f(n) = g(n)','f(n) = g(n) + h(n)','f(n) = max(g(n), h(n))'], ans:2, exp:'A* = actual cost so far plus estimated cost to go. That combination keeps it informed AND grounded in real cost.'},
   {cat:'astar', q:'On the Romania map, why does GBFS reach Bucharest via a suboptimal 450km path?', opts:['It got stuck in an infinite loop','It picked Fagaras for its low h(n), ignoring the expensive Fagaras→Bucharest edge','It used the wrong start node','It ran out of memory before finishing'], ans:1, exp:'GBFS only compares h(n). Fagaras looked closest by heuristic, but the real edge cost from there was high — GBFS never accounts for that.'},
-  {cat:'astar', q:'Pitesti shows f=415 (just generated) while Fagaras shows f=417 (generated earlier, still open). What should A* do?', opts:['Expand Pitesti immediately — lowest among newly generated nodes','Expand whichever node is alphabetically first','Compare ALL nodes currently in the open list, then expand the global minimum','Discard Fagaras since it is no longer relevant'], ans:2, exp:'A* must scan the entire open list, not just recently generated nodes. Pitesti still wins at 415 — but only checking everything confirms that.'},
+  {cat:'astar', q:'Fagaras shows f=415 (generated earlier, still open) while Pitesti shows f=417 (just generated). What should A* do?', opts:['Expand Pitesti immediately — it was generated most recently','Expand whichever node is alphabetically first','Compare ALL nodes currently in the open list, then expand the global minimum','Discard Fagaras since it is no longer relevant'], ans:2, exp:'A* must scan the entire open list, not just recently generated nodes. Fagaras still wins at 415 — but only checking everything confirms that.'},
   {cat:'astar', q:'With h(n) = 0 for every node, A* behaves exactly like:', opts:['Greedy Best-First Search','Depth-First Search','Uniform Cost Search','Iterative Deepening Search'], ans:2, exp:'f(n) = g(n) + 0 = g(n) — that is precisely UCS. A* with a zero heuristic degenerates into UCS.'},
   {cat:'astar', q:'On a small graph (S–A 2, S–B 3, A–C 4, B–C 1, B–D 5, C–D 2, C–G 4, D–G 3; h: S=6,A=6,B=4,C=3,D=2,G=0), why does Greedy choose S–B–D–G (cost 11) over S–B–C–G (cost 8)?', opts:["Because D has a lower g(n) than C","Because D has a lower h(n)=2 than C's h(n)=3, ignoring the expensive 5-cost B→D edge","Because the graph has a cycle","Because Greedy prefers alphabetically later nodes"], ans:1, exp:"Greedy compares only h-values: D(2) looks better than C(3). It never weighs the real edge cost B→D=5, which is what makes the path expensive."},
   {cat:'admiss', q:'A heuristic h(n) is admissible when:', opts:['h(n) ≥ h*(n) for all n','h(n) ≤ h*(n) for all n','h(n) = h*(n) exactly','h(n) is always 0'], ans:1, exp:'Admissible = never overestimates. h(n) must be ≤ the true optimal cost-to-goal for every node.'},
