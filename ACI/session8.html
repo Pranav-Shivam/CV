@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S8 · Alpha-Beta Pruning &amp; MCTS · ACI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0E1A14;
+  --bg-raised:#142420;
+  --bg-card:#152821;
+  --ink:#F2EADB;
+  --ink-dim:#B9C2B6;
+  --ink-faint:#7C8A81;
+  --max:#D4A24C;
+  --max-dim:#5A4A2A;
+  --min:#3E7CB1;
+  --min-dim:#2A3F52;
+  --dead:#C75C4A;
+  --dead-dim:#3A2620;
+  --good:#6FA888;
+  --line:#23362E;
+  --serif:'Fraunces', serif;
+  --sans:'Inter', sans-serif;
+  --mono:'JetBrains Mono', monospace;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--max); text-decoration:none;}
+a:hover{text-decoration:underline;}
+.wrap{max-width:1180px; margin:0 auto; padding:0 32px;}
+
+.topbar{
+  border-bottom:1px solid var(--line);
+  padding:14px 0;
+  position:sticky; top:0; z-index:50;
+  background:rgba(14,26,20,0.92);
+  backdrop-filter:blur(8px);
+}
+.topbar .wrap{display:flex; align-items:center; justify-content:space-between; gap:16px;}
+.crumb{font-size:13px; color:var(--ink-faint); font-family:var(--mono);}
+.crumb a{color:var(--ink-dim);}
+.nav-links{display:flex; gap:20px; font-size:13px; font-family:var(--mono);}
+.nav-links a{color:var(--ink-faint);}
+.nav-links a.active{color:var(--max);}
+
+.layout{display:grid; grid-template-columns:230px 1fr; gap:56px; padding:48px 0 120px;}
+.rail{position:sticky; top:76px; align-self:start; max-height:calc(100vh - 100px); overflow-y:auto;}
+.rail-label{font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:14px;}
+.rail ol{list-style:none;}
+.rail li{margin-bottom:9px; font-size:13.5px;}
+.rail a{color:var(--ink-dim); display:block; padding:4px 0 4px 12px; border-left:2px solid var(--line); transition:.15s;}
+.rail a:hover, .rail a.current{color:var(--max); border-left-color:var(--max); text-decoration:none;}
+
+main{min-width:0;}
+
+.hero{padding-bottom:40px; border-bottom:1px solid var(--line); margin-bottom:48px;}
+.eyebrow{font-family:var(--mono); font-size:12.5px; color:var(--max); letter-spacing:.05em; margin-bottom:18px; display:flex; gap:10px; align-items:center;}
+.eyebrow .tag{background:var(--max-dim); color:var(--max); padding:3px 9px; border-radius:3px; font-weight:600;}
+h1{font-family:var(--serif); font-weight:600; font-size:clamp(32px,5vw,50px); line-height:1.08; letter-spacing:-0.01em; margin-bottom:18px;}
+.hero p.lede{font-size:18px; color:var(--ink-dim); max-width:700px;}
+.hero p.lede b{color:var(--ink); font-weight:600;}
+
+section.block{margin-bottom:64px; scroll-margin-top:90px;}
+h2{font-family:var(--serif); font-weight:600; font-size:28px; margin-bottom:18px; display:flex; align-items:baseline; gap:12px;}
+h2 .num{font-family:var(--mono); font-size:15px; color:var(--ink-faint); font-weight:400;}
+h3{font-family:var(--serif); font-weight:600; font-size:20px; margin:28px 0 12px;}
+p{margin-bottom:14px; color:var(--ink-dim);}
+p b, p strong{color:var(--ink); font-weight:600;}
+ul, ol.normal{margin:0 0 14px 22px; color:var(--ink-dim);}
+ul li, ol.normal li{margin-bottom:6px;}
+code{font-family:var(--mono); background:var(--bg-raised); padding:2px 6px; border-radius:4px; font-size:0.9em; color:var(--max);}
+pre{font-family:var(--mono); background:var(--bg-raised); border:1px solid var(--line); border-radius:8px; padding:16px 18px; overflow-x:auto; font-size:13.5px; line-height:1.7; margin:16px 0; color:var(--ink-dim);}
+
+table{width:100%; border-collapse:collapse; margin:16px 0 20px; font-size:14.5px;}
+th, td{padding:10px 14px; border-bottom:1px solid var(--line); text-align:left;}
+th{font-family:var(--mono); font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-faint); font-weight:600;}
+tr:last-child td{border-bottom:none;}
+td{color:var(--ink-dim);}
+
+.callout{border:1px solid var(--line); background:var(--bg-card); border-radius:10px; padding:20px 22px; margin:20px 0;}
+.callout-title{font-family:var(--mono); font-size:12px; letter-spacing:.05em; text-transform:uppercase; font-weight:600; margin-bottom:10px; display:flex; align-items:center; gap:8px;}
+.callout.key{border-left:3px solid var(--max);}
+.callout.key .callout-title{color:var(--max);}
+.callout.trap{border-left:3px solid var(--dead);}
+.callout.trap .callout-title{color:var(--dead);}
+.callout.cool{border-left:3px solid var(--min);}
+.callout.cool .callout-title{color:var(--min);}
+
+.plain{
+  border:1px dashed #4A5C50;
+  background:linear-gradient(180deg, rgba(111,168,136,0.07), rgba(111,168,136,0.02));
+  border-radius:10px;
+  padding:18px 22px;
+  margin:18px 0 26px;
+  position:relative;
+}
+.plain::before{
+  content:"PLAIN ENGLISH";
+  font-family:var(--mono);
+  font-size:10.5px;
+  letter-spacing:.09em;
+  color:var(--good);
+  background:var(--bg);
+  position:absolute;
+  top:-9px; left:16px;
+  padding:0 8px;
+  font-weight:700;
+}
+.plain p{color:var(--ink); font-size:15px; margin-bottom:8px;}
+.plain p:last-child{margin-bottom:0;}
+.plain .analogy{color:var(--good); font-style:italic;}
+
+.def-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:18px 0;}
+.def-card{background:var(--bg-card); border:1px solid var(--line); border-radius:8px; padding:16px 18px;}
+.def-card .k{font-family:var(--mono); color:var(--max); font-size:14px; font-weight:600; margin-bottom:6px;}
+.def-card .v{font-size:14px; color:var(--ink-dim);}
+@media(max-width:700px){.def-grid{grid-template-columns:1fr;}}
+
+.viz{background:var(--bg-card); border:1px solid var(--line); border-radius:14px; padding:28px; margin:22px 0;}
+.viz-header{display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:14px; margin-bottom:18px;}
+.viz-title{font-family:var(--serif); font-size:19px; font-weight:600;}
+.viz-sub{font-size:13px; color:var(--ink-faint); margin-top:3px;}
+.viz-controls{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+.btn{
+  font-family:var(--mono); font-size:13px; font-weight:600;
+  background:var(--bg-raised); color:var(--ink);
+  border:1px solid var(--line); border-radius:7px;
+  padding:9px 16px; cursor:pointer; transition:.15s;
+}
+.btn:hover{border-color:var(--max); color:var(--max);}
+.btn:disabled{opacity:.35; cursor:not-allowed;}
+.btn.primary{background:var(--max); color:#1A1408; border-color:var(--max);}
+.btn.primary:hover{background:#E3B264; color:#1A1408;}
+.btn.ghost{background:transparent;}
+
+.state-bar{
+  display:flex; gap:22px; flex-wrap:wrap;
+  font-family:var(--mono); font-size:13.5px;
+  background:var(--bg-raised); border-radius:8px; padding:12px 16px; margin-bottom:18px;
+  border:1px solid var(--line);
+}
+.state-item{display:flex; gap:7px; align-items:center;}
+.state-item .lbl{color:var(--ink-faint);}
+.state-item .val{color:var(--ink); font-weight:600;}
+.state-item .val.a-c{color:var(--max);}
+.state-item .val.b-c{color:var(--min);}
+
+#abSvg{width:100%; height:auto; display:block;}
+.tree-node-bg{transition:fill .35s, stroke .35s, opacity .4s;}
+.tree-node-label{font-family:var(--mono); font-weight:600; font-size:13px; fill:var(--ink); transition:opacity .4s; pointer-events:none;}
+.tree-edge{stroke:var(--line); stroke-width:2; transition:stroke .35s, opacity .4s;}
+.tree-leaf-val{font-family:var(--mono); font-weight:600; font-size:15px; transition:fill .3s, opacity .4s;}
+.ab-label{font-family:var(--mono); font-size:9.5px; transition:opacity .3s, fill .3s;}
+.node-pulse{animation:pulse 1.1s ease-in-out infinite;}
+@keyframes pulse{0%,100%{filter:drop-shadow(0 0 0px currentColor);} 50%{filter:drop-shadow(0 0 7px currentColor);}}
+.pruned{opacity:0.22;}
+.pruned-strike{stroke:var(--dead); stroke-width:3;}
+
+.viz-log{
+  margin-top:16px; font-family:var(--mono); font-size:13px; color:var(--ink-dim);
+  background:var(--bg-raised); border:1px solid var(--line); border-radius:8px;
+  padding:13px 16px; min-height:46px; line-height:1.6;
+}
+.viz-log .step-current{color:var(--max); font-weight:600;}
+.viz-log .pruned-text{color:var(--dead); font-weight:600;}
+
+.legend{display:flex; gap:18px; flex-wrap:wrap; margin-top:14px; font-size:12.5px; color:var(--ink-faint);}
+.legend span{display:inline-flex; align-items:center; gap:6px;}
+.dot{width:10px; height:10px; border-radius:50%; display:inline-block;}
+
+/* MCTS specific */
+.mcts-arms{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin:18px 0;}
+.arm{
+  background:var(--bg-raised); border:1px solid var(--line); border-radius:10px;
+  padding:18px; text-align:center; position:relative; transition:.25s;
+}
+.arm.best{border-color:var(--good); box-shadow:0 0 0 1px var(--good) inset;}
+.arm .arm-name{font-family:var(--serif); font-weight:700; font-size:22px; margin-bottom:10px;}
+.arm .arm-stat{font-family:var(--mono); font-size:12.5px; color:var(--ink-faint); margin-bottom:4px;}
+.arm .arm-ucb{font-family:var(--mono); font-size:19px; color:var(--max); font-weight:700; margin-top:10px;}
+.arm .visit-track{height:6px; background:var(--bg); border-radius:4px; margin-top:10px; overflow:hidden;}
+.arm .visit-fill{height:100%; background:var(--good); transition:width .3s;}
+.arm.selected{animation:selectPulse .6s;}
+@keyframes selectPulse{0%{transform:scale(1);} 40%{transform:scale(1.04); box-shadow:0 0 18px rgba(212,162,76,0.4);} 100%{transform:scale(1);}}
+
+.mcts-phase-strip{display:flex; gap:8px; margin:18px 0; flex-wrap:wrap;}
+.phase-pill{
+  font-family:var(--mono); font-size:11.5px; padding:6px 13px; border-radius:20px;
+  background:var(--bg-raised); border:1px solid var(--line); color:var(--ink-faint); transition:.2s;
+}
+.phase-pill.active{background:var(--max-dim); color:var(--max); border-color:var(--max);}
+
+/* Worked example accordion */
+.worked{border:1px solid var(--line); border-radius:10px; margin-bottom:14px; overflow:hidden; background:var(--bg-card);}
+.worked-head{
+  padding:16px 20px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;
+  font-family:var(--serif); font-weight:600; font-size:16.5px;
+}
+.worked-head .wtag{font-family:var(--mono); font-size:11px; color:var(--max); background:var(--max-dim); padding:2px 9px; border-radius:4px; margin-right:10px; text-transform:uppercase;}
+.worked-head .chev{transition:.25s; color:var(--ink-faint); font-size:14px;}
+.worked.open .chev{transform:rotate(90deg);}
+.worked-body{max-height:0; overflow:hidden; transition:max-height .35s ease;}
+.worked-body-inner{padding:0 22px 22px;}
+.worked.open .worked-body{max-height:2400px;}
+.step-line{display:flex; gap:10px; margin-bottom:9px; align-items:flex-start; font-size:14.5px;}
+.step-num{font-family:var(--mono); color:var(--max); font-weight:700; flex-shrink:0;}
+
+.quiz-card{background:var(--bg-card); border:1px solid var(--line); border-radius:10px; padding:22px; margin-bottom:16px;}
+.quiz-q{font-family:var(--serif); font-weight:600; font-size:17px; margin-bottom:14px;}
+.quiz-opts{display:grid; gap:9px;}
+.quiz-opt{
+  text-align:left; background:var(--bg-raised); border:1px solid var(--line); color:var(--ink-dim);
+  padding:11px 15px; border-radius:7px; cursor:pointer; font-size:14.5px; font-family:var(--sans); transition:.15s;
+}
+.quiz-opt:hover{border-color:var(--ink-faint);}
+.quiz-opt.correct{border-color:var(--good); background:rgba(111,168,136,0.12); color:var(--good); font-weight:600;}
+.quiz-opt.wrong{border-color:var(--dead); background:rgba(199,92,74,0.12); color:var(--dead);}
+.quiz-explain{margin-top:12px; padding-top:12px; border-top:1px solid var(--line); font-size:13.5px; color:var(--ink-faint); display:none;}
+.quiz-explain.show{display:block;}
+
+.complete-bar{
+  margin-top:60px; padding:24px 28px; background:var(--bg-card); border:1px solid var(--line); border-radius:12px;
+  display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;
+}
+.complete-bar span{color:var(--ink-dim); font-size:14px;}
+.next-link{font-family:var(--mono); font-size:13.5px; font-weight:600;}
+
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr; gap:0;}
+  .rail{display:none;}
+  .wrap{padding:0 20px;}
+  .mcts-arms{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="crumb"><a href="https://sanskarmk.github.io/ACI_Midsem/index.html">ACI Hub</a> › Session 8</div>
+    <div class="nav-links">
+      <a href="session7.html">S7 · Minimax</a>
+      <a href="session8.html" class="active">S8 · Alpha-Beta &amp; MCTS</a>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+<div class="layout">
+
+  <nav class="rail">
+    <div class="rail-label">On this page</div>
+    <ol>
+      <li><a href="#ab" class="current">Alpha-Beta pruning</a></li>
+      <li><a href="#absteps">The algorithm</a></li>
+      <li><a href="#viz">▸ Play: Alpha-Beta</a></li>
+      <li><a href="#ordering">Move ordering</a></li>
+      <li><a href="#mcts">Monte-Carlo Tree Search</a></li>
+      <li><a href="#mctsviz">▸ Play: UCB / MCTS</a></li>
+      <li><a href="#stochastic">Stochastic games</a></li>
+      <li><a href="#worked">Worked examples</a></li>
+      <li><a href="#quiz">Self-test</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <div class="hero">
+      <div class="eyebrow"><span class="tag">CS#8</span> Module 3 · Games</div>
+      <h1>Alpha-Beta Pruning &amp; Monte-Carlo Tree Search</h1>
+      <p class="lede">Minimax wastes effort on branches that can't change the decision. <b>Alpha-Beta pruning</b> gives the <i>identical</i> answer while skipping those branches. <b>MCTS</b> takes a different route: it samples random play-outs to focus search where it matters — the idea behind modern Go engines.</p>
+    </div>
+
+    <!-- ============ ALPHA BETA INTRO ============ -->
+    <section class="block" id="ab">
+      <h2><span class="num">01</span> Alpha-Beta pruning</h2>
+      <p>Alpha-Beta is minimax + a heuristic that <b>stops evaluating a move once it's proven worse than an already-examined option</b>. Same output, far fewer nodes. Maintain two bounds through the search:</p>
+
+      <div class="def-grid">
+        <div class="def-card"><div class="k">α (alpha)</div><div class="v">The best (highest) value MAX can already guarantee so far. Lower bound on the result. Starts at −∞.</div></div>
+        <div class="def-card"><div class="k">β (beta)</div><div class="v">The best (lowest) value MIN can already guarantee so far. Upper bound. Starts at +∞.</div></div>
+      </div>
+
+      <div class="callout key">
+        <div class="callout-title">✂ General pruning principle</div>
+        <p style="margin-bottom:0">At a node n, if a player already has a better option at n's parent (or higher up), then n will never be reached in optimal play — so the <b>entire subtree under n can be pruned</b>. The cut-off condition is <b>β ≤ α</b>.</p>
+      </div>
+
+      <div class="plain">
+        <p>α and β are basically two players' "asking prices" written on a sticky note. <span class="analogy">α is the best deal MAX has found so far ("I can already get at least 6 elsewhere"); β is the best deal MIN has found so far ("I can already limit my loss to at most 4 elsewhere").</span> The moment α catches up to or passes β, it means: "Whatever I find deeper in this branch can't change my mind — I already have something at least this good guaranteed elsewhere." So why keep looking? You prune.</p>
+      </div>
+    </section>
+
+    <!-- ============ ALGORITHM STEPS ============ -->
+    <section class="block" id="absteps">
+      <h2><span class="num">02</span> The algorithm</h2>
+      <ol class="normal">
+        <li>At the root, set α = −∞, β = +∞.</li>
+        <li>Descend to the depth limit and read static values.</li>
+        <li>For each value VAL, until all leaves are done <b>or β ≤ α</b>:
+          <ul>
+            <li>If player is <b>MAX</b>: if VAL &gt; α, set α = VAL. Then if β ≤ α, prune the remaining siblings (a <b>β-cutoff</b>).</li>
+            <li>If player is <b>MIN</b>: if VAL &lt; β, set β = VAL. Then if β ≤ α, prune the remaining siblings (an <b>α-cutoff</b>).</li>
+          </ul>
+        </li>
+      </ol>
+
+      <div class="plain">
+        <p>In plain steps: walk the tree exactly like minimax, but carry two running "records" downward — the best guarantee MAX has found (α) and the best guarantee MIN has found (β). <span class="analogy">Every time you finish a child, check: "does this break the deal for whoever owns the parent?"</span> If yes — stop checking that parent's remaining children entirely. You already know the parent will never be chosen in that direction.</p>
+      </div>
+    </section>
+
+    <!-- ============ ALPHA-BETA VISUALIZER ============ -->
+    <section class="block" id="viz">
+      <h2><span class="num">▸</span> Play: step through Alpha-Beta</h2>
+      <p>Same tree, same 8 leaves as Session 7's Minimax walker — leaves <b>6, 5, 8, 10, 2, 1, 9, 12</b>. Watch α/β update live, and watch branches turn red and grey out the instant they get pruned. The final answer is still <b>6</b>.</p>
+
+      <div class="viz">
+        <div class="viz-header">
+          <div>
+            <div class="viz-title">Alpha-Beta tree walker</div>
+            <div class="viz-sub">Identical tree to S7 — compare how many nodes get skipped</div>
+          </div>
+          <div class="viz-controls">
+            <button class="btn ghost" id="abReset">⟲ Reset</button>
+            <button class="btn" id="abStep">Step →</button>
+            <button class="btn primary" id="abAuto">▶ Auto</button>
+          </div>
+        </div>
+
+        <div class="state-bar">
+          <div class="state-item"><span class="lbl">Current node:</span><span class="val" id="abCurNode">—</span></div>
+          <div class="state-item"><span class="lbl">α:</span><span class="val a-c" id="abAlpha">−∞</span></div>
+          <div class="state-item"><span class="lbl">β:</span><span class="val b-c" id="abBeta">+∞</span></div>
+          <div class="state-item"><span class="lbl">Leaves evaluated:</span><span class="val" id="abCount">0 / 8</span></div>
+          <div class="state-item"><span class="lbl">Pruned:</span><span class="val" id="abPruned" style="color:var(--dead)">0</span></div>
+        </div>
+
+        <svg id="abSvg" viewBox="0 0 920 360" xmlns="http://www.w3.org/2000/svg"></svg>
+
+        <div class="legend">
+          <span><span class="dot" style="background:var(--max)"></span> MAX node</span>
+          <span><span class="dot" style="background:var(--min)"></span> MIN node</span>
+          <span><span class="dot" style="background:var(--ink-faint)"></span> Leaf</span>
+          <span><span class="dot" style="background:var(--dead)"></span> Pruned (never evaluated)</span>
+        </div>
+
+        <div class="viz-log" id="abLog">Press <b>Step</b> to begin. Watch α (MAX's guarantee) and β (MIN's guarantee) tighten — the moment β ≤ α, the rest of that branch dies.</div>
+      </div>
+    </section>
+
+    <!-- ============ MOVE ORDERING ============ -->
+    <section class="block" id="ordering">
+      <h2><span class="num">03</span> Move ordering matters</h2>
+      <p>Alpha-Beta's savings depend entirely on the <i>order</i> children are examined. Examine the best moves first → more cut-offs.</p>
+      <ul>
+        <li>Worst-case (bad ordering): <code>O(b^m)</code> — no better than minimax.</li>
+        <li>Best-case (perfect ordering): <code>O(b^(m/2))</code> — effectively branching factor <code>√b</code>, so you can search <b>twice as deep</b> in the same time.</li>
+      </ul>
+
+      <div class="callout cool">
+        <div class="callout-title">🧭 Intuition</div>
+        <p style="margin-bottom:0">If the first move you check is already great, the opponent's good replies establish tight α/β bounds early, and most of the remaining junk branches fail the β ≤ α test immediately.</p>
+      </div>
+
+      <div class="plain">
+        <p><span class="analogy">Imagine house-hunting and the very first house you tour happens to be excellent.</span> Now every later house gets compared against that great one and rejected in seconds — you don't need to tour every room. But if the first house you see is the worst one on your list, you have nothing to compare against, and you end up touring every single house fully. That's the difference between best-case and worst-case ordering: a strong early bound lets you reject the rest fast.</p>
+      </div>
+    </section>
+
+    <!-- ============ MCTS ============ -->
+    <section class="block" id="mcts">
+      <h2><span class="num">04</span> Monte-Carlo Tree Search (MCTS)</h2>
+      <p>A heuristic search that <b>uses random simulations to decide where to grow the tree</b>, instead of a hand-built evaluation function. It only searches a few layers and simulates the rest — keeping evaluations cheap. Four phases per iteration:</p>
+
+      <div class="def-grid">
+        <div class="def-card"><div class="k">1 · Selection</div><div class="v">From the root, repeatedly pick the most promising child, balancing exploitation (high win-rate) and exploration (rarely tried).</div></div>
+        <div class="def-card"><div class="k">2 · Expansion</div><div class="v">At a node with untried moves, add one new child node.</div></div>
+        <div class="def-card"><div class="k">3 · Simulation / rollout</div><div class="v">Play to the end from the new node using random (or lightweight) moves; record win/loss/draw.</div></div>
+        <div class="def-card"><div class="k">4 · Backpropagation</div><div class="v">Send the result back up the visited path, updating each node's visit count &amp; win score.</div></div>
+      </div>
+
+      <h3>UCB / UCT (used in Selection)</h3>
+      <pre>UCB_i = (w_i / n_i)  +  c · sqrt( ln(N) / n_i )
+         └─ exploit ─┘    └──── explore ────┘</pre>
+      <p>Probability rises with a node's value (exploit) and falls with its visits (explore); every option is tried at least once.</p>
+
+      <p>Applies to <b>combinatorial games</b>: two-player, sequential, perfect information, finite well-defined moves (chess, checkers, Go, tic-tac-toe).</p>
+      <p><i>Why not naïve Monte-Carlo as an eval?</i> A single simulation is a noisy 0/1 signal and running many per node is too slow (Go: ~25 evals/sec) — MCTS fixes this by reusing simulations to <i>guide</i> tree growth.</p>
+
+      <div class="plain">
+        <p>Forget the formula for a second. <span class="analogy">You're at a casino with 3 slot machines and limited coins. Early on, you try each machine a few times just to get a feel (explore). Once one machine seems clearly better, you start feeding it more coins (exploit) — but you still occasionally test the others, just in case you got unlucky/lucky early and your first impression was wrong.</span> UCB is the formula that decides, each round, exactly which machine to try next — by adding a small "but I haven't tried this much" bonus to each machine's average payout. As you play more, that bonus shrinks, and the system trusts the averages more.</p>
+        <p>The 4 phases are just: <b>(1)</b> walk down picking the best-looking path so far, <b>(2)</b> try one brand-new move you haven't tried, <b>(3)</b> "fast-forward" the rest of the game randomly to see who wins, and <b>(4)</b> walk back up updating everyone's scorecard with that result.</p>
+      </div>
+    </section>
+
+    <!-- ============ MCTS / UCB VISUALIZER ============ -->
+    <section class="block" id="mctsviz">
+      <h2><span class="num">▸</span> Play: UCB selection live</h2>
+      <p>Three actions (A, B, C) — B is secretly the best (highest true win rate). Press <b>Simulate</b> to run one MCTS iteration: UCB picks an arm, we "roll out" a random result, and we backpropagate. Hit <b>Auto</b> and watch visits concentrate on B as exploration tapers off — exactly as the source material describes.</p>
+
+      <div class="viz">
+        <div class="viz-header">
+          <div>
+            <div class="viz-title">UCB arm selector</div>
+            <div class="viz-sub">c (exploration constant) = 1.4 · true win-rates hidden, just like real MCTS</div>
+          </div>
+          <div class="viz-controls">
+            <button class="btn ghost" id="mcReset">⟲ Reset</button>
+            <button class="btn" id="mcStep">Simulate →</button>
+            <button class="btn primary" id="mcAuto">▶ Auto</button>
+          </div>
+        </div>
+
+        <div class="mcts-phase-strip">
+          <span class="phase-pill" id="phase-sel">1 · Selection</span>
+          <span class="phase-pill" id="phase-exp">2 · Expansion</span>
+          <span class="phase-pill" id="phase-sim">3 · Simulation</span>
+          <span class="phase-pill" id="phase-back">4 · Backpropagation</span>
+        </div>
+
+        <div class="mcts-arms">
+          <div class="arm" id="arm-A">
+            <div class="arm-name" style="color:var(--min)">A</div>
+            <div class="arm-stat">visits: <span id="arm-A-n">0</span></div>
+            <div class="arm-stat">wins: <span id="arm-A-w">0</span></div>
+            <div class="visit-track"><div class="visit-fill" id="arm-A-bar" style="width:0%; background:var(--min)"></div></div>
+            <div class="arm-ucb" id="arm-A-ucb">UCB: ∞</div>
+          </div>
+          <div class="arm" id="arm-B">
+            <div class="arm-name" style="color:var(--max)">B</div>
+            <div class="arm-stat">visits: <span id="arm-B-n">0</span></div>
+            <div class="arm-stat">wins: <span id="arm-B-w">0</span></div>
+            <div class="visit-track"><div class="visit-fill" id="arm-B-bar" style="width:0%; background:var(--max)"></div></div>
+            <div class="arm-ucb" id="arm-B-ucb">UCB: ∞</div>
+          </div>
+          <div class="arm" id="arm-C">
+            <div class="arm-name" style="color:var(--good)">C</div>
+            <div class="arm-stat">visits: <span id="arm-C-n">0</span></div>
+            <div class="arm-stat">wins: <span id="arm-C-w">0</span></div>
+            <div class="visit-track"><div class="visit-fill" id="arm-C-bar" style="width:0%; background:var(--good)"></div></div>
+            <div class="arm-ucb" id="arm-C-ucb">UCB: ∞</div>
+          </div>
+        </div>
+
+        <div class="state-bar">
+          <div class="state-item"><span class="lbl">Total simulations N:</span><span class="val" id="mcTotalN">0</span></div>
+        </div>
+
+        <div class="viz-log" id="mcLog">Press <b>Simulate</b> to run iteration 1. Every untried arm gets explored first (UCB = ∞ until n&gt;0).</div>
+      </div>
+    </section>
+
+    <!-- ============ STOCHASTIC ============ -->
+    <section class="block" id="stochastic">
+      <h2><span class="num">05</span> Stochastic games (brief)</h2>
+      <p>Games with chance (dice, shuffled cards) add <b>chance nodes</b> between MAX and MIN levels. We back up the <b>expected value</b> at chance nodes (= Σ probability × child value) — this generalises minimax to <b>expectiminimax</b>. Example: backgammon.</p>
+
+      <div class="plain">
+        <p>Normal minimax assumes both players always make the smartest possible move. But what if a dice roll decides part of the outcome? <span class="analogy">You can't "out-strategize" a die — you can only know the odds.</span> So at a chance node, instead of picking max or min, you just average all outcomes weighted by how likely each one is — same way you'd compute the "expected payout" of a casino game from its odds table.</p>
+      </div>
+    </section>
+
+    <!-- ============ WORKED EXAMPLES ============ -->
+    <section class="block" id="worked">
+      <h2><span class="num">06</span> Worked examples</h2>
+
+      <div class="worked open" data-w="1">
+        <div class="worked-head"><span><span class="wtag">Numerical</span>Alpha-Beta on leaves 6,5,8,10,2,1,9,12</span><span class="chev">▸</span></div>
+        <div class="worked-body"><div class="worked-body-inner">
+          <p>Root MAX → two MIN nodes (B, C) → each has two MAX nodes → each two leaves. Left-to-right:</p>
+          <div class="step-line"><span class="step-num">1.</span><span><b>B's left MAX</b> sees 6 then 5 → value <b>6</b>. So B (MIN) gets β = 6.</span></div>
+          <div class="step-line"><span class="step-num">2.</span><span><b>B's right MAX</b> (called with β = 6) sees <b>8</b>: as a MAX node α becomes 8 ≥ β 6 → β-cutoff, prune leaf 10. Returns 8.</span></div>
+          <div class="step-line"><span class="step-num">3.</span><span>B (MIN) = min(6, 8) = <b>6</b>. Root MAX sets α = 6.</span></div>
+          <div class="step-line"><span class="step-num">4.</span><span><b>C's left MAX</b> (called with α = 6) sees 2 then 1 → value <b>2</b>. So C (MIN) gets β = 2.</span></div>
+          <div class="step-line"><span class="step-num">5.</span><span>Now at C: α 6 ≥ β 2 → α-cutoff, prune C's entire right MAX subtree (leaves 9 and 12).</span></div>
+          <div class="step-line"><span class="step-num">6.</span><span>C (MIN) = 2. Root MAX = max(6, 2) = <b>6</b>.</span></div>
+          <div class="callout key" style="margin-top:14px;"><p style="margin-bottom:0"><b>Result = 6</b> (same as minimax). <b>Pruned leaves: 10, 9, 12.</b> 3 of 8 leaves never evaluated.</p></div>
+        </div></div>
+      </div>
+
+      <div class="worked" data-w="2">
+        <div class="worked-head"><span><span class="wtag">Concept</span>Make a tree where Alpha-Beta cannot prune at all</span><span class="chev">▸</span></div>
+        <div class="worked-body"><div class="worked-body-inner">
+          <p>Pruning fails when every node's best option is discovered <i>last</i> — i.e. the worst-ordered case. For a MAX-root tree, arrange leaves so values <b>increase</b> exactly when a higher value would be needed to trigger a cut-off (e.g. each MIN node's first child is its smallest, so β never gets tight enough early). Then α-β degenerates to full minimax, <code>O(b^m)</code>, evaluating <b>all</b> leaves. This is the worst case; perfect (best-first) ordering gives the <code>O(b^(m/2))</code> best case.</p>
+          <div class="plain">
+            <p><span class="analogy">It's the "worst house first" version of the house-hunting analogy above</span> — if every tour you do is slightly better than the last, you never get a strong-enough early bound to skip anything, and you end up touring every single house.</p>
+          </div>
+        </div></div>
+      </div>
+
+      <div class="worked" data-w="3">
+        <div class="worked-head"><span><span class="wtag">Concept</span>MCTS vs Alpha-Beta — when to use which</span><span class="chev">▸</span></div>
+        <div class="worked-body"><div class="worked-body-inner">
+          <ul>
+            <li><b>Alpha-Beta</b> needs a <i>good static evaluation function</i> and a modest branching factor (chess). Exact within the depth limit.</li>
+            <li><b>MCTS</b> needs <i>no</i> hand-crafted evaluation — it estimates value by random play-outs. Wins when branching is huge or a good eval is hard to design (Go). It's <i>anytime</i>: stop whenever and return the best-sampled move.</li>
+          </ul>
+          <div class="callout cool">
+            <div class="callout-title">🎯 Exam tip</div>
+            <p style="margin-bottom:0">If a question says "branching factor is enormous" or "no good evaluation function exists" → that's your MCTS cue. If it gives you a hand-built eval formula and asks you to prune → that's Alpha-Beta.</p>
+          </div>
+        </div></div>
+      </div>
+    </section>
+
+    <!-- ============ SELF TEST ============ -->
+    <section class="block" id="quiz">
+      <h2><span class="num">07</span> Self-test</h2>
+
+      <div class="quiz-card" data-correct="1">
+        <div class="quiz-q">Q1. Compared with plain minimax, alpha-beta pruning gives:</div>
+        <div class="quiz-opts">
+          <button class="quiz-opt">A different (better) move</button>
+          <button class="quiz-opt">The same move, evaluating fewer nodes</button>
+          <button class="quiz-opt">An approximate move</button>
+          <button class="quiz-opt">A move only for MIN</button>
+        </div>
+        <div class="quiz-explain">Alpha-Beta returns identical results to minimax; it only skips branches that can't affect the decision.</div>
+      </div>
+
+      <div class="quiz-card" data-correct="1">
+        <div class="quiz-q">Q2. The alpha-beta cut-off condition is:</div>
+        <div class="quiz-opts">
+          <button class="quiz-opt">α ≤ β</button>
+          <button class="quiz-opt">β ≤ α</button>
+          <button class="quiz-opt">α = 0</button>
+          <button class="quiz-opt">β = +∞</button>
+        </div>
+        <div class="quiz-explain">When β ≤ α, the current player already has a better option elsewhere, so the rest of the subtree is pruned.</div>
+      </div>
+
+      <div class="quiz-card" data-correct="1">
+        <div class="quiz-q">Q3. With perfect move ordering, alpha-beta's time complexity is:</div>
+        <div class="quiz-opts">
+          <button class="quiz-opt">O(b<sup>m</sup>)</button>
+          <button class="quiz-opt">O(b<sup>m/2</sup>)</button>
+          <button class="quiz-opt">O(mb)</button>
+          <button class="quiz-opt">O(bm)</button>
+        </div>
+        <div class="quiz-explain">Best-case α-β effectively halves the exponent — branching factor √b — letting you search twice as deep.</div>
+      </div>
+
+      <div class="quiz-card" data-correct="2">
+        <div class="quiz-q">Q4. Which is NOT one of the four MCTS phases?</div>
+        <div class="quiz-opts">
+          <button class="quiz-opt">Selection</button>
+          <button class="quiz-opt">Expansion</button>
+          <button class="quiz-opt">Pruning</button>
+          <button class="quiz-opt">Backpropagation</button>
+        </div>
+        <div class="quiz-explain">MCTS phases are Selection, Expansion, Simulation (rollout), Backpropagation. Pruning belongs to alpha-beta.</div>
+      </div>
+    </section>
+
+    <div class="complete-bar">
+      <span>✓ Both games sessions done. Back to the hub for papers &amp; practice.</span>
+      <a class="next-link" href="https://sanskarmk.github.io/ACI_Midsem/index.html">← Back to ACI Hub</a>
+    </div>
+
+  </main>
+</div>
+</div>
+
+<script>
+/* ============================================================
+   ALPHA-BETA TREE VISUALIZER
+   Same structure & leaves as Session 7's minimax tree, but now
+   we simulate the alpha-beta algorithm step-by-step including
+   pruning of leaves 10, 9, 12 per the worked example.
+   ============================================================ */
+const leaves = [6,5,8,10,2,1,9,12];
+
+const nodes = {
+  root: {type:'MAX', x:460, y:40, children:['B','C']},
+  B:    {type:'MIN', x:230, y:130, children:['B1','B2']},
+  C:    {type:'MIN', x:690, y:130, children:['C1','C2']},
+  B1:   {type:'MAX', x:115, y:220, children:['L0','L1']},
+  B2:   {type:'MAX', x:345, y:220, children:['L2','L3']},
+  C1:   {type:'MAX', x:575, y:220, children:['L4','L5']},
+  C2:   {type:'MAX', x:805, y:220, children:['L6','L7']},
+  L0:{type:'LEAF', x:60,  y:310, val:leaves[0]},
+  L1:{type:'LEAF', x:170, y:310, val:leaves[1]},
+  L2:{type:'LEAF', x:290, y:310, val:leaves[2]},
+  L3:{type:'LEAF', x:400, y:310, val:leaves[3]},
+  L4:{type:'LEAF', x:520, y:310, val:leaves[4]},
+  L5:{type:'LEAF', x:630, y:310, val:leaves[5]},
+  L6:{type:'LEAF', x:750, y:310, val:leaves[6]},
+  L7:{type:'LEAF', x:860, y:310, val:leaves[7]},
+};
+const edges = [
+  ['root','B'],['root','C'],
+  ['B','B1'],['B','B2'],['C','C1'],['C','C2'],
+  ['B1','L0'],['B1','L1'],['B2','L2'],['B2','L3'],
+  ['C1','L4'],['C1','L5'],['C2','L6'],['C2','L7'],
+];
+
+// Scripted alpha-beta trace matching the worked example exactly.
+// Each step: {type:'eval', id, val} | {type:'resolve', id, val} | {type:'prune', ids:[...]}
+const trace = [
+  {type:'eval', id:'L0', val:6, note:"Evaluate leaf L0 = 6."},
+  {type:'eval', id:'L1', val:5, note:"Evaluate leaf L1 = 5."},
+  {type:'resolve', id:'B1', val:6, note:"B1 (MAX) = max(6,5) = 6. This becomes β=6 for parent B (MIN)."},
+  {type:'eval', id:'L2', val:8, note:"Evaluate leaf L2 = 8. At B2 (MAX), α=8 ≥ inherited β=6 → β-cutoff!"},
+  {type:'prune', ids:['L3'], note:"Prune leaf L3 (value 10) — B2 already guarantees ≥8, worse than B's β=6 doesn't matter, B2 returns 8 regardless of L3."},
+  {type:'resolve', id:'B2', val:8, note:"B2 (MAX) returns 8 (cut off before checking L3)."},
+  {type:'resolve', id:'B', val:6, note:"B (MIN) = min(6,8) = 6. Root MAX sets α = 6."},
+  {type:'eval', id:'L4', val:2, note:"Evaluate leaf L4 = 2."},
+  {type:'eval', id:'L5', val:1, note:"Evaluate leaf L5 = 1."},
+  {type:'resolve', id:'C1', val:2, note:"C1 (MAX) = max(2,1) = 2. This becomes β=2 for parent C (MIN)."},
+  {type:'prune', ids:['L6','L7','C2'], note:"At C: inherited α=6 ≥ β=2 → α-cutoff! Prune C's entire right subtree — C2 and leaves 9, 12 never evaluated."},
+  {type:'resolve', id:'C', val:2, note:"C (MIN) = 2 (C2 branch pruned entirely)."},
+  {type:'resolve', id:'root', val:6, note:"Root MAX = max(6,2) = 6 — final answer, identical to plain minimax."},
+];
+
+let abStep = 0;
+let abAutoTimer = null;
+const abResolved = {};
+const abPrunedSet = new Set();
+let abAlpha = -Infinity, abBeta = Infinity;
+let abLeavesEvaluated = 0;
+
+function colorFor(type){
+  if(type==='MAX') return 'var(--max)';
+  if(type==='MIN') return 'var(--min)';
+  return 'var(--ink-faint)';
+}
+function dimColorFor(type){
+  if(type==='MAX') return 'var(--max-dim)';
+  if(type==='MIN') return 'var(--min-dim)';
+  return 'var(--bg-raised)';
+}
+
+function renderAbTree(){
+  const svg = document.getElementById('abSvg');
+  let html = '';
+  edges.forEach(([a,b])=>{
+    html += `<line class="tree-edge" x1="${nodes[a].x}" y1="${nodes[a].y+20}" x2="${nodes[b].x}" y2="${nodes[b].y-22}" id="abedge-${a}-${b}"/>`;
+  });
+  Object.entries(nodes).forEach(([id,n])=>{
+    if(n.type==='LEAF'){
+      html += `<g id="abnode-${id}">
+        <rect class="tree-node-bg" x="${n.x-26}" y="${n.y-18}" width="52" height="36" rx="8" fill="var(--bg-raised)" stroke="var(--line)" stroke-width="1.5"/>
+        <text class="tree-leaf-val" id="abval-${id}" x="${n.x}" y="${n.y+6}" text-anchor="middle" fill="var(--ink-faint)" opacity="0.3">${n.val}</text>
+      </g>`;
+    } else {
+      const r = n.type==='MAX' ? 24 : 22;
+      html += `<g id="abnode-${id}">
+        <circle class="tree-node-bg" cx="${n.x}" cy="${n.y}" r="${r}" fill="var(--bg-raised)" stroke="${colorFor(n.type)}" stroke-width="2"/>
+        <text x="${n.x}" y="${n.y-30}" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="${colorFor(n.type)}" font-weight="700">${n.type}</text>
+        <text class="tree-node-label" id="ablabel-${id}" x="${n.x}" y="${n.y+5}" text-anchor="middle">?</text>
+        <text class="ab-label" id="abbounds-${id}" x="${n.x}" y="${n.y+38}" text-anchor="middle" fill="var(--ink-faint)" opacity="0"></text>
+      </g>`;
+    }
+  });
+  svg.innerHTML = html;
+}
+
+function markPruned(id){
+  abPrunedSet.add(id);
+  const g = document.getElementById('abnode-'+id);
+  if(g){
+    g.classList.add('pruned');
+    const n = nodes[id];
+    if(n.type==='LEAF'){
+      g.querySelector('.tree-leaf-val').setAttribute('fill','var(--dead)');
+      g.querySelector('.tree-leaf-val').setAttribute('opacity','1');
+      g.querySelector('.tree-leaf-val').textContent = '✕';
+      g.querySelector('.tree-node-bg').setAttribute('stroke','var(--dead)');
+    } else {
+      g.querySelector('.tree-node-bg').setAttribute('stroke','var(--dead)');
+      const lbl = document.getElementById('ablabel-'+id);
+      if(lbl){ lbl.textContent='✕'; lbl.setAttribute('fill','var(--dead)'); }
+      // recursively grey out children too
+      n.children.forEach(c=>markPruned(c));
+    }
+  }
+  // also dim the edge leading to it
+  edges.forEach(([a,b])=>{
+    if(b===id){
+      const e = document.getElementById('abedge-'+a+'-'+b);
+      if(e) e.classList.add('pruned');
+    }
+  });
+}
+
+function clearPulse(){
+  Object.keys(nodes).forEach(id=>{
+    const g = document.getElementById('abnode-'+id);
+    if(g) g.classList.remove('node-pulse');
+  });
+}
+
+function abDoStep(){
+  if(abStep>=trace.length) return false;
+  const t = trace[abStep];
+  clearPulse();
+
+  if(t.type==='eval'){
+    const valEl = document.getElementById('abval-'+t.id);
+    valEl.setAttribute('opacity','1');
+    valEl.setAttribute('fill','#E8DFC9');
+    document.getElementById('abnode-'+t.id).classList.add('node-pulse');
+    abLeavesEvaluated++;
+  } else if(t.type==='resolve'){
+    abResolved[t.id]=t.val;
+    const n = nodes[t.id];
+    if(t.id==='root'){
+      abAlpha = t.val;
+    } else if(n.type==='MAX'){
+      // this node's value becomes a bound for the parent
+    }
+    const lbl = document.getElementById('ablabel-'+t.id);
+    if(lbl){ lbl.textContent = t.val; lbl.setAttribute('fill', colorFor(n.type)); }
+    document.getElementById('abnode-'+t.id).querySelector('.tree-node-bg').setAttribute('fill', dimColorFor(n.type));
+    document.getElementById('abnode-'+t.id).classList.add('node-pulse');
+
+    // update global alpha/beta tracking heuristically per our scripted trace
+    if(t.id==='B1') { abAlpha = -Infinity; } // local context, display handled via note
+    if(t.id==='B') { abAlpha = 6; }
+    if(t.id==='C1') { abBeta = 2; }
+  } else if(t.type==='prune'){
+    t.ids.forEach(id=> markPruned(id));
+  }
+
+  // recompute alpha/beta display based on step progress (scripted to match narrative)
+  if(abStep===2) { abAlpha=-Infinity; abBeta=6; } // after B1 resolves, B's beta=6
+  if(abStep===5) { abBeta=Infinity; } // B2 cutoff happened
+  if(abStep===6) { abAlpha=6; abBeta=Infinity; } // B resolved, root alpha=6
+  if(abStep===9) { abBeta=2; } // C1 resolves, C's beta=2
+  if(abStep===10) { /* alpha-cutoff at C, alpha=6 beta=2 */ }
+  if(abStep===12) { abAlpha=6; }
+
+  document.getElementById('abAlpha').textContent = abAlpha===-Infinity ? '−∞' : abAlpha;
+  document.getElementById('abBeta').textContent = abBeta===Infinity ? '+∞' : abBeta;
+  document.getElementById('abCount').textContent = `${abLeavesEvaluated} / 8`;
+  document.getElementById('abPruned').textContent = abPrunedSet.size ? [...abPrunedSet].filter(id=>nodes[id].type==='LEAF').length : 0;
+
+  const logEl = document.getElementById('abLog');
+  const isPrune = t.type==='prune';
+  logEl.innerHTML = isPrune ? `<span class="pruned-text">✂ PRUNE — ${t.note}</span>` : `<span class="step-current">${t.id}</span> ${t.note}`;
+  document.getElementById('abCurNode').textContent = t.id || (t.ids ? t.ids.join(', ') : '—');
+
+  abStep++;
+  if(abStep>=trace.length){
+    document.getElementById('abStep').disabled = true;
+    document.getElementById('abAuto').disabled = true;
+    clearInterval(abAutoTimer); abAutoTimer=null;
+    document.getElementById('abAuto').textContent='▶ Auto';
+  }
+  return true;
+}
+
+function abResetAll(){
+  abStep=0; abAlpha=-Infinity; abBeta=Infinity; abLeavesEvaluated=0;
+  Object.keys(abResolved).forEach(k=>delete abResolved[k]);
+  abPrunedSet.clear();
+  clearInterval(abAutoTimer); abAutoTimer=null;
+  document.getElementById('abAuto').textContent='▶ Auto';
+  document.getElementById('abStep').disabled=false;
+  document.getElementById('abAuto').disabled=false;
+  renderAbTree();
+  document.getElementById('abCurNode').textContent='—';
+  document.getElementById('abAlpha').textContent='−∞';
+  document.getElementById('abBeta').textContent='+∞';
+  document.getElementById('abCount').textContent='0 / 8';
+  document.getElementById('abPruned').textContent='0';
+  document.getElementById('abLog').innerHTML = `Press <b>Step</b> to begin. Watch α (MAX's guarantee) and β (MIN's guarantee) tighten — the moment β ≤ α, the rest of that branch dies.`;
+}
+
+document.getElementById('abStep').addEventListener('click', abDoStep);
+document.getElementById('abReset').addEventListener('click', abResetAll);
+document.getElementById('abAuto').addEventListener('click', function(){
+  if(abAutoTimer){
+    clearInterval(abAutoTimer); abAutoTimer=null;
+    this.textContent='▶ Auto';
+  } else {
+    this.textContent='⏸ Pause';
+    abAutoTimer = setInterval(()=>{
+      const cont = abDoStep();
+      if(!cont){ clearInterval(abAutoTimer); abAutoTimer=null; document.getElementById('abAuto').textContent='▶ Auto'; }
+    }, 1100);
+  }
+});
+
+renderAbTree();
+
+/* ============================================================
+   MCTS / UCB VISUALIZER
+   Three arms with hidden true win-probabilities.
+   B is the best arm. UCB formula drives selection.
+   ============================================================ */
+const arms = {
+  A: {n:0, w:0, trueP:0.35},
+  B: {n:0, w:0, trueP:0.70},
+  C: {n:0, w:0, trueP:0.45},
+};
+let mcN = 0;
+let mcAutoTimer = null;
+const C_EXPLORE = 1.4;
+
+function computeUCB(arm){
+  if(arm.n===0) return Infinity;
+  return (arm.w/arm.n) + C_EXPLORE*Math.sqrt(Math.log(mcN)/arm.n);
+}
+
+function mcRenderArms(){
+  Object.entries(arms).forEach(([name,arm])=>{
+    document.getElementById(`arm-${name}-n`).textContent = arm.n;
+    document.getElementById(`arm-${name}-w`).textContent = arm.w;
+    const ucb = computeUCB(arm);
+    document.getElementById(`arm-${name}-ucb`).textContent = 'UCB: ' + (ucb===Infinity ? '∞' : ucb.toFixed(2));
+    const maxN = Math.max(1, ...Object.values(arms).map(a=>a.n));
+    document.getElementById(`arm-${name}-bar`).style.width = (arm.n/Math.max(maxN, mcN||1)*100) + '%';
+  });
+  document.getElementById('mcTotalN').textContent = mcN;
+
+  // highlight current best by visits
+  const bestName = Object.entries(arms).sort((a,b)=>b[1].n-a[1].n)[0][0];
+  Object.keys(arms).forEach(name=>{
+    document.getElementById('arm-'+name).classList.toggle('best', name===bestName && mcN>3);
+  });
+}
+
+function setPhase(active){
+  ['sel','exp','sim','back'].forEach(p=> document.getElementById('phase-'+p).classList.remove('active'));
+  if(active) document.getElementById('phase-'+active).classList.add('active');
+}
+
+function mcDoStep(){
+  mcN++;
+  setPhase('sel');
+  // Selection: pick highest UCB
+  let chosen = 'A';
+  let bestUcb = -Infinity;
+  Object.entries(arms).forEach(([name,arm])=>{
+    const u = computeUCB(arm);
+    if(u>bestUcb){ bestUcb=u; chosen=name; }
+  });
+
+  const isNew = arms[chosen].n===0;
+  setTimeout(()=> setPhase(isNew?'exp':'sim'), 250);
+
+  // Simulation: random rollout based on true probability (hidden from learner)
+  const win = Math.random() < arms[chosen].trueP ? 1 : 0;
+
+  setTimeout(()=>{
+    setPhase('back');
+    arms[chosen].n++;
+    arms[chosen].w += win;
+    mcRenderArms();
+
+    const el = document.getElementById('arm-'+chosen);
+    el.classList.remove('selected');
+    void el.offsetWidth;
+    el.classList.add('selected');
+
+    const logEl = document.getElementById('mcLog');
+    logEl.innerHTML = `<b>Iteration ${mcN}:</b> UCB selected <b style="color:${chosen==='A'?'var(--min)':chosen==='B'?'var(--max)':'var(--good)'}">${chosen}</b> (UCB=${bestUcb===Infinity?'∞ — untried':bestUcb.toFixed(2)}) → simulated rollout result: <b style="color:${win?'var(--good)':'var(--dead)'}">${win?'WIN':'loss'}</b>. Backpropagated: ${chosen} is now ${arms[chosen].n} visits, ${arms[chosen].w} wins.`;
+  }, 500);
+}
+
+document.getElementById('mcStep').addEventListener('click', mcDoStep);
+document.getElementById('mcReset').addEventListener('click', ()=>{
+  Object.keys(arms).forEach(k=>{ arms[k].n=0; arms[k].w=0; });
+  mcN=0;
+  clearInterval(mcAutoTimer); mcAutoTimer=null;
+  document.getElementById('mcAuto').textContent='▶ Auto';
+  setPhase(null);
+  mcRenderArms();
+  document.getElementById('mcLog').innerHTML = 'Press <b>Simulate</b> to run iteration 1. Every untried arm gets explored first (UCB = ∞ until n&gt;0).';
+});
+document.getElementById('mcAuto').addEventListener('click', function(){
+  if(mcAutoTimer){
+    clearInterval(mcAutoTimer); mcAutoTimer=null;
+    this.textContent='▶ Auto';
+  } else {
+    this.textContent='⏸ Pause';
+    mcAutoTimer = setInterval(mcDoStep, 1000);
+  }
+});
+
+mcRenderArms();
+
+/* ============================================================
+   WORKED EXAMPLE ACCORDIONS
+   ============================================================ */
+document.querySelectorAll('.worked-head').forEach(h=>{
+  h.addEventListener('click', ()=> h.parentElement.classList.toggle('open'));
+});
+
+/* ============================================================
+   QUIZ
+   ============================================================ */
+document.querySelectorAll('.quiz-card').forEach(card=>{
+  const correctIdx = parseInt(card.dataset.correct);
+  const opts = card.querySelectorAll('.quiz-opt');
+  opts.forEach((opt,i)=>{
+    opt.addEventListener('click', ()=>{
+      if(card.classList.contains('answered')) return;
+      card.classList.add('answered');
+      opts.forEach((o,j)=>{
+        if(j===correctIdx) o.classList.add('correct');
+        else if(j===i) o.classList.add('wrong');
+      });
+      card.querySelector('.quiz-explain').classList.add('show');
+    });
+  });
+});
+
+/* ============================================================
+   SCROLLSPY
+   ============================================================ */
+const sections = document.querySelectorAll('section.block');
+const railLinks = document.querySelectorAll('.rail a');
+function onScroll(){
+  let current = sections[0].id;
+  sections.forEach(s=>{
+    if(window.scrollY + 100 >= s.offsetTop) current = s.id;
+  });
+  railLinks.forEach(a=>{
+    a.classList.toggle('current', a.getAttribute('href')==='#'+current);
+  });
+}
+window.addEventListener('scroll', onScroll);
+onScroll();
+</script>
+</body>
+</html>
